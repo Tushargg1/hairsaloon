@@ -54,7 +54,7 @@ app:
       issuer: "${JWT_ISSUER:hairsaloon}"
       ttl: "${JWT_TTL:8h}"
     cookie:
-      domain: "${AUTH_COOKIE_DOMAIN:.yoursite.com}"
+      domain: "${AUTH_COOKIE_DOMAIN:}"
       secure: "${AUTH_COOKIE_SECURE:true}"
     bootstrap-platform-admin:
       enabled: "${PLATFORM_ADMIN_BOOTSTRAP_ENABLED:false}"
