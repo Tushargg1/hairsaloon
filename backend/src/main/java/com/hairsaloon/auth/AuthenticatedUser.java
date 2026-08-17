@@ -1,4 +1,4 @@
 package com.hairsaloon.auth;
 
-public record AuthenticatedUser(Long id, String email, UserRole role) {
+public record AuthenticatedUser(Long id, String phone, String email, UserRole role) {
 }

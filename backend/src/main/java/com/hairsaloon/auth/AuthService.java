@@ -21,27 +21,29 @@ class AuthService {
     }
 
     @Transactional
-    AuthResult signup(String email, String password, UserRole role) {
-        if (role == UserRole.PLATFORM_ADMIN) {
-            throw new AuthException(HttpStatus.BAD_REQUEST, "INVALID_ROLE",
-                "Public signup supports only CUSTOMER or SALON_OWNER");
+    AuthResult signup(String phone, String email, String password) {
+        String normalizedPhone = phone.trim();
+        String normalizedEmail = email == null || email.isBlank() ? null : normalize(email);
+        if (users.existsByPhone(normalizedPhone)) {
+            throw new AuthException(HttpStatus.CONFLICT, "PHONE_EXISTS",
+                "An account with this phone number already exists");
         }
-        String normalizedEmail = normalize(email);
-        if (users.existsByEmail(normalizedEmail)) {
+        if (normalizedEmail != null && users.existsByEmail(normalizedEmail)) {
             throw duplicateEmail();
         }
         try {
-            User user = users.saveAndFlush(new User(normalizedEmail,
-                passwordEncoder.encode(password), role));
+            User user = users.saveAndFlush(new User(normalizedPhone, normalizedEmail,
+                passwordEncoder.encode(password), UserRole.CUSTOMER));
             return result(user);
         } catch (DataIntegrityViolationException duplicate) {
-            throw duplicateEmail();
+            throw new AuthException(HttpStatus.CONFLICT, "PHONE_EXISTS",
+                "An account with this phone number already exists");
         }
     }
 
     @Transactional(readOnly = true)
-    AuthResult login(String email, String password) {
-        User user = users.findByEmail(normalize(email))
+    AuthResult login(String phone, String password) {
+        User user = users.findByPhone(phone.trim())
             .orElseThrow(AuthService::invalidCredentials);
         if (!passwordEncoder.matches(password, user.getPasswordHash())) {
             throw invalidCredentials();
@@ -51,7 +53,7 @@ class AuthService {
 
     private AuthResult result(User user) {
         return new AuthResult(new AuthenticatedUser(
-            user.getId(), user.getEmail(), user.getRole()), jwtService.issue(user));
+            user.getId(), user.getPhone(), user.getEmail(), user.getRole()), jwtService.issue(user));
     }
 
     static String normalize(String email) {

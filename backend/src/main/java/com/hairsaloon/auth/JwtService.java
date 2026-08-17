@@ -36,15 +36,17 @@ class JwtService {
 
     String issue(User user) {
         Instant now = Instant.now();
-        return Jwts.builder()
+        var builder = Jwts.builder()
             .subject(user.getId().toString())
             .issuer(issuer)
             .issuedAt(Date.from(now))
             .expiration(Date.from(now.plus(ttl)))
-            .claim("email", user.getEmail())
-            .claim("role", user.getRole().name())
-            .signWith(key, Jwts.SIG.HS512)
-            .compact();
+            .claim("phone", user.getPhone())
+            .claim("role", user.getRole().name());
+        if (user.getEmail() != null) {
+            builder.claim("email", user.getEmail());
+        }
+        return builder.signWith(key, Jwts.SIG.HS512).compact();
     }
 
     TokenClaims parse(String token) {
@@ -56,12 +58,13 @@ class JwtService {
                 .parseSignedClaims(token)
                 .getPayload();
             long userId = Long.parseLong(claims.getSubject());
+            String phone = claims.get("phone", String.class);
             String email = claims.get("email", String.class);
             UserRole role = UserRole.valueOf(claims.get("role", String.class));
-            if (userId <= 0 || email == null || email.isBlank()) {
+            if (userId <= 0 || phone == null || phone.isBlank()) {
                 throw new JwtValidationException();
             }
-            return new TokenClaims(userId, email, role);
+            return new TokenClaims(userId, phone, email, role);
         } catch (JwtException | IllegalArgumentException | NullPointerException invalid) {
             throw new JwtValidationException();
         }
@@ -93,7 +96,7 @@ class JwtService {
         return value.getBytes(StandardCharsets.UTF_8);
     }
 
-    record TokenClaims(long userId, String email, UserRole role) {
+    record TokenClaims(long userId, String phone, String email, UserRole role) {
     }
 
     static class JwtValidationException extends RuntimeException {

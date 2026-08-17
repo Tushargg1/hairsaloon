@@ -19,7 +19,7 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 320)
+    @Column(unique = true, length = 320)
     private String email;
 
     @Column(name = "password_hash", nullable = false, length = 255)
@@ -29,6 +29,9 @@ public class User {
     @Column(nullable = false, length = 32)
     private UserRole role;
 
+    @Column(length = 32, nullable = false, unique = true)
+    private String phone;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -36,7 +39,8 @@ public class User {
     protected User() {
     }
 
-    User(String email, String passwordHash, UserRole role) {
+    User(String phone, String email, String passwordHash, UserRole role) {
+        this.phone = phone;
         this.email = email;
         this.passwordHash = passwordHash;
         this.role = role;
@@ -48,6 +52,10 @@ public class User {
 
     public String getEmail() {
         return email;
+    }
+
+    public String getPhone() {
+        return phone;
     }
 
     String getPasswordHash() {

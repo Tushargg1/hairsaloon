@@ -30,7 +30,7 @@ class AuthController {
     @PostMapping("/signup")
     ResponseEntity<UserResponse> signup(@Valid @RequestBody SignupRequest request) {
         AuthService.AuthResult result = authService.signup(
-            request.email(), request.password(), request.role());
+            request.phone(), request.email(), request.password());
         return ResponseEntity.status(HttpStatus.CREATED)
             .header(HttpHeaders.SET_COOKIE, cookies.authenticated(result.token()).toString())
             .body(UserResponse.from(result.user()));
@@ -38,7 +38,7 @@ class AuthController {
 
     @PostMapping("/login")
     ResponseEntity<UserResponse> login(@Valid @RequestBody LoginRequest request) {
-        AuthService.AuthResult result = authService.login(request.email(), request.password());
+        AuthService.AuthResult result = authService.login(request.phone(), request.password());
         return ResponseEntity.ok()
             .header(HttpHeaders.SET_COOKIE, cookies.authenticated(result.token()).toString())
             .body(UserResponse.from(result.user()));
@@ -57,25 +57,26 @@ class AuthController {
     }
 
     record SignupRequest(
-        @NotBlank @Email @Size(max = 320) String email,
-        @NotBlank @Size(min = 8, max = 72) String password,
-        @NotNull UserRole role) {
+        @NotBlank @Size(min = 10, max = 15) String phone,
+        @Email @Size(max = 320) String email,
+        @NotBlank @Size(min = 8, max = 72) String password) {
         SignupRequest {
-            email = email == null ? null : email.trim();
+            phone = phone == null ? null : phone.trim();
+            email = email == null || email.isBlank() ? null : email.trim();
         }
     }
 
     record LoginRequest(
-        @NotBlank @Email @Size(max = 320) String email,
+        @NotBlank @Size(min = 10, max = 15) String phone,
         @NotBlank @Size(min = 8, max = 72) String password) {
         LoginRequest {
-            email = email == null ? null : email.trim();
+            phone = phone == null ? null : phone.trim();
         }
     }
 
-    record UserResponse(Long id, String email, UserRole role) {
+    record UserResponse(Long id, String phone, String email, UserRole role) {
         static UserResponse from(AuthenticatedUser user) {
-            return new UserResponse(user.id(), user.email(), user.role());
+            return new UserResponse(user.id(), user.phone(), user.email(), user.role());
         }
     }
 }
