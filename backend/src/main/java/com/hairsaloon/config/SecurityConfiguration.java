@@ -39,6 +39,8 @@ public class SecurityConfiguration {
                     "/api/platform/auth/logout").permitAll()
                 .requestMatchers("/api/platform/auth/me").authenticated()
                 .requestMatchers("/api/platform/profile", "/api/platform/profile/**").authenticated()
+                .requestMatchers("/api/platform/favorites", "/api/platform/favorites/**").authenticated()
+                .requestMatchers("/api/platform/my-bookings").authenticated()
                 .requestMatchers("/api/platform/admin/**").hasRole("PLATFORM_ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/platform/salons/check-subdomain")
                     .hasRole("SALON_OWNER")

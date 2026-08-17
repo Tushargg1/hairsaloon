@@ -13,6 +13,19 @@ export default function PlatformLayout() {
   const navigate = useNavigate()
   const [loggingOut, setLoggingOut] = useState(false)
   const [logoutError, setLogoutError] = useState('')
+  const [dark, setDark] = useState(() => localStorage.getItem('theme') === 'dark')
+
+  function toggleTheme() {
+    const next = !dark
+    setDark(next)
+    document.documentElement.setAttribute('data-theme', next ? 'dark' : 'light')
+    localStorage.setItem('theme', next ? 'dark' : 'light')
+  }
+
+  // Apply saved theme on mount
+  useState(() => {
+    if (dark) document.documentElement.setAttribute('data-theme', 'dark')
+  })
 
   async function handleLogout() {
     setLoggingOut(true)
@@ -41,6 +54,7 @@ export default function PlatformLayout() {
           {user?.role === 'PLATFORM_ADMIN' && <NavLink to="/admin/approvals">Approvals</NavLink>}
         </nav>
         <div className="account-actions">
+          <button className="theme-toggle" type="button" onClick={toggleTheme} aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'} title={dark ? 'Light mode' : 'Dark mode'}>{dark ? '☀️' : '🌙'}</button>
           {logoutError && <span className="header-error" role="alert">{logoutError}</span>}
           {loading ? (
             <span className="muted">Checking account…</span>

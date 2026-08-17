@@ -1,6 +1,14 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;1,600&display=swap');
 
 :root { color: #1f211d; background: #f7f5ef; font-family: 'DM Sans', system-ui, sans-serif; font-synthesis: none; text-rendering: optimizeLegibility; --ink: #1f211d; --muted: #696b64; --paper: #f7f5ef; --cream: #ebe6da; --sage: #566454; --sage-dark: #303b31; --rust: #b45c3b; --line: #d8d4ca; }
+[data-theme="dark"] { color: #e8e6e0; background: #1a1d1a; --ink: #e8e6e0; --muted: #9a9d96; --paper: #1a1d1a; --cream: #2a2d2a; --sage: #7a8e78; --sage-dark: #b8c4b6; --rust: #e07a55; --line: #3a3d3a; }
+[data-theme="dark"] .site-header { background: rgba(26,29,26,.94); border-color: var(--line); }
+[data-theme="dark"] input, [data-theme="dark"] select, [data-theme="dark"] textarea { background: #242724; border-color: #3a3d3a; color: var(--ink); }
+[data-theme="dark"] .form-card, [data-theme="dark"] .salon-card, [data-theme="dark"] .manager-item, [data-theme="dark"] .manager-create-card, [data-theme="dark"] .staff-manager-card, [data-theme="dark"] .booking-panel { background: #222522; border-color: var(--line); }
+[data-theme="dark"] .button { background: var(--sage-dark); border-color: var(--sage-dark); color: #1a1d1a; }
+[data-theme="dark"] .button:hover:not(:disabled) { background: var(--rust); border-color: var(--rust); }
+[data-theme="dark"] .button-secondary, [data-theme="dark"] .button-ghost { color: var(--ink); background: transparent; border-color: #5a5d5a; }
+[data-theme="dark"] .site-footer { background: #111311; }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 body { margin: 0; min-width: 320px; min-height: 100vh; }
@@ -857,3 +865,12 @@ input:focus, select:focus, textarea:focus {
   .backend-status-banner { left: 1rem; grid-template-columns: auto 1fr; }
   .backend-status-banner .button { grid-column: span 2; width: 100%; }
 }
+
+/* Profile nav tabs as buttons */
+.dashboard-nav-btn { padding: .75rem 1rem; color: var(--muted); background: none; border: 0; border-bottom: 2px solid transparent; font-size: .86rem; font-weight: 700; cursor: pointer; }
+.dashboard-nav-btn.active { color: var(--rust); border-color: var(--rust); }
+.dashboard-nav-btn:hover:not(.active) { color: var(--ink); }
+
+/* Dark mode toggle */
+.theme-toggle { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; color: var(--muted); background: transparent; border: 1px solid var(--line); border-radius: 50%; cursor: pointer; font-size: 1.1rem; transition: color .15s, border-color .15s; }
+.theme-toggle:hover { color: var(--rust); border-color: var(--rust); }
