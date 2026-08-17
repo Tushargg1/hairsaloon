@@ -4,6 +4,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { errorMessage, getSalons, salonKeys } from './salon-api.js'
 import { salonUrl } from './platform-config.js'
 import useAuth from '../shared/auth/useAuth.js'
+import apiClient from '../shared/api/client.js'
 
 const defaults = { city: '', service: '', rating: '', search: '', page: '0' }
 
@@ -27,11 +28,32 @@ function normalizePage(data, requestedPage) {
 export default function SalonDirectory() {
   const { user } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
+  const [favorites, setFavorites] = useState(new Set())
   const urlFilters = Object.fromEntries(
     Object.keys(defaults).map((key) => [key, searchParams.get(key) || defaults[key]]),
   )
   const [form, setForm] = useState(urlFilters)
   const serializedParams = searchParams.toString()
+
+  useEffect(() => {
+    if (user) {
+      apiClient.get('/api/platform/favorites').then(({ data }) => {
+        setFavorites(new Set(data.map((f) => f.salonId)))
+      }).catch(() => {})
+    }
+  }, [user])
+
+  function toggleFavorite(salonId) {
+    if (favorites.has(salonId)) {
+      apiClient.delete(`/api/platform/favorites/${salonId}`).then(() => {
+        setFavorites((prev) => { const next = new Set(prev); next.delete(salonId); return next })
+      })
+    } else {
+      apiClient.post(`/api/platform/favorites/${salonId}`).then(() => {
+        setFavorites((prev) => new Set(prev).add(salonId))
+      })
+    }
+  }
 
   useEffect(() => {
     const currentParams = new URLSearchParams(serializedParams)
@@ -126,6 +148,7 @@ export default function SalonDirectory() {
                 {salon.address && <address>{salon.address}{salon.city ? `, ${salon.city}` : ''}</address>}
                 {salon.reviewCount != null && <small>{salon.reviewCount} review{salon.reviewCount === 1 ? '' : 's'}</small>}
                 <a className="arrow-link" href={salonUrl(salon.subdomain)}>Visit salon <span aria-hidden="true">→</span></a>
+                {user && <button className="button button-ghost button-small" type="button" style={{ marginTop: '.5rem', width: '100%' }} onClick={() => toggleFavorite(salon.id)}>{favorites.has(salon.id) ? '♥ Saved' : '♡ Save salon'}</button>}
               </div>
             </article>
           ))}

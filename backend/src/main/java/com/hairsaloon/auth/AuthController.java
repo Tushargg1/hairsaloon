@@ -1,5 +1,6 @@
 package com.hairsaloon.auth;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -21,10 +22,12 @@ class AuthController {
 
     private final AuthService authService;
     private final AuthCookieService cookies;
+    private final LoginRateLimiter rateLimiter;
 
-    AuthController(AuthService authService, AuthCookieService cookies) {
+    AuthController(AuthService authService, AuthCookieService cookies, LoginRateLimiter rateLimiter) {
         this.authService = authService;
         this.cookies = cookies;
+        this.rateLimiter = rateLimiter;
     }
 
     @PostMapping("/signup")
@@ -37,11 +40,23 @@ class AuthController {
     }
 
     @PostMapping("/login")
-    ResponseEntity<UserResponse> login(@Valid @RequestBody LoginRequest request) {
-        AuthService.AuthResult result = authService.login(request.phone(), request.password());
-        return ResponseEntity.ok()
-            .header(HttpHeaders.SET_COOKIE, cookies.authenticated(result.token()).toString())
-            .body(UserResponse.from(result.user()));
+    ResponseEntity<UserResponse> login(@Valid @RequestBody LoginRequest request,
+                                        HttpServletRequest httpRequest) {
+        String clientIp = httpRequest.getRemoteAddr();
+        if (rateLimiter.isBlocked(clientIp)) {
+            throw new AuthException(HttpStatus.TOO_MANY_REQUESTS, "RATE_LIMITED",
+                "Too many login attempts. Please wait a few minutes and try again.");
+        }
+        try {
+            AuthService.AuthResult result = authService.login(request.phone(), request.password());
+            rateLimiter.recordSuccess(clientIp);
+            return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookies.authenticated(result.token()).toString())
+                .body(UserResponse.from(result.user()));
+        } catch (AuthException e) {
+            rateLimiter.recordFailure(clientIp);
+            throw e;
+        }
     }
 
     @PostMapping("/logout")
