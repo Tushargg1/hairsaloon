@@ -8,6 +8,7 @@ import AuthPage from './platform/AuthPage.jsx'
 import SalonDirectory from './platform/SalonDirectory.jsx'
 import SalonSignup from './platform/SalonSignup.jsx'
 import AdminApprovals from './platform/AdminApprovals.jsx'
+import ProfilePage from './platform/ProfilePage.jsx'
 import TenantRoutes from './tenant/TenantRoutes.jsx'
 
 function PlatformRoutes() {
@@ -24,6 +25,9 @@ function PlatformRoutes() {
         </Route>
         <Route element={<RequireRole roles="PLATFORM_ADMIN" loadingFallback={loadingFallback} />}>
           <Route path="admin/approvals" element={<AdminApprovals />} />
+        </Route>
+        <Route element={<RequireRole roles="CUSTOMER" loadingFallback={loadingFallback} />}>
+          <Route path="profile" element={<ProfilePage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>

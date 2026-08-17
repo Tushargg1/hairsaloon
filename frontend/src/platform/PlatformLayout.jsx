@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate, Link } from 'react-router-dom'
 import useAuth from '../shared/auth/useAuth.js'
 
 const roleLabels = {
@@ -50,6 +50,7 @@ export default function PlatformLayout() {
                 <strong>{user.email}</strong>
                 <small>{roleLabels[user.role] || user.role}</small>
               </span>
+              <Link to="/profile" className="text-link">Profile</Link>
               <button className="button button-ghost button-small" type="button" disabled={loggingOut} onClick={handleLogout}>
                 {loggingOut ? 'Logging out…' : 'Log out'}
               </button>
