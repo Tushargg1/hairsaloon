@@ -1,0 +1,19 @@
+spring:
+  config:
+    activate:
+      on-profile: dev
+  jpa:
+    show-sql: false
+
+server:
+  error:
+    include-message: always
+
+management:
+  health:
+    redis:
+      enabled: false
+
+logging:
+  level:
+    com.hairsaloon: DEBUG

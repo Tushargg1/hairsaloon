@@ -1,0 +1,74 @@
+spring:
+  application:
+    name: hairsaloon-backend
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/hairsaloon}
+    username: ${POSTGRES_USER:hairsaloon}
+    password: ${POSTGRES_PASSWORD:hairsaloon}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      username: ${REDIS_USERNAME:}
+      password: ${REDIS_PASSWORD:}
+      ssl:
+        enabled: ${REDIS_SSL_ENABLED:false}
+
+server:
+  port: ${SERVER_PORT:8080}
+  shutdown: graceful
+  forward-headers-strategy: framework
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+  health:
+    readinessstate:
+      enabled: true
+    livenessstate:
+      enabled: true
+
+app:
+  base-domain: ${BASE_DOMAIN:localhost}
+  platform-hosts: ${PLATFORM_HOSTS:localhost,www.localhost}
+  tenant-cache-ttl: 5m
+  cors:
+    allowed-origins: "${CORS_ALLOWED_ORIGINS:http://localhost:5173}"
+    allowed-origin-patterns: "${CORS_ALLOWED_ORIGIN_PATTERNS:http://*.localhost:[*]}"
+  auth:
+    jwt:
+      secret: "${JWT_SECRET:}"
+      issuer: "${JWT_ISSUER:hairsaloon}"
+      ttl: "${JWT_TTL:8h}"
+    cookie:
+      domain: "${AUTH_COOKIE_DOMAIN:.yoursite.com}"
+      secure: "${AUTH_COOKIE_SECURE:true}"
+    bootstrap-platform-admin:
+      enabled: "${PLATFORM_ADMIN_BOOTSTRAP_ENABLED:false}"
+      email: "${PLATFORM_ADMIN_BOOTSTRAP_EMAIL:}"
+      password: "${PLATFORM_ADMIN_BOOTSTRAP_PASSWORD:}"
+  notifications:
+    provider: "${EMAIL_PROVIDER:logging}"
+    from: "${EMAIL_FROM:}"
+    resend-api-key: "${RESEND_API_KEY:}"
+    batch-size: "${EMAIL_OUTBOX_BATCH_SIZE:25}"
+    max-attempts: "${EMAIL_MAX_ATTEMPTS:6}"
+    claim-duration: "${EMAIL_CLAIM_DURATION:2m}"
+    base-retry-delay: "${EMAIL_BASE_RETRY_DELAY:30s}"
+    max-retry-delay: "${EMAIL_MAX_RETRY_DELAY:30m}"
+    scheduling-enabled: "${EMAIL_SCHEDULING_ENABLED:true}"
+    reminder-scan-delay-ms: "${EMAIL_REMINDER_SCAN_DELAY_MS:60000}"
+    process-delay-ms: "${EMAIL_PROCESS_DELAY_MS:5000}"

@@ -1,0 +1,35 @@
+# Placeholders only. Do not put secret values in this file.
+aws_region = "<deployment-region>"
+
+project_name    = "hairsaloon"
+environment     = "prod"
+domain_name     = "<example.com>"
+route53_zone_id = "<existing-public-hosted-zone-id>"
+vpc_id           = "<existing-vpc-id>"
+public_subnet_ids = [
+  "<public-subnet-id-a>",
+  "<public-subnet-id-b>",
+]
+private_subnet_ids = [
+  "<private-subnet-id-a>",
+  "<private-subnet-id-b>",
+]
+
+container_image_tag = "<immutable-release-tag>"
+frontend_bucket_name = "<globally-unique-private-bucket-name>"
+
+# Existing secret ARNs only; never place secret values in Terraform inputs.
+jwt_secret_arn        = "<existing-jwt-secret-arn>"
+redis_auth_secret_arn = "<existing-redis-auth-token-secret-arn>"
+resend_secret_arn     = null
+secret_kms_key_arns   = []
+email_from             = "<verified-sender-address-or-empty>"
+
+# Review availability and cost before changing these.
+ecs_desired_count       = 2
+db_multi_az             = false
+redis_num_cache_clusters = 2
+
+tags = {
+  Owner = "<team-or-owner>"
+}
