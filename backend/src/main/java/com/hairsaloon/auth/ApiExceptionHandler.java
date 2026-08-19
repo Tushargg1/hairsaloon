@@ -3,6 +3,7 @@ package com.hairsaloon.auth;
 import com.hairsaloon.platform.PlatformApiException;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -17,8 +18,12 @@ class ApiExceptionHandler {
 
     @ExceptionHandler(AuthException.class)
     ResponseEntity<ApiError> authError(AuthException exception) {
-        return ResponseEntity.status(exception.status())
-            .body(ApiError.of(exception.code(), exception.getMessage()));
+        ResponseEntity.BodyBuilder response = ResponseEntity.status(exception.status());
+        if (exception.retryAfterSeconds() != null) {
+            response.header(HttpHeaders.RETRY_AFTER,
+                Long.toString(exception.retryAfterSeconds()));
+        }
+        return response.body(ApiError.of(exception.code(), exception.getMessage()));
     }
 
     @ExceptionHandler(PlatformApiException.class)

@@ -17,3 +17,11 @@ management:
 logging:
   level:
     com.hairsaloon: DEBUG
+
+app:
+  auth:
+    otp:
+      allow-code-logging: true
+
+media:
+  storage-provider: disabled

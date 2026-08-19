@@ -32,17 +32,24 @@ class ProfileController {
     ResponseEntity<ProfileResponse> updateProfile(@AuthenticationPrincipal AuthenticatedUser principal,
                                                    @Valid @RequestBody UpdateProfileRequest request) {
         User user = users.findById(principal.id()).orElseThrow();
-        user.setName(request.name());
-        if (request.email() != null && !request.email().isBlank()) {
-            user.setEmail(request.email().trim().toLowerCase(java.util.Locale.ROOT));
-        } else {
-            user.setEmail(null);
+        String phone = request.phone().trim();
+        String email = request.email() == null || request.email().isBlank()
+            ? null : request.email().trim().toLowerCase(java.util.Locale.ROOT);
+        if (users.existsByPhoneAndIdNot(phone, user.getId())) {
+            throw new AuthException(HttpStatus.CONFLICT, "PHONE_EXISTS",
+                "An account with this phone number already exists");
         }
-        if (request.phone() != null && !request.phone().isBlank()) {
-            user.setPhone(request.phone().trim());
+        if (email != null && users.existsByEmailAndIdNot(email, user.getId())) {
+            throw new AuthException(HttpStatus.CONFLICT, "EMAIL_EXISTS",
+                "An account with this email already exists");
         }
-        users.save(user);
-        return ResponseEntity.ok(new ProfileResponse(user.getId(), user.getName(), user.getPhone(), user.getEmail()));
+        String name = request.name() == null ? null : request.name().trim();
+        user.setName(name == null || name.isBlank() ? null : name);
+        user.setEmail(email);
+        user.setPhone(phone);
+        users.saveAndFlush(user);
+        return ResponseEntity.ok(new ProfileResponse(
+            user.getId(), user.getName(), user.getPhone(), user.getEmail()));
     }
 
     @PutMapping("/password")
@@ -61,7 +68,13 @@ class ProfileController {
     record UpdateProfileRequest(
         @Size(max = 160) String name,
         @NotBlank @Size(min = 10, max = 15) String phone,
-        @Email @Size(max = 320) String email) {}
+        @Email @Size(max = 320) String email) {
+        UpdateProfileRequest {
+            name = name == null ? null : name.trim();
+            phone = phone == null ? null : phone.trim();
+            email = email == null || email.isBlank() ? null : email.trim();
+        }
+    }
 
     record ChangePasswordRequest(
         @NotBlank String currentPassword,

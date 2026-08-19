@@ -1,3 +1,12 @@
+media:
+  storage-provider: "${MEDIA_STORAGE_PROVIDER:disabled}"
+  object-prefix: "${MEDIA_OBJECT_PREFIX:salons}"
+  cdn-base-url: "${MEDIA_CDN_BASE_URL:}"
+  presign-ttl: "${MEDIA_PRESIGN_TTL:5m}"
+  s3:
+    bucket: "${MEDIA_S3_BUCKET:}"
+    region: "${MEDIA_S3_REGION:us-east-1}"
+
 spring:
   application:
     name: hairsaloon-backend
@@ -56,10 +65,38 @@ app:
     cookie:
       domain: "${AUTH_COOKIE_DOMAIN:}"
       secure: "${AUTH_COOKIE_SECURE:true}"
+    security:
+      hmac-secret: "${APP_AUTH_SECURITY_HMAC_SECRET:}"
+    rate-limit:
+      max-attempts: "${AUTH_RATE_LIMIT_MAX_ATTEMPTS:5}"
+      window: "${AUTH_RATE_LIMIT_WINDOW:5m}"
+      redis-enabled: "${AUTH_RATE_LIMIT_REDIS_ENABLED:true}"
+      key-prefix: "${AUTH_RATE_LIMIT_KEY_PREFIX:hairsaloon:auth:rate:}"
+    otp:
+      code-length: "${OTP_CODE_LENGTH:6}"
+      max-attempts: "${OTP_MAX_ATTEMPTS:5}"
+      challenge-ttl: "${OTP_CHALLENGE_TTL:10m}"
+      proof-ttl: "${OTP_PROOF_TTL:5m}"
+      resend-delay: "${OTP_RESEND_DELAY:60s}"
+      allow-code-logging: "${OTP_ALLOW_CODE_LOGGING:false}"
+      expose-code: false
+      require-signup-verification: "${OTP_REQUIRE_SIGNUP_VERIFICATION:true}"
     bootstrap-platform-admin:
       enabled: "${PLATFORM_ADMIN_BOOTSTRAP_ENABLED:false}"
       email: "${PLATFORM_ADMIN_BOOTSTRAP_EMAIL:}"
       password: "${PLATFORM_ADMIN_BOOTSTRAP_PASSWORD:}"
+  push:
+    enabled: "${PUSH_ENABLED:false}"
+    provider: "${PUSH_PROVIDER:disabled}"
+    batch-size: "${PUSH_OUTBOX_BATCH_SIZE:25}"
+    max-attempts: "${PUSH_MAX_ATTEMPTS:8}"
+    claim-duration: "${PUSH_CLAIM_DURATION:2m}"
+    base-retry-delay: "${PUSH_BASE_RETRY_DELAY:30s}"
+    max-retry-delay: "${PUSH_MAX_RETRY_DELAY:30m}"
+    process-delay-ms: "${PUSH_PROCESS_DELAY_MS:5000}"
+    vapid-public-key: "${VAPID_PUBLIC_KEY:}"
+    vapid-private-key: "${VAPID_PRIVATE_KEY:}"
+    vapid-subject: "${VAPID_SUBJECT:}"
   notifications:
     provider: "${EMAIL_PROVIDER:logging}"
     from: "${EMAIL_FROM:}"

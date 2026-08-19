@@ -4,7 +4,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -19,7 +18,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/platform/auth")
 class AuthController {
-
     private final AuthService authService;
     private final AuthCookieService cookies;
     private final LoginRateLimiter rateLimiter;
@@ -32,8 +30,8 @@ class AuthController {
 
     @PostMapping("/signup")
     ResponseEntity<UserResponse> signup(@Valid @RequestBody SignupRequest request) {
-        AuthService.AuthResult result = authService.signup(
-            request.phone(), request.email(), request.password());
+        AuthService.AuthResult result = authService.signup(request.phone(), request.email(),
+            request.password(), request.verificationProof());
         return ResponseEntity.status(HttpStatus.CREATED)
             .header(HttpHeaders.SET_COOKIE, cookies.authenticated(result.token()).toString())
             .body(UserResponse.from(result.user()));
@@ -42,28 +40,26 @@ class AuthController {
     @PostMapping("/login")
     ResponseEntity<UserResponse> login(@Valid @RequestBody LoginRequest request,
                                         HttpServletRequest httpRequest) {
-        String clientIp = httpRequest.getRemoteAddr();
-        if (rateLimiter.isBlocked(clientIp)) {
-            throw new AuthException(HttpStatus.TOO_MANY_REQUESTS, "RATE_LIMITED",
-                "Too many login attempts. Please wait a few minutes and try again.");
-        }
+        String ip = httpRequest.getRemoteAddr();
+        String principal = AuthService.normalizePhone(request.phone());
+        enforceRateLimit("customer-login", ip, principal);
         try {
-            AuthService.AuthResult result = authService.login(request.phone(), request.password());
-            rateLimiter.recordSuccess(clientIp);
+            AuthService.AuthResult result = authService.customerLogin(request.phone(),
+                request.password());
+            rateLimiter.recordSuccess("customer-login", ip, principal);
             return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookies.authenticated(result.token()).toString())
                 .body(UserResponse.from(result.user()));
-        } catch (AuthException e) {
-            rateLimiter.recordFailure(clientIp);
-            throw e;
+        } catch (AuthException failure) {
+            rateLimiter.recordFailure("customer-login", ip, principal);
+            throw failure;
         }
     }
 
     @PostMapping("/logout")
     ResponseEntity<Void> logout() {
         return ResponseEntity.noContent()
-            .header(HttpHeaders.SET_COOKIE, cookies.cleared().toString())
-            .build();
+            .header(HttpHeaders.SET_COOKIE, cookies.cleared().toString()).build();
     }
 
     @GetMapping("/me")
@@ -71,27 +67,35 @@ class AuthController {
         return UserResponse.from(user);
     }
 
+    private void enforceRateLimit(String scope, String ip, String principal) {
+        LoginRateLimiter.Decision decision = rateLimiter.check(scope, ip, principal);
+        if (decision.blocked()) {
+            throw new AuthException(HttpStatus.TOO_MANY_REQUESTS, "RATE_LIMITED",
+                "Too many attempts. Please wait and try again.", decision.retryAfterSeconds());
+        }
+    }
+
     record SignupRequest(
         @NotBlank @Size(min = 10, max = 15) String phone,
         @Email @Size(max = 320) String email,
-        @NotBlank @Size(min = 8, max = 72) String password) {
+        @NotBlank @Size(min = 8, max = 72) String password,
+        @Size(max = 200) String verificationProof) {
         SignupRequest {
             phone = phone == null ? null : phone.trim();
             email = email == null || email.isBlank() ? null : email.trim();
+            verificationProof = verificationProof == null ? null : verificationProof.trim();
         }
     }
 
     record LoginRequest(
         @NotBlank @Size(min = 10, max = 15) String phone,
         @NotBlank @Size(min = 8, max = 72) String password) {
-        LoginRequest {
-            phone = phone == null ? null : phone.trim();
-        }
+        LoginRequest { phone = phone == null ? null : phone.trim(); }
     }
 
-    record UserResponse(Long id, String phone, String email, UserRole role) {
+    record UserResponse(Long id, String name, String phone, String email, UserRole role) {
         static UserResponse from(AuthenticatedUser user) {
-            return new UserResponse(user.id(), user.phone(), user.email(), user.role());
+            return new UserResponse(user.id(), user.name(), user.phone(), user.email(), user.role());
         }
     }
 }

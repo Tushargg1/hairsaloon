@@ -35,6 +35,9 @@ public class User {
     @Column(length = 32, nullable = false, unique = true)
     private String phone;
 
+    @Column(name = "phone_verified_at")
+    private Instant phoneVerifiedAt;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -87,5 +90,13 @@ public class User {
 
     public UserRole getRole() {
         return role;
+    }
+
+    public Instant getPhoneVerifiedAt() {
+        return phoneVerifiedAt;
+    }
+
+    void markPhoneVerified(Instant verifiedAt) {
+        this.phoneVerifiedAt = verifiedAt;
     }
 }

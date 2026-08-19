@@ -37,7 +37,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     throw new JwtService.JwtValidationException();
                 }
                 AuthenticatedUser principal = new AuthenticatedUser(
-                    user.getId(), user.getPhone(), user.getEmail(), user.getRole());
+                    user.getId(), user.getName(), user.getPhone(), user.getEmail(), user.getRole());
                 var authority = new SimpleGrantedAuthority("ROLE_" + user.getRole().name());
                 SecurityContextHolder.getContext().setAuthentication(
                     new UsernamePasswordAuthenticationToken(principal, null, java.util.List.of(authority)));

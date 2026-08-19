@@ -2,6 +2,7 @@ package com.hairsaloon.auth;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -31,8 +32,10 @@ import org.springframework.test.web.servlet.MvcResult;
     "app.auth.jwt.secret=raw:0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-extra-secret",
     "app.auth.jwt.issuer=auth-integration-test",
     "app.auth.jwt.ttl=2h",
-    "app.auth.cookie.domain=.yoursite.com",
-    "app.auth.cookie.secure=true",
+    "app.auth.cookie.domain=",
+    "app.auth.cookie.secure=false",
+    "app.auth.rate-limit.redis-enabled=false",
+    "app.auth.otp.require-signup-verification=false",
     "app.auth.bootstrap-platform-admin.enabled=false"
 })
 @AutoConfigureMockMvc
@@ -42,36 +45,41 @@ class AuthIntegrationTest {
 
     @Autowired MockMvc mockMvc;
     @Autowired UserRepository users;
+    @Autowired LoginRateLimiter rateLimiter;
+    @Autowired TestUserFactory testUsers;
 
     @BeforeEach
     void clearUsers() {
         users.deleteAll();
+        rateLimiter.clear();
     }
 
     @Test
-    void signupValidatesFieldsAndRejectsPlatformAdmin() throws Exception {
+    void signupValidatesPhoneEmailPasswordAndCannotElevateRole() throws Exception {
         mockMvc.perform(post("/api/platform/auth/signup").header("Host", HOST)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"email\":\"bad\",\"password\":\"short\"}"))
+                .content("{\"phone\":\"bad\",\"email\":\"bad\",\"password\":\"short\"}"))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.error").value("VALIDATION_ERROR"))
+            .andExpect(jsonPath("$.fieldErrors.phone").exists())
             .andExpect(jsonPath("$.fieldErrors.email").exists())
-            .andExpect(jsonPath("$.fieldErrors.password").exists())
-            .andExpect(jsonPath("$.fieldErrors.role").exists());
+            .andExpect(jsonPath("$.fieldErrors.password").exists());
 
         mockMvc.perform(post("/api/platform/auth/signup").header("Host", HOST)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(signupJson("admin@example.com", "Password123!", "PLATFORM_ADMIN")))
-            .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.error").value("INVALID_ROLE"));
+                .content("{\"phone\":\"9876543210\",\"password\":\"Password123!\","
+                    + "\"role\":\"SALON_OWNER\"}"))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.role").value("CUSTOMER"));
     }
 
     @Test
-    void signupAcceptsCustomerAndSalonOwnerAndNormalizesDuplicateEmail() throws Exception {
+    void signupCreatesOnlyCustomersAndSupportsOptionalEmailAndStableDuplicates() throws Exception {
         mockMvc.perform(post("/api/platform/auth/signup").header("Host", HOST)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(signupJson(" Customer@Example.COM ", "Password123!", "CUSTOMER")))
+                .content(signupJson("9876543210", " Customer@Example.COM ", "Password123!")))
             .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.phone").value("9876543210"))
             .andExpect(jsonPath("$.email").value("customer@example.com"))
             .andExpect(jsonPath("$.role").value("CUSTOMER"))
             .andExpect(jsonPath("$.passwordHash").doesNotExist())
@@ -79,52 +87,69 @@ class AuthIntegrationTest {
 
         mockMvc.perform(post("/api/platform/auth/signup").header("Host", HOST)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(signupJson("owner@example.com", "Password123!", "SALON_OWNER")))
+                .content(signupJson("9876543211", null, "Password123!")))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.role").value("SALON_OWNER"));
+            .andExpect(jsonPath("$.email").doesNotExist())
+            .andExpect(jsonPath("$.role").value("CUSTOMER"));
 
         mockMvc.perform(post("/api/platform/auth/signup").header("Host", HOST)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(signupJson("CUSTOMER@example.com", "Password123!", "CUSTOMER")))
+                .content(signupJson("9876543210", "other@example.com", "Password123!")))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.error").value("PHONE_EXISTS"));
+
+        mockMvc.perform(post("/api/platform/auth/signup").header("Host", HOST)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(signupJson("9876543212", "CUSTOMER@example.com", "Password123!")))
             .andExpect(status().isConflict())
             .andExpect(jsonPath("$.error").value("EMAIL_EXISTS"));
     }
 
     @Test
-    void loginSetsHardenedCookieAndBadCredentialsAreUnauthorized() throws Exception {
-        signup("cookie@example.com", "Password123!", "CUSTOMER");
+    void loginUsesPhoneSetsHostOnlyCookieAndRejectsNonCustomers() throws Exception {
+        signup("9876543220", "cookie@example.com", "Password123!");
 
         MvcResult login = mockMvc.perform(post("/api/platform/auth/login").header("Host", HOST)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(loginJson("COOKIE@EXAMPLE.COM", "Password123!")))
+                .content(loginJson("9876543220", "Password123!")))
             .andExpect(status().isOk())
+            .andExpect(jsonPath("$.phone").value("9876543220"))
             .andExpect(jsonPath("$.passwordHash").doesNotExist())
             .andReturn();
 
         String setCookie = login.getResponse().getHeader(HttpHeaders.SET_COOKIE);
         assertThat(setCookie)
             .contains("auth_token=")
-            .contains("Domain=.yoursite.com")
+            .doesNotContain("Domain=")
             .contains("Path=/")
             .contains("Max-Age=7200")
-            .contains("Secure")
+            .doesNotContain("Secure")
             .contains("HttpOnly")
             .contains("SameSite=Lax");
 
         mockMvc.perform(post("/api/platform/auth/login").header("Host", HOST)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(loginJson("cookie@example.com", "WrongPassword!")))
+                .content(loginJson("9876543220", "WrongPassword!")))
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.error").value("INVALID_CREDENTIALS"));
+
+        TestUserFactory.Identity owner = testUsers.create(
+            "owner@example.com", UserRole.SALON_OWNER);
+        mockMvc.perform(post("/api/platform/auth/login").header("Host", HOST)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(loginJson(owner.phone(), "Password123!")))
             .andExpect(status().isUnauthorized())
             .andExpect(jsonPath("$.error").value("INVALID_CREDENTIALS"));
     }
 
     @Test
     void meUsesOnlyValidCookieAndReturnsSanitizedUser() throws Exception {
-        String token = signup("me@example.com", "Password123!", "CUSTOMER");
+        String token = signup("9876543230", "me@example.com", "Password123!");
 
         mockMvc.perform(get("/api/platform/auth/me").header("Host", HOST)
                 .cookie(new Cookie("auth_token", token)))
             .andExpect(status().isOk())
+            .andExpect(jsonPath("$.phone").value("9876543230"))
             .andExpect(jsonPath("$.email").value("me@example.com"))
             .andExpect(jsonPath("$.role").value("CUSTOMER"))
             .andExpect(jsonPath("$.passwordHash").doesNotExist())
@@ -148,7 +173,7 @@ class AuthIntegrationTest {
 
     @Test
     void deletedUserTokenIsRejectedAndCustomerGetsStableAdminForbidden() throws Exception {
-        String token = signup("roles@example.com", "Password123!", "CUSTOMER");
+        String token = signup("9876543240", "roles@example.com", "Password123!");
 
         mockMvc.perform(get("/api/platform/admin/probe").header("Host", HOST)
                 .cookie(new Cookie("auth_token", token)))
@@ -163,24 +188,75 @@ class AuthIntegrationTest {
     }
 
     @Test
-    void logoutClearsCookieWithMatchingAttributes() throws Exception {
+    void logoutClearsHostOnlyCookieWithMatchingAttributes() throws Exception {
         mockMvc.perform(post("/api/platform/auth/logout").header("Host", HOST))
             .andExpect(status().isNoContent())
             .andExpect(header().string(HttpHeaders.SET_COOKIE,
                 org.hamcrest.Matchers.allOf(
                     org.hamcrest.Matchers.containsString("auth_token="),
-                    org.hamcrest.Matchers.containsString("Domain=.yoursite.com"),
+                    org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("Domain=")),
                     org.hamcrest.Matchers.containsString("Path=/"),
                     org.hamcrest.Matchers.containsString("Max-Age=0"),
-                    org.hamcrest.Matchers.containsString("Secure"),
+                    org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("Secure")),
                     org.hamcrest.Matchers.containsString("HttpOnly"),
                     org.hamcrest.Matchers.containsString("SameSite=Lax"))));
     }
 
-    private String signup(String email, String password, String role) throws Exception {
+    @Test
+    void profileUpdateRefreshesSessionFieldsAndRejectsDuplicates() throws Exception {
+        String token = signup("9876543250", "profile@example.com", "Password123!");
+        signup("9876543251", "taken@example.com", "Password123!");
+
+        mockMvc.perform(put("/api/platform/profile").header("Host", HOST)
+                .cookie(new Cookie("auth_token", token))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"  Taylor  \",\"phone\":\"9876543252\","
+                    + "\"email\":\" Updated@Example.COM \"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.name").value("Taylor"))
+            .andExpect(jsonPath("$.phone").value("9876543252"))
+            .andExpect(jsonPath("$.email").value("updated@example.com"));
+
+        mockMvc.perform(get("/api/platform/auth/me").header("Host", HOST)
+                .cookie(new Cookie("auth_token", token)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.name").value("Taylor"))
+            .andExpect(jsonPath("$.phone").value("9876543252"))
+            .andExpect(jsonPath("$.email").value("updated@example.com"));
+
+        mockMvc.perform(put("/api/platform/profile").header("Host", HOST)
+                .cookie(new Cookie("auth_token", token))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"Taylor\",\"phone\":\"9876543251\"}"))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.error").value("PHONE_EXISTS"));
+    }
+
+    @Test
+    void loginRateLimitReturnsRetryAfter() throws Exception {
+        String request = loginJson("9999999999", "WrongPassword!");
+        for (int attempt = 0; attempt < 5; attempt++) {
+            mockMvc.perform(post("/api/platform/auth/login").header("Host", HOST)
+                    .with(http -> { http.setRemoteAddr("203.0.113.10"); return http; })
+                    .contentType(MediaType.APPLICATION_JSON).content(request))
+                .andExpect(status().isUnauthorized());
+        }
+        mockMvc.perform(post("/api/platform/auth/login").header("Host", HOST)
+                .header(HttpHeaders.ORIGIN, "http://localhost:5173")
+                .with(http -> { http.setRemoteAddr("203.0.113.10"); return http; })
+                .contentType(MediaType.APPLICATION_JSON).content(request))
+            .andExpect(status().isTooManyRequests())
+            .andExpect(header().string(HttpHeaders.RETRY_AFTER,
+                org.hamcrest.Matchers.matchesPattern("[1-9][0-9]*")))
+            .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS,
+                org.hamcrest.Matchers.containsString("Retry-After")))
+            .andExpect(jsonPath("$.error").value("RATE_LIMITED"));
+    }
+
+    private String signup(String phone, String email, String password) throws Exception {
         MvcResult result = mockMvc.perform(post("/api/platform/auth/signup").header("Host", HOST)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(signupJson(email, password, role)))
+                .content(signupJson(phone, email, password)))
             .andExpect(status().isCreated())
             .andReturn();
         String setCookie = result.getResponse().getHeader(HttpHeaders.SET_COOKIE);
@@ -188,15 +264,13 @@ class AuthIntegrationTest {
         return setCookie.substring("auth_token=".length(), setCookie.indexOf(';'));
     }
 
-    private static String signupJson(String email, String password, String role) {
-        return """
-            {"email":"%s","password":"%s","role":"%s"}
-            """.formatted(email, password, role);
+    private static String signupJson(String phone, String email, String password) {
+        String emailField = email == null ? "" : ",\"email\":\"" + email + "\"";
+        return "{\"phone\":\"" + phone + "\"" + emailField
+            + ",\"password\":\"" + password + "\"}";
     }
 
-    private static String loginJson(String email, String password) {
-        return """
-            {"email":"%s","password":"%s"}
-            """.formatted(email, password);
+    private static String loginJson(String phone, String password) {
+        return "{\"phone\":\"" + phone + "\",\"password\":\"" + password + "\"}";
     }
 }
