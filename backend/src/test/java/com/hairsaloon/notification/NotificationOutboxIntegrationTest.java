@@ -95,10 +95,12 @@ class NotificationOutboxIntegrationTest {
     private Fixture fixture(String label, LocalDateTime start) {
         String owner = label + "-owner@example.com";
         String customer = label + "-customer@example.com";
-        jdbc.update("INSERT INTO users(email,password_hash,role,created_at) "
-            + "VALUES (?,'hash','SALON_OWNER',CURRENT_TIMESTAMP)", owner);
-        jdbc.update("INSERT INTO users(email,password_hash,role,created_at) "
-            + "VALUES (?,'hash','CUSTOMER',CURRENT_TIMESTAMP)", customer);
+        jdbc.update("INSERT INTO users(email,phone,password_hash,role,created_at) "
+            + "VALUES (?,?,'hash','SALON_OWNER',CURRENT_TIMESTAMP)", owner,
+            label + "-owner-phone");
+        jdbc.update("INSERT INTO users(email,phone,password_hash,role,created_at) "
+            + "VALUES (?,?,'hash','CUSTOMER',CURRENT_TIMESTAMP)", customer,
+            label + "-customer-phone");
         long ownerId = id("users", "email", owner);
         long customerId = id("users", "email", customer);
         jdbc.update("INSERT INTO salons(owner_id,subdomain,name,address,city,email,timezone,"

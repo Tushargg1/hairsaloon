@@ -37,6 +37,7 @@ class BookingService {
     private final StaffTimeOffRepository timeOff;
     private final BookingRepository bookings;
     private final ReviewRepository reviews;
+    private final PromotionService promotions;
     private final BookingNotificationService notifications;
     private final TransactionTemplate transactions;
 
@@ -44,6 +45,7 @@ class BookingService {
                    SalonStaffRepository staff, StaffServiceRepository assignments,
                    StaffWorkingHourRepository hours, StaffTimeOffRepository timeOff,
                    BookingRepository bookings, ReviewRepository reviews,
+                   PromotionService promotions,
                    BookingNotificationService notifications,
                    PlatformTransactionManager transactionManager) {
         this.salons = salons;
@@ -54,6 +56,7 @@ class BookingService {
         this.timeOff = timeOff;
         this.bookings = bookings;
         this.reviews = reviews;
+        this.promotions = promotions;
         this.notifications = notifications;
         this.transactions = new TransactionTemplate(transactionManager);
     }
@@ -109,7 +112,7 @@ class BookingService {
         return result.stream().distinct().toList();
     }
     Booking create(AuthenticatedUser user, long staffId, long serviceId,
-                   LocalDateTime start, String idempotencyKey) {
+                   LocalDateTime start, String idempotencyKey, String promoCode) {
         requireCustomer(user);
         String key = normalizeKey(idempotencyKey);
         long salonId = TenantContext.requireSalonId();
@@ -121,9 +124,13 @@ class BookingService {
                     if (prior.isPresent()) return prior.get();
                 }
                 ValidatedSlot slot = validateSlot(salonId, staffId, serviceId, start, null);
+                PromotionService.Quote quote = promotions.quoteForBooking(
+                    salonId, user.id(), promoCode, slot.service());
                 Booking booking = bookings.saveAndFlush(new Booking(salonId, user.id(), staffId,
-                    serviceId, start, slot.end(), slot.service().getPrice(),
-                    slot.service().getName(), key));
+                    serviceId, start, slot.end(), quote.originalPrice(), quote.discountAmount(),
+                    quote.finalPrice(), quote.promoCode(), slot.service().getName(), key,
+                    BookingSource.ONLINE, null, null));
+                promotions.reserve(salonId, user.id(), booking.getId(), quote);
                 notifications.confirmed(salonId, booking);
                 return booking;
             });
@@ -133,6 +140,27 @@ class BookingService {
                     salonId, user.id(), key);
                 if (prior.isPresent()) return prior.get();
             }
+            if (isOverlap(exception)) throw slotUnavailable();
+            throw exception;
+        }
+    }
+
+    Booking createWalkIn(long staffId, long serviceId, LocalDateTime start,
+                         String guestName, String guestPhone) {
+        long salonId = TenantContext.requireSalonId();
+        String name = TenantInputPolicy.text(guestName, 160, "guestName", true);
+        String phone = TenantInputPolicy.phone(guestPhone);
+        if (phone == null) throw TenantInputPolicy.validation("guestPhone", "is required");
+        try {
+            return transactions.execute(status -> {
+                ValidatedSlot slot = validateSlot(salonId, staffId, serviceId, start, null);
+                var quote = PromotionService.Quote.none(slot.service().getPrice());
+                return bookings.saveAndFlush(new Booking(salonId, null, staffId, serviceId,
+                    start, slot.end(), quote.originalPrice(), quote.discountAmount(),
+                    quote.finalPrice(), null, slot.service().getName(), null,
+                    BookingSource.WALK_IN, name, phone));
+            });
+        } catch (DataIntegrityViolationException exception) {
             if (isOverlap(exception)) throw slotUnavailable();
             throw exception;
         }
@@ -187,9 +215,15 @@ class BookingService {
         long salonId = TenantContext.requireSalonId();
         String staffName = staff.findByIdAndSalonId(booking.getStaffId(), salonId)
             .map(SalonStaff::getName).orElse("Staff member");
-        boolean reviewed = reviews.existsBySalonIdAndBookingIdAndCustomerId(
-            salonId, booking.getId(), booking.getCustomerId());
-        return BookingDtos.BookingResponse.from(booking, staffName, reviewed);
+        boolean reviewed = booking.getCustomerId() != null
+            && reviews.existsBySalonIdAndBookingIdAndCustomerId(
+                salonId, booking.getId(), booking.getCustomerId());
+        List<Object[]> display = booking.getCustomerId() == null ? List.of()
+            : bookings.findCustomerDisplay(booking.getId(), salonId);
+        String customerName = display.isEmpty() ? null : (String) display.get(0)[0];
+        String customerPhone = display.isEmpty() ? null : (String) display.get(0)[1];
+        return BookingDtos.BookingResponse.from(
+            booking, staffName, customerName, customerPhone, reviewed);
     }
 
     @Transactional(readOnly = true)
@@ -213,6 +247,9 @@ class BookingService {
             rangeStart = startDate;
             rangeEnd = endDate;
         }
+        if (java.time.temporal.ChronoUnit.DAYS.between(rangeStart, rangeEnd) + 1 > 31)
+            throw TenantInputPolicy.validation("endDate",
+                "calendar range must not exceed 31 inclusive days");
         if (staffId != null && staffId <= 0)
             throw TenantInputPolicy.validation("staffId", "must be positive");
         long salonId = TenantContext.requireSalonId();
@@ -265,7 +302,9 @@ class BookingService {
             throw statusConflict();
         Booking cancelled = bookings.findByIdAndSalonId(booking.getId(), salonId)
             .orElseThrow(() -> TenantInputPolicy.notFound("booking"));
-        notifications.cancelled(salonId, cancelled, enforceWindow);
+        promotions.release(salonId, cancelled.getId(), now);
+        if (cancelled.getCustomerId() != null)
+            notifications.cancelled(salonId, cancelled, enforceWindow);
         return cancelled;
     }
     private ValidatedSlot validateSlot(long salonId, long staffId, long serviceId,

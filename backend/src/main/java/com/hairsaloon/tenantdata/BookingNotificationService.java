@@ -4,6 +4,8 @@ import com.hairsaloon.auth.User;
 import com.hairsaloon.auth.UserRepository;
 import com.hairsaloon.notification.NotificationOutboxWriter;
 import com.hairsaloon.notification.NotificationType;
+import com.hairsaloon.notification.PushOutboxWriter;
+import com.hairsaloon.notification.PushSubscriptionAudience;
 import com.hairsaloon.notification.SafeEmailTemplate;
 import com.hairsaloon.tenant.Salon;
 import com.hairsaloon.tenant.SalonRepository;
@@ -15,12 +17,15 @@ class BookingNotificationService {
     private final SalonRepository salons;
     private final UserRepository users;
     private final NotificationOutboxWriter outbox;
+    private final PushOutboxWriter pushOutbox;
 
     BookingNotificationService(SalonRepository salons, UserRepository users,
-                               NotificationOutboxWriter outbox) {
+                               NotificationOutboxWriter outbox,
+                               PushOutboxWriter pushOutbox) {
         this.salons = salons;
         this.users = users;
         this.outbox = outbox;
+        this.pushOutbox = pushOutbox;
     }
 
     void confirmed(long salonId, Booking booking) {
@@ -54,6 +59,8 @@ class BookingNotificationService {
 
     private void enqueueBoth(Salon salon, Booking booking, NotificationType type,
                              String subjectAction, String body, String occurrence) {
+        // Walk-ins deliberately have no customer identity and never receive notifications.
+        if (booking.getCustomerId() == null) return;
         User customer = users.findById(booking.getCustomerId())
             .orElseThrow(() -> TenantInputPolicy.notFound("customer"));
         String subject = SafeEmailTemplate.subject(subjectAction, salon.getName());
@@ -65,6 +72,15 @@ class BookingNotificationService {
         }
         outbox.enqueue(salon.getId(), booking.getId(), type, contact, subject, body,
             occurrence);
+
+        String pushBody = "Appointment update for "
+            + booking.getServiceNameSnapshot() + " at " + booking.getStartDateTime();
+        pushOutbox.enqueueForUser(salon.getId(), booking.getId(), customer.getId(),
+            PushSubscriptionAudience.CUSTOMER, type, subject, pushBody,
+            "/bookings", occurrence);
+        pushOutbox.enqueueForUser(salon.getId(), booking.getId(), salon.getOwnerId(),
+            PushSubscriptionAudience.OWNER, type, subject, pushBody,
+            "/dashboard/bookings", occurrence);
     }
 
     private Salon salon(long salonId) {

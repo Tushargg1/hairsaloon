@@ -16,6 +16,12 @@ interface BookingRepository extends TenantScopedRepository<Booking> {
     List<Booking> findAllBySalonIdAndCustomerIdOrderByStartDateTimeDescIdDesc(
         long salonId, long customerId);
 
+    @Query("select user.name, user.phone from Booking booking, User user "
+        + "where booking.id = :bookingId and booking.salonId = :salonId "
+        + "and booking.customerId = user.id")
+    List<Object[]> findCustomerDisplay(@Param("bookingId") long bookingId,
+        @Param("salonId") long salonId);
+
     @Query("select booking from Booking booking where booking.salonId = :salonId "
         + "and booking.startDateTime >= :start and booking.startDateTime < :end "
         + "and (:staffId is null or booking.staffId = :staffId) "

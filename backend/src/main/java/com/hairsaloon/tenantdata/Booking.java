@@ -20,8 +20,16 @@ public class Booking {
     private Long id;
     @Column(name = "salon_id", nullable = false)
     private Long salonId;
-    @Column(name = "customer_id", nullable = false)
+    @Column(name = "customer_id")
     private Long customerId;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "booking_source", nullable = false, length = 16,
+        columnDefinition = "varchar(16) default 'ONLINE'")
+    private BookingSource bookingSource = BookingSource.ONLINE;
+    @Column(name = "guest_name", length = 160)
+    private String guestName;
+    @Column(name = "guest_phone", length = 32)
+    private String guestPhone;
     @Column(name = "staff_id", nullable = false)
     private Long staffId;
     @Column(name = "service_id", nullable = false)
@@ -33,8 +41,16 @@ public class Booking {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 16)
     private BookingStatus status = BookingStatus.CONFIRMED;
+    @Column(name = "original_price", nullable = false, precision = 12, scale = 2,
+        columnDefinition = "numeric(12,2) default 0")
+    private BigDecimal originalPrice;
+    @Column(name = "discount_amount", nullable = false, precision = 12, scale = 2,
+        columnDefinition = "numeric(12,2) default 0")
+    private BigDecimal discountAmount = BigDecimal.ZERO.setScale(2);
     @Column(name = "price_snapshot", nullable = false, precision = 12, scale = 2)
     private BigDecimal priceSnapshot;
+    @Column(name = "promo_code", length = 40)
+    private String promoCode;
     @Column(name = "service_name_snapshot", nullable = false, length = 160)
     private String serviceNameSnapshot;
     @Column(name = "idempotency_key", length = 128)
@@ -50,29 +66,47 @@ public class Booking {
 
     protected Booking() {}
 
-    Booking(long salonId, long customerId, long staffId, long serviceId,
+    Booking(long salonId, Long customerId, long staffId, long serviceId,
             LocalDateTime startDateTime, LocalDateTime endDateTime,
-            BigDecimal priceSnapshot, String serviceNameSnapshot,
-            String idempotencyKey) {
+            BigDecimal originalPrice, BigDecimal discountAmount, BigDecimal finalPrice,
+            String promoCode, String serviceNameSnapshot, String idempotencyKey,
+            BookingSource source, String guestName, String guestPhone) {
         this.salonId = salonId;
         this.customerId = customerId;
         this.staffId = staffId;
         this.serviceId = serviceId;
         this.startDateTime = startDateTime;
         this.endDateTime = endDateTime;
-        this.priceSnapshot = priceSnapshot;
+        this.originalPrice = originalPrice;
+        this.discountAmount = discountAmount;
+        this.priceSnapshot = finalPrice;
+        this.promoCode = promoCode;
         this.serviceNameSnapshot = serviceNameSnapshot;
         this.idempotencyKey = idempotencyKey;
+        this.bookingSource = source;
+        this.guestName = guestName;
+        this.guestPhone = guestPhone;
+        if (source == BookingSource.WALK_IN) {
+            Instant suppressedAt = Instant.now();
+            this.reminder24hSentAt = suppressedAt;
+            this.reminder1hSentAt = suppressedAt;
+        }
     }
 
     public Long getId() { return id; }
     public Long getCustomerId() { return customerId; }
+    public BookingSource getBookingSource() { return bookingSource; }
+    public String getGuestName() { return guestName; }
+    public String getGuestPhone() { return guestPhone; }
     public Long getStaffId() { return staffId; }
     public Long getServiceId() { return serviceId; }
     public LocalDateTime getStartDateTime() { return startDateTime; }
     public LocalDateTime getEndDateTime() { return endDateTime; }
     public BookingStatus getStatus() { return status; }
+    public BigDecimal getOriginalPrice() { return originalPrice; }
+    public BigDecimal getDiscountAmount() { return discountAmount; }
     public BigDecimal getPriceSnapshot() { return priceSnapshot; }
+    public String getPromoCode() { return promoCode; }
     public String getServiceNameSnapshot() { return serviceNameSnapshot; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getCancelledAt() { return cancelledAt; }
