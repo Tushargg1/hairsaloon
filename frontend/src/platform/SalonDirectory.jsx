@@ -1,10 +1,10 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { errorMessage, getSalons, salonKeys } from './salon-api.js'
 import { salonUrl } from './platform-config.js'
 import useAuth from '../shared/auth/useAuth.js'
-import apiClient from '../shared/api/client.js'
+import apiClient, { apiErrorMessage } from '../shared/api/client.js'
 
 const defaults = { city: '', service: '', rating: '', search: '', page: '0' }
 
@@ -29,6 +29,7 @@ export default function SalonDirectory() {
   const { user } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
   const [favorites, setFavorites] = useState(new Set())
+  const [favoriteStatus, setFavoriteStatus] = useState({ pendingId: null, error: '' })
   const urlFilters = Object.fromEntries(
     Object.keys(defaults).map((key) => [key, searchParams.get(key) || defaults[key]]),
   )
@@ -36,21 +37,38 @@ export default function SalonDirectory() {
   const serializedParams = searchParams.toString()
 
   useEffect(() => {
-    if (user) {
+    if (user?.role === 'CUSTOMER') {
       apiClient.get('/api/platform/favorites').then(({ data }) => {
         setFavorites(new Set(data.map((f) => f.salonId)))
-      }).catch(() => {})
+      }).catch((error) => {
+        setFavoriteStatus((current) => ({
+          ...current, error: apiErrorMessage(error, 'Could not load saved salons.'),
+        }))
+      })
+    } else {
+      setFavorites(new Set())
     }
   }, [user])
 
-  function toggleFavorite(salonId) {
-    if (favorites.has(salonId)) {
-      apiClient.delete(`/api/platform/favorites/${salonId}`).then(() => {
-        setFavorites((prev) => { const next = new Set(prev); next.delete(salonId); return next })
-      })
-    } else {
-      apiClient.post(`/api/platform/favorites/${salonId}`).then(() => {
-        setFavorites((prev) => new Set(prev).add(salonId))
+  async function toggleFavorite(salonId) {
+    setFavoriteStatus({ pendingId: salonId, error: '' })
+    try {
+      if (favorites.has(salonId)) {
+        await apiClient.delete(`/api/platform/favorites/${salonId}`)
+        setFavorites((previous) => {
+          const next = new Set(previous)
+          next.delete(salonId)
+          return next
+        })
+      } else {
+        await apiClient.post(`/api/platform/favorites/${salonId}`)
+        setFavorites((previous) => new Set(previous).add(salonId))
+      }
+      setFavoriteStatus({ pendingId: null, error: '' })
+    } catch (error) {
+      setFavoriteStatus({
+        pendingId: null,
+        error: apiErrorMessage(error, 'Could not update this saved salon.'),
       })
     }
   }
@@ -114,6 +132,7 @@ export default function SalonDirectory() {
         <strong>{salonsQuery.isLoading ? 'Searching…' : `${page.totalElements} salon${page.totalElements === 1 ? '' : 's'} found`}</strong>
         {salonsQuery.isFetching && !salonsQuery.isLoading && <span>Updating results…</span>}
       </div>
+      {favoriteStatus.error && <p className="form-status error" role="alert">{favoriteStatus.error}</p>}
 
       {salonsQuery.isLoading ? (
         <div className="card-grid" aria-label="Loading salons">
@@ -148,7 +167,16 @@ export default function SalonDirectory() {
                 {salon.address && <address>{salon.address}{salon.city ? `, ${salon.city}` : ''}</address>}
                 {salon.reviewCount != null && <small>{salon.reviewCount} review{salon.reviewCount === 1 ? '' : 's'}</small>}
                 <a className="arrow-link" href={salonUrl(salon.subdomain)}>Visit salon <span aria-hidden="true">→</span></a>
-                {user && <button className="button button-ghost button-small" type="button" style={{ marginTop: '.5rem', width: '100%' }} onClick={() => toggleFavorite(salon.id)}>{favorites.has(salon.id) ? '♥ Saved' : '♡ Save salon'}</button>}
+                {user?.role === 'CUSTOMER' && (
+                  <button className="button button-ghost button-small" type="button"
+                    style={{ marginTop: '.5rem', width: '100%' }}
+                    disabled={favoriteStatus.pendingId === salon.id}
+                    onClick={() => toggleFavorite(salon.id)}>
+                    {favoriteStatus.pendingId === salon.id
+                      ? 'Saving…'
+                      : favorites.has(salon.id) ? '♥ Saved' : '♡ Save salon'}
+                  </button>
+                )}
               </div>
             </article>
           ))}
@@ -161,12 +189,6 @@ export default function SalonDirectory() {
           <span>Page {page.page + 1} of {page.totalPages}</span>
           <button className="button button-ghost" disabled={page.page >= page.totalPages - 1} onClick={() => changePage(page.page + 1)}>Next</button>
         </nav>
-      )}
-      {(!user || user.role === 'SALON_OWNER') && (
-        <aside className="owner-callout">
-          <div><p className="eyebrow">For salon owners</p><h2>Want to be discovered here?</h2></div>
-          <Link className="button button-light" to={user ? '/salon-signup' : '/signup'}>List your salon</Link>
-        </aside>
       )}
     </main>
   )

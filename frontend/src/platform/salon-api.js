@@ -38,3 +38,8 @@ export async function approveSalon(id) {
   const { data } = await apiClient.post(`/api/platform/admin/salons/${id}/approve`)
   return data
 }
+
+export async function createOwner(payload) {
+  const { data } = await apiClient.post('/api/platform/admin/owners', payload)
+  return data
+}

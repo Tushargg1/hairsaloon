@@ -8,7 +8,7 @@ export default function TenantLoginPage() {
   const { user, login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const [form, setForm] = useState({ email: '', password: '' })
+  const [form, setForm] = useState({ phone: '', password: '' })
   const [status, setStatus] = useState({ pending: false, error: '' })
   const salonName = tenantNameFallback()
 
@@ -22,13 +22,15 @@ export default function TenantLoginPage() {
     event.preventDefault()
     setStatus({ pending: true, error: '' })
     try {
-      const signedInUser = await login(form)
+      const signedInUser = await login({ phone: form.phone.trim(), password: form.password })
+      if (signedInUser.role !== 'CUSTOMER') {
+        setStatus({ pending: false, error: 'Please use the management login for staff accounts.' })
+        return
+      }
       const requestedPath = location.state?.from?.pathname
-      const destination = signedInUser.role === 'SALON_OWNER' ? '/dashboard' : '/'
-      const rolePathAllowed = signedInUser.role === 'SALON_OWNER'
-        ? requestedPath?.startsWith('/dashboard')
-        : requestedPath && !requestedPath.startsWith('/dashboard')
-      navigate(rolePathAllowed ? requestedPath : destination, { replace: true })
+      const rolePathAllowed = requestedPath
+        && !/^\/(?:dashboard|admin|manage)(?:\/|$)/.test(requestedPath)
+      navigate(rolePathAllowed ? requestedPath : '/', { replace: true })
     } catch (error) {
       setStatus({ pending: false, error: errorMessage(error, 'Unable to log in with those details.') })
     }
@@ -39,16 +41,17 @@ export default function TenantLoginPage() {
       <section className="auth-intro">
         <p className="eyebrow">{salonName}</p>
         <h1>Welcome back.</h1>
-        <p>Sign in to access your salon account.</p>
+        <p>Customers can sign in with their phone number to manage appointments.</p>
       </section>
       <section className="form-card" aria-labelledby="tenant-login-heading">
-        <h2 id="tenant-login-heading">Log in</h2>
+        <h2 id="tenant-login-heading">Customer login</h2>
         <form onSubmit={submit}>
-          <label>Email address<input name="email" type="email" autoComplete="email" required value={form.email} onChange={update} /></label>
+          <label>Phone number<input name="phone" type="tel" inputMode="tel" autoComplete="tel" required minLength="10" maxLength="15" value={form.phone} onChange={update} /></label>
           <label>Password<input name="password" type="password" autoComplete="current-password" minLength="8" maxLength="72" required value={form.password} onChange={update} /></label>
           {status.error && <p className="form-status error" role="alert">{status.error}</p>}
           <button className="button button-full" disabled={status.pending} type="submit">{status.pending ? 'Signing in…' : 'Log in'}</button>
         </form>
+        <p className="form-switch"><Link to="/manage/login">Staff or owner? Management login</Link></p>
         <p className="form-switch"><Link to="/">Back to salon home</Link></p>
       </section>
     </main>

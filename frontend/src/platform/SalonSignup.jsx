@@ -13,6 +13,7 @@ export default function SalonSignup() {
   const [step, setStep] = useState(1)
   const [form, setForm] = useState(initialForm)
   const [createdSalon, setCreatedSalon] = useState(null)
+  const [fieldErrors, setFieldErrors] = useState({})
   const validSubdomain = /^[a-z0-9](?:[a-z0-9-]{1,28}[a-z0-9])?$/.test(form.subdomain)
   const availability = useQuery({
 
@@ -25,6 +26,13 @@ export default function SalonSignup() {
   const createMutation = useMutation({
     mutationFn: createSalon,
     onSuccess: (salon) => setCreatedSalon(salon),
+    onError: (error) => {
+      const fields = error?.response?.data?.fieldErrors
+      if (fields && typeof fields === 'object' && Object.keys(fields).length > 0) {
+        setFieldErrors(fields)
+        setStep(2)
+      }
+    },
   })
 
   function update(event) {
@@ -33,6 +41,14 @@ export default function SalonSignup() {
       value = value.toLowerCase().replace(/[^a-z0-9-]/g, '')
     }
     setForm((current) => ({ ...current, [event.target.name]: value }))
+    setFieldErrors((current) => {
+      if (current[event.target.name]) {
+        const next = { ...current }
+        delete next[event.target.name]
+        return next
+      }
+      return current
+    })
   }
 
   function next(event) {
@@ -99,14 +115,15 @@ export default function SalonSignup() {
         {step === 2 && (
           <form onSubmit={next}>
             <div className="form-heading"><span>02</span><div><h2>Business details</h2><p>Give future clients the information they need.</p></div></div>
+            {Object.keys(fieldErrors).length > 0 && <p className="form-status error" role="alert">Please fix the highlighted fields below.</p>}
             <div className="form-grid">
               <label className="span-2">Description<textarea name="description" rows="4" maxLength="1000" placeholder="What makes your salon special?" value={form.description} onChange={update} /></label>
-              <label className="span-2">Street address<input name="address" required maxLength="255" autoComplete="street-address" value={form.address} onChange={update} /></label>
-              <label>City<input name="city" required maxLength="100" autoComplete="address-level2" value={form.city} onChange={update} /></label>
-              <label>Phone<input name="phone" required type="tel" maxLength="40" autoComplete="tel" value={form.phone} onChange={update} /></label>
-              <label>Email<input name="email" required type="email" maxLength="320" autoComplete="email" value={form.email} onChange={update} /></label>
-              <label>Timezone<input name="timezone" required maxLength="80" placeholder="America/New_York" value={form.timezone} onChange={update} /></label>
-              <label className="span-2">Logo URL <span className="optional">Optional</span><input name="logoUrl" type="url" maxLength="500" placeholder="https://…" value={form.logoUrl} onChange={update} /></label>
+              <label className={`span-2 ${fieldErrors.address ? 'field-invalid' : ''}`}>Street address<input name="address" required maxLength="255" autoComplete="street-address" value={form.address} onChange={update} />{fieldErrors.address && <small className="field-error">{fieldErrors.address}</small>}</label>
+              <label className={fieldErrors.city ? 'field-invalid' : ''}>City<input name="city" required maxLength="100" autoComplete="address-level2" value={form.city} onChange={update} />{fieldErrors.city && <small className="field-error">{fieldErrors.city}</small>}</label>
+              <label className={fieldErrors.phone ? 'field-invalid' : ''}>Phone<input name="phone" required type="tel" maxLength="40" autoComplete="tel" value={form.phone} onChange={update} />{fieldErrors.phone && <small className="field-error">{fieldErrors.phone}</small>}</label>
+              <label className={fieldErrors.email ? 'field-invalid' : ''}>Email<input name="email" required type="email" maxLength="320" autoComplete="email" value={form.email} onChange={update} />{fieldErrors.email && <small className="field-error">{fieldErrors.email}</small>}</label>
+              <label className={fieldErrors.timezone ? 'field-invalid' : ''}>Timezone<input name="timezone" required maxLength="80" placeholder="America/New_York" value={form.timezone} onChange={update} />{fieldErrors.timezone && <small className="field-error">{fieldErrors.timezone}</small>}</label>
+              <label className={`span-2 ${fieldErrors.logoUrl ? 'field-invalid' : ''}`}>Logo URL <span className="optional">Optional</span><input name="logoUrl" type="url" maxLength="500" placeholder="https://…" value={form.logoUrl} onChange={update} />{fieldErrors.logoUrl && <small className="field-error">{fieldErrors.logoUrl}</small>}</label>
             </div>
             <div className="wizard-actions"><button className="button button-ghost" type="button" onClick={() => setStep(1)}>Back</button><button className="button" type="submit">Review application <span aria-hidden="true">→</span></button></div>
           </form>

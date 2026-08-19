@@ -13,6 +13,8 @@ export default function DashboardLayout() {
             <NavLink to="/dashboard/services">Services</NavLink>
             <NavLink to="/dashboard/staff">Staff</NavLink>
             <NavLink to="/dashboard/reviews">Reviews</NavLink>
+            <NavLink to="/dashboard/media">Media</NavLink>
+            <NavLink to="/dashboard/promotions">Promotions</NavLink>
           </nav>
         </div>
       </header>

@@ -1,12 +1,35 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { approveSalon, errorMessage, getPendingSalons, salonKeys } from './salon-api.js'
+import { approveSalon, createOwner, errorMessage, getPendingSalons, salonKeys } from './salon-api.js'
 import { salonUrl } from './platform-config.js'
 
 export default function AdminApprovals() {
   const queryClient = useQueryClient()
   const [feedback, setFeedback] = useState('')
+  const [ownerForm, setOwnerForm] = useState({
+    name: '', phone: '', email: '', temporaryPassword: '',
+  })
+  const [ownerFeedback, setOwnerFeedback] = useState({ type: '', message: '' })
   const pendingQuery = useQuery({ queryKey: salonKeys.pending, queryFn: getPendingSalons })
+  const provisioning = useMutation({
+    mutationFn: createOwner,
+    onSuccess: () => {
+      setOwnerForm({ name: '', phone: '', email: '', temporaryPassword: '' })
+      setOwnerFeedback({ type: 'success', message: 'Salon owner account created successfully.' })
+    },
+    onError: (error) => {
+      const fields = error?.response?.data?.fieldErrors
+      if (fields && typeof fields === 'object' && Object.keys(fields).length > 0) {
+        const detail = Object.entries(fields).map(([f, m]) => `${f}: ${m}`).join('. ')
+        setOwnerFeedback({ type: 'error', message: detail + '.' })
+      } else {
+        setOwnerFeedback({
+          type: 'error',
+          message: errorMessage(error, 'Unable to create the salon owner account.'),
+        })
+      }
+    },
+  })
   const approval = useMutation({
     mutationFn: approveSalon,
     onSuccess: (salon) => {
@@ -17,12 +40,45 @@ export default function AdminApprovals() {
     onError: (error) => setFeedback(errorMessage(error, 'Approval failed. Please try again.')),
   })
 
+  function updateOwner(event) {
+    setOwnerForm((current) => ({ ...current, [event.target.name]: event.target.value }))
+  }
+
+  function submitOwner(event) {
+    event.preventDefault()
+    setOwnerFeedback({ type: '', message: '' })
+    provisioning.mutate({
+      name: ownerForm.name.trim(),
+      phone: ownerForm.phone.trim(),
+      email: ownerForm.email.trim(),
+      temporaryPassword: ownerForm.temporaryPassword,
+    })
+  }
+
   return (
     <main className="admin-page page-width">
       <header className="admin-heading">
         <div><p className="eyebrow">Platform administration</p><h1>Salon approvals</h1><p>Review new businesses before they become visible on HairSaloon.</p></div>
         <div className="count-card"><strong>{pendingQuery.data?.length ?? '—'}</strong><span>Awaiting review</span></div>
       </header>
+
+      <section className="form-card" aria-labelledby="owner-provisioning-heading">
+        <p className="eyebrow">Account provisioning</p>
+        <h2 id="owner-provisioning-heading">Create salon owner</h2>
+        <p>Create the owner’s account before they register their salon.</p>
+        <form onSubmit={submitOwner}>
+          <label>Owner name<input name="name" type="text" autoComplete="name" required maxLength="160" value={ownerForm.name} onChange={updateOwner} /></label>
+          <label>Phone number<input name="phone" type="tel" inputMode="tel" autoComplete="tel" required minLength="10" maxLength="15" value={ownerForm.phone} onChange={updateOwner} /></label>
+          <label>Email address<input name="email" type="email" autoComplete="email" required maxLength="320" value={ownerForm.email} onChange={updateOwner} /></label>
+          <label>Temporary password<input name="temporaryPassword" type="password" autoComplete="new-password" required minLength="12" maxLength="72" value={ownerForm.temporaryPassword} onChange={updateOwner} /></label>
+          {ownerFeedback.message && (
+            <p className={`form-status ${ownerFeedback.type}`} role={ownerFeedback.type === 'error' ? 'alert' : 'status'}>{ownerFeedback.message}</p>
+          )}
+          <button className="button" disabled={provisioning.isPending} type="submit">
+            {provisioning.isPending ? 'Creating owner…' : 'Create salon owner'}
+          </button>
+        </form>
+      </section>
 
       {feedback && <p className={`form-status ${approval.isError ? 'error' : 'success'}`} role="status">{feedback}</p>}
 

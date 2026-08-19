@@ -19,3 +19,15 @@ createRoot(document.getElementById('root')).render(
     </StrictMode>
   </ErrorBoundary>,
 )
+
+const localHostnames = ['localhost', '127.0.0.1', '[::1]']
+const canRegisterServiceWorker = 'serviceWorker' in navigator
+  && (window.isSecureContext || localHostnames.includes(window.location.hostname))
+
+if (canRegisterServiceWorker) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js').catch(() => {
+      // The app remains fully usable when service workers are unavailable.
+    })
+  })
+}

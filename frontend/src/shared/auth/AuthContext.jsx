@@ -65,6 +65,51 @@ export function AuthProvider({ children }) {
     }
   }, [])
 
+  const privilegedLogin = useCallback(async (credentials) => {
+    try {
+      const { data } = await apiClient.post('/api/platform/privileged-auth/login', credentials)
+      setUser(data)
+      setBackendStatus('online')
+      return data
+    } catch (error) {
+      if (isConnectivityError(error)) setBackendStatus('offline')
+      throw error
+    }
+  }, [])
+
+  const requestOtp = useCallback(async (payload) => {
+    try {
+      const { data } = await apiClient.post('/api/platform/auth/otp/request', payload)
+      setBackendStatus('online')
+      return data
+    } catch (error) {
+      if (isConnectivityError(error)) setBackendStatus('offline')
+      throw error
+    }
+  }, [])
+
+  const verifyOtp = useCallback(async (payload) => {
+    try {
+      const { data } = await apiClient.post('/api/platform/auth/otp/verify', payload)
+      setBackendStatus('online')
+      return data
+    } catch (error) {
+      if (isConnectivityError(error)) setBackendStatus('offline')
+      throw error
+    }
+  }, [])
+
+  const resetPassword = useCallback(async (payload) => {
+    try {
+      const { data } = await apiClient.post('/api/platform/auth/otp/reset-password', payload)
+      setBackendStatus('online')
+      return data
+    } catch (error) {
+      if (isConnectivityError(error)) setBackendStatus('offline')
+      throw error
+    }
+  }, [])
+
   const logout = useCallback(async () => {
     try {
       await apiClient.post('/api/platform/auth/logout')
@@ -78,8 +123,14 @@ export function AuthProvider({ children }) {
   }, [])
 
   const value = useMemo(
-    () => ({ user, signup, login, logout, loading, backendStatus, retryBackend: refreshSession }),
-    [user, signup, login, logout, loading, backendStatus, refreshSession],
+    () => ({
+      user, signup, login, privilegedLogin, requestOtp, verifyOtp, resetPassword,
+      logout, loading, backendStatus, refreshSession, retryBackend: refreshSession,
+    }),
+    [
+      user, signup, login, privilegedLogin, requestOtp, verifyOtp, resetPassword,
+      logout, loading, backendStatus, refreshSession,
+    ],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

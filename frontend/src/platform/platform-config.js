@@ -21,6 +21,17 @@ export function isPlatformHost(hostname = window.location.hostname) {
   return localHosts.has(host) || host === baseDomain || host === `www.${baseDomain}`
 }
 
+export function platformUrl(path = '/') {
+  const safePath = String(path || '/').startsWith('/') ? String(path || '/') : `/${path}`
+  const currentHost = window.location.hostname.toLowerCase()
+  if (currentHost.endsWith('.localhost')) {
+    const port = window.location.port ? `:${window.location.port}` : ''
+    return `${window.location.protocol}//localhost${port}${safePath}`
+  }
+  const port = basePort ? `:${basePort}` : ''
+  return `${baseProtocol}://${baseDomain}${port}${safePath}`
+}
+
 export function salonUrl(subdomain) {
   const safeSubdomain = String(subdomain || '').trim().toLowerCase()
   if (!safeSubdomain) return '#'

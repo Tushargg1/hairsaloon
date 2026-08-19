@@ -5,6 +5,7 @@ import { isPlatformHost } from './platform/platform-config.js'
 import PlatformLayout from './platform/PlatformLayout.jsx'
 import HomePage from './platform/HomePage.jsx'
 import AuthPage from './platform/AuthPage.jsx'
+import ManagementLoginPage from './shared/auth/ManagementLoginPage.jsx'
 import SalonDirectory from './platform/SalonDirectory.jsx'
 import SalonSignup from './platform/SalonSignup.jsx'
 import AdminApprovals from './platform/AdminApprovals.jsx'
@@ -20,10 +21,11 @@ function PlatformRoutes() {
         <Route path="salons" element={<SalonDirectory />} />
         <Route path="login" element={<AuthPage mode="login" />} />
         <Route path="signup" element={<AuthPage mode="signup" />} />
-        <Route element={<RequireRole roles="SALON_OWNER" loadingFallback={loadingFallback} />}>
+        <Route path="manage/login" element={<ManagementLoginPage />} />
+        <Route element={<RequireRole roles="SALON_OWNER" unauthenticatedTo="/manage/login" loadingFallback={loadingFallback} />}>
           <Route path="salon-signup" element={<SalonSignup />} />
         </Route>
-        <Route element={<RequireRole roles="PLATFORM_ADMIN" loadingFallback={loadingFallback} />}>
+        <Route element={<RequireRole roles="PLATFORM_ADMIN" unauthenticatedTo="/manage/login" loadingFallback={loadingFallback} />}>
           <Route path="admin/approvals" element={<AdminApprovals />} />
         </Route>
         <Route element={<RequireRole roles="CUSTOMER" loadingFallback={loadingFallback} />}>
@@ -37,7 +39,7 @@ function PlatformRoutes() {
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <BackendStatusBanner />
       {isPlatformHost() ? <PlatformRoutes /> : <TenantRoutes />}
     </BrowserRouter>

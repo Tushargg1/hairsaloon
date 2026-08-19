@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import apiClient, { apiErrorMessage } from '../shared/api/client.js'
+import useAuth from '../shared/auth/useAuth.js'
 
 function ProfileForm() {
+  const { refreshSession } = useAuth()
   const [form, setForm] = useState({ name: '', phone: '', email: '' })
   const [status, setStatus] = useState({ loading: true, saving: false, error: '', success: '' })
 
@@ -20,6 +22,7 @@ function ProfileForm() {
     try {
       const { data } = await apiClient.put('/api/platform/profile', form)
       setForm({ name: data.name || '', phone: data.phone || '', email: data.email || '' })
+      await refreshSession()
       setStatus({ loading: false, saving: false, error: '', success: 'Profile updated!' })
     } catch (err) {
       setStatus({ loading: false, saving: false, error: apiErrorMessage(err), success: '' })
@@ -83,27 +86,43 @@ function PasswordForm() {
 
 function BookingHistory() {
   const [bookings, setBookings] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [status, setStatus] = useState({ loading: true, error: '' })
 
-  useEffect(() => {
-    apiClient.get('/api/platform/my-bookings').then(({ data }) => {
+  const loadBookings = useCallback(async () => {
+    setStatus({ loading: true, error: '' })
+    try {
+      const { data } = await apiClient.get('/api/platform/my-bookings')
       setBookings(data)
-    }).finally(() => setLoading(false))
+      setStatus({ loading: false, error: '' })
+    } catch (error) {
+      setStatus({
+        loading: false,
+        error: apiErrorMessage(error, 'Could not load your booking history.'),
+      })
+    }
   }, [])
 
-  if (loading) return <p className="muted">Loading bookings…</p>
+  useEffect(() => { loadBookings() }, [loadBookings])
+
+  if (status.loading) return <p className="muted">Loading bookings…</p>
+  if (status.error) return (
+    <div className="state-card" role="alert">
+      <p>{status.error}</p>
+      <button className="button button-secondary" type="button" onClick={loadBookings}>Try again</button>
+    </div>
+  )
   if (bookings.length === 0) return <p className="muted">No bookings yet. Explore salons to book your first appointment!</p>
 
   return (
     <div className="manager-list">
-      {bookings.map((b) => (
-        <div key={b.id} className="manager-item">
+      {bookings.map((booking) => (
+        <div key={booking.id} className="manager-item">
           <div>
-            <h3>{b.serviceName}</h3>
-            <p>{b.salonName} · {b.staffName}</p>
-            <p className="muted">{new Date(b.startDateTime).toLocaleDateString()} at {new Date(b.startDateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+            <h3>{booking.serviceName}</h3>
+            <p>{booking.salonName} · {booking.staffName}</p>
+            <p className="muted">{new Date(booking.startDateTime).toLocaleDateString()} at {new Date(booking.startDateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
           </div>
-          <span className={`manager-status ${b.status === 'CONFIRMED' ? '' : 'inactive'}`}>{b.status}</span>
+          <span className={`manager-status ${booking.status === 'CONFIRMED' ? '' : 'inactive'}`}>{booking.status}</span>
         </div>
       ))}
     </div>
@@ -112,32 +131,61 @@ function BookingHistory() {
 
 function FavoritesList() {
   const [favorites, setFavorites] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [status, setStatus] = useState({ loading: true, removingId: null, error: '' })
 
-  useEffect(() => {
-    apiClient.get('/api/platform/favorites').then(({ data }) => {
+  const loadFavorites = useCallback(async () => {
+    setStatus({ loading: true, removingId: null, error: '' })
+    try {
+      const { data } = await apiClient.get('/api/platform/favorites')
       setFavorites(data)
-    }).finally(() => setLoading(false))
+      setStatus({ loading: false, removingId: null, error: '' })
+    } catch (error) {
+      setStatus({
+        loading: false, removingId: null,
+        error: apiErrorMessage(error, 'Could not load your saved salons.'),
+      })
+    }
   }, [])
 
-  function removeFavorite(salonId) {
-    apiClient.delete(`/api/platform/favorites/${salonId}`).then(() => {
-      setFavorites((prev) => prev.filter((f) => f.salonId !== salonId))
-    })
+  useEffect(() => { loadFavorites() }, [loadFavorites])
+
+  async function removeFavorite(salonId) {
+    setStatus((current) => ({ ...current, removingId: salonId, error: '' }))
+    try {
+      await apiClient.delete(`/api/platform/favorites/${salonId}`)
+      setFavorites((previous) => previous.filter((favorite) => favorite.salonId !== salonId))
+      setStatus({ loading: false, removingId: null, error: '' })
+    } catch (error) {
+      setStatus({
+        loading: false, removingId: null,
+        error: apiErrorMessage(error, 'Could not remove this saved salon.'),
+      })
+    }
   }
 
-  if (loading) return <p className="muted">Loading favorites…</p>
+  if (status.loading) return <p className="muted">Loading favorites…</p>
+  if (status.error && favorites.length === 0) return (
+    <div className="state-card" role="alert">
+      <p>{status.error}</p>
+      <button className="button button-secondary" type="button" onClick={loadFavorites}>Try again</button>
+    </div>
+  )
   if (favorites.length === 0) return <p className="muted">No saved salons yet. Browse salons and save your favorites!</p>
 
   return (
     <div className="manager-list">
-      {favorites.map((f) => (
-        <div key={f.salonId} className="manager-item">
+      {status.error && <p className="form-status error" role="alert">{status.error}</p>}
+      {favorites.map((favorite) => (
+        <div key={favorite.salonId} className="manager-item">
           <div>
-            <h3>{f.name}</h3>
-            <p className="muted">{f.city}</p>
+            <h3>{favorite.name}</h3>
+            <p className="muted">{favorite.city}</p>
           </div>
-          <button className="button button-ghost button-small" type="button" onClick={() => removeFavorite(f.salonId)}>Remove</button>
+          <button className="button button-ghost button-small" type="button"
+            disabled={status.removingId === favorite.salonId}
+            onClick={() => removeFavorite(favorite.salonId)}>
+            {status.removingId === favorite.salonId ? 'Removing…' : 'Remove'}
+          </button>
         </div>
       ))}
     </div>

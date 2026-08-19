@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import useAuth from '../shared/auth/useAuth.js'
+import PushOptIn from '../shared/components/PushOptIn.jsx'
 import { getSalonProfile, tenantKeys } from './tenant-api.js'
 import { tenantNameFallback } from './tenant-host.js'
 
@@ -16,6 +17,7 @@ export default function TenantLayout() {
   const [logoutError, setLogoutError] = useState('')
   const profileQuery = useQuery({ queryKey: tenantKeys.profile, queryFn: getSalonProfile })
   const salonName = profileQuery.data?.name || profileQuery.data?.salonName || tenantNameFallback()
+  const pushEligible = user?.role === 'CUSTOMER' || user?.role === 'SALON_OWNER'
 
   async function handleLogout() {
     setLoggingOut(true)
@@ -58,6 +60,7 @@ export default function TenantLayout() {
           ) : <NavLink className="button button-small" to="/login">Customer login</NavLink>}
         </div>
       </header>
+      {pushEligible && <PushOptIn role={user.role} />}
       <div className="site-content" id="main-content" tabIndex="-1">
         <Outlet context={{ profile: profileQuery.data, profileQuery, salonName }} />
       </div>

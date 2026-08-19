@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useNavigate, Link } from 'react-router-dom'
 import useAuth from '../shared/auth/useAuth.js'
 
@@ -22,10 +22,9 @@ export default function PlatformLayout() {
     localStorage.setItem('theme', next ? 'dark' : 'light')
   }
 
-  // Apply saved theme on mount
-  useState(() => {
-    if (dark) document.documentElement.setAttribute('data-theme', 'dark')
-  })
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light')
+  }, [dark])
 
   async function handleLogout() {
     setLoggingOut(true)
@@ -61,10 +60,10 @@ export default function PlatformLayout() {
           ) : user ? (
             <>
               <span className="account-label">
-                <strong>{user.email}</strong>
+                <strong>{user.name || user.email || user.phone}</strong>
                 <small>{roleLabels[user.role] || user.role}</small>
               </span>
-              <Link to="/profile" className="text-link">Profile</Link>
+              {user.role === 'CUSTOMER' && <Link to="/profile" className="text-link">Profile</Link>}
               <button className="button button-ghost button-small" type="button" disabled={loggingOut} onClick={handleLogout}>
                 {loggingOut ? 'Logging out…' : 'Log out'}
               </button>

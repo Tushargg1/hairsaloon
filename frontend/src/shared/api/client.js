@@ -19,19 +19,41 @@ export function isConnectivityError(error) {
   return category === 'network' || category === 'timeout'
 }
 
+export function retryAfterSeconds(error) {
+  const value = Number(error?.response?.headers?.['retry-after'])
+  return Number.isFinite(value) && value > 0 ? Math.ceil(value) : 0
+}
+
 export function apiErrorMessage(error, fallback = 'Something went wrong. Please try again.') {
   const category = error?.hairsaloonErrorType || classifyApiError(error)
+  if (error?.response?.status === 429) {
+    const seconds = retryAfterSeconds(error)
+    return seconds
+      ? `Too many login attempts. Try again in ${seconds} seconds.`
+      : 'Too many login attempts. Please wait a few minutes and try again.'
+  }
   if (category === 'timeout') return 'The server is taking too long to respond. Please try again.'
   if (category === 'network') {
     if (typeof navigator !== 'undefined' && navigator.onLine === false) {
       return 'You appear to be offline. Check your internet connection and try again.'
     }
     return import.meta.env.DEV
-      ? 'HairSaloon can’t reach the backend. Make sure the server is running on port 8080, then try again.'
-      : 'HairSaloon can’t reach the server right now. Check your connection and try again.'
+      ? "HairSaloon can\u2019t reach the backend. Make sure the server is running on port 8080, then try again."
+      : "HairSaloon can\u2019t reach the server right now. Check your connection and try again."
   }
   if (category === 'server') return error?.response?.data?.message || 'The server encountered a problem. Please try again shortly.'
-  return error?.response?.data?.message || fallback
+  const data = error?.response?.data
+  if (data?.fieldErrors && typeof data.fieldErrors === 'object') {
+    const entries = Object.entries(data.fieldErrors)
+    if (entries.length > 0) {
+      return entries.map(([field, msg]) => `${field}: ${msg}`).join('. ') + '.'
+    }
+  }
+  return data?.message || fallback
+}
+
+export function extractFieldErrors(error) {
+  return error?.response?.data?.fieldErrors || null
 }
 
 const apiClient = axios.create({

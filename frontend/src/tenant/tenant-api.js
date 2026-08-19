@@ -14,6 +14,10 @@ export const tenantKeys = {
   myBookings: ['tenant', 'my-bookings'],
   dashboardBookings: (filters) => ['tenant', 'dashboard-bookings', filters],
   dashboardAnalytics: ['tenant', 'dashboard-analytics'],
+  dashboardAnalyticsFilters: (filters = {}) => ['tenant', 'dashboard-analytics', filters],
+  dashboardMedia: ['tenant', 'dashboard-media'],
+  dashboardPromotions: ['tenant', 'dashboard-promotions'],
+  pushSubscription: (roleOrDashboard) => ['tenant', 'push-subscription', isDashboardRole(roleOrDashboard) ? 'owner' : 'customer'],
   staffTimeOff: (staffId) => ['tenant', 'dashboard-staff', staffId, 'time-off'],
 }
 
@@ -57,6 +61,18 @@ async function getReviews(url, { page = 0, size = 20 } = {}) {
   return data
 }
 
+function isDashboardRole(roleOrDashboard) {
+  if (typeof roleOrDashboard === 'boolean') return roleOrDashboard
+  if (typeof roleOrDashboard === 'string') return roleOrDashboard === 'SALON_OWNER'
+  return Boolean(roleOrDashboard?.dashboard || roleOrDashboard?.role === 'SALON_OWNER')
+}
+
+function pushSubscriptionsUrl(roleOrDashboard) {
+  return isDashboardRole(roleOrDashboard)
+    ? '/api/salon/dashboard/push-subscriptions'
+    : '/api/salon/push-subscriptions'
+}
+
 export const getSalonProfile = () => getObject('/api/salon/profile', ['profile', 'salon'])
 export const getPublicServices = () => getCollection('/api/salon/services', ['services'])
 export const getPublicStaff = () => getCollection('/api/salon/staff', ['staff', 'employees'])
@@ -64,6 +80,8 @@ export const getPublicReviews = (pagination) => getReviews('/api/salon/reviews',
 export const getDashboardServices = () => getCollection('/api/salon/dashboard/services', ['services'])
 export const getDashboardStaff = () => getCollection('/api/salon/dashboard/staff', ['staff', 'employees'])
 export const getDashboardReviews = (pagination) => getReviews('/api/salon/dashboard/reviews', pagination)
+export const getDashboardMedia = () => getCollection('/api/salon/dashboard/media', ['media', 'uploads', 'assets'])
+export const getDashboardPromotions = () => getCollection('/api/salon/dashboard/promotions', ['promotions'])
 
 export async function createReview(payload) {
   const { data } = await apiClient.post('/api/salon/reviews', payload)
@@ -148,18 +166,26 @@ export async function rescheduleMyBooking({ id, startDatetime }) {
   return data
 }
 
-export async function getDashboardAnalytics() {
-  const { data } = await apiClient.get('/api/salon/dashboard/analytics')
+export async function getDashboardAnalytics({ startDate, endDate } = {}) {
+  const params = {}
+  if (startDate) params.startDate = startDate
+  if (endDate) params.endDate = endDate
+  const { data } = await apiClient.get('/api/salon/dashboard/analytics', { params })
   return data
 }
 
-export async function getDashboardBookings(filters) {
+export async function getDashboardBookings(filters = {}) {
   const params = new URLSearchParams()
   if (filters.date) params.set('date', filters.date)
   if (filters.startDate) params.set('startDate', filters.startDate)
   if (filters.endDate) params.set('endDate', filters.endDate)
   if (filters.staffId) params.set('staffId', filters.staffId)
   return getCollection(`/api/salon/dashboard/bookings?${params}`, ['bookings'])
+}
+
+export async function createWalkInBooking(payload) {
+  const { data } = await apiClient.post('/api/salon/dashboard/bookings/walk-ins', payload)
+  return data
 }
 
 export async function cancelDashboardBooking(id) {
@@ -171,3 +197,65 @@ export async function transitionDashboardBooking({ id, status }) {
   const { data } = await apiClient.patch(`/api/salon/dashboard/bookings/${id}/status`, { status })
   return data
 }
+
+export async function createMediaUpload({ type, contentType, sizeBytes }) {
+  const { data } = await apiClient.post('/api/salon/dashboard/media/uploads', {
+    type, contentType, sizeBytes,
+  })
+  return unwrapObject(data, ['upload'])
+}
+
+export async function uploadMediaFile({ uploadUrl, requiredHeaders = {}, file }) {
+  const response = await fetch(uploadUrl, {
+    method: 'PUT',
+    headers: requiredHeaders,
+    body: file,
+    credentials: 'omit',
+  })
+  if (!response.ok) throw new Error(`Direct media upload failed with status ${response.status}.`)
+}
+
+export async function confirmMediaUpload({ type, uploadId }) {
+  const { data } = await apiClient.post(`/api/salon/dashboard/media/uploads/${encodeURIComponent(type)}/${encodeURIComponent(uploadId)}/confirm`)
+  return data
+}
+
+export async function subscribePushSubscription(payload, roleOrDashboard) {
+  const { role, dashboard, endpoint, keys } = payload
+  const target = roleOrDashboard ?? dashboard ?? role
+  const { data } = await apiClient.post(pushSubscriptionsUrl(target), { endpoint, keys })
+  return data
+}
+
+export async function unsubscribePushSubscription(payload, roleOrDashboard) {
+  const { role, dashboard, endpoint } = payload
+  const target = roleOrDashboard ?? dashboard ?? role
+  const { data } = await apiClient.delete(pushSubscriptionsUrl(target), { data: { endpoint } })
+  return data
+}
+
+export async function createPromotion(payload) {
+  const { data } = await apiClient.post('/api/salon/dashboard/promotions', payload)
+  return data
+}
+
+export async function updatePromotion({ id, payload }) {
+  const { data } = await apiClient.put(`/api/salon/dashboard/promotions/${encodeURIComponent(id)}`, payload)
+  return data
+}
+
+export async function deletePromotion(id) {
+  const { data } = await apiClient.delete(`/api/salon/dashboard/promotions/${encodeURIComponent(id)}`)
+  return data
+}
+
+export async function validatePromotion({ promoCode, serviceId }) {
+  const { data } = await apiClient.post('/api/salon/promotions/validate', { promoCode, serviceId })
+  return data
+}
+
+export const requestMediaUpload = createMediaUpload
+export const directUploadMedia = uploadMediaFile
+export const subscribeToPush = subscribePushSubscription
+export const unsubscribeFromPush = unsubscribePushSubscription
+export const createWalkIn = createWalkInBooking

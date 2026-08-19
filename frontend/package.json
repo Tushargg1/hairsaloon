@@ -7,7 +7,11 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "e2e": "playwright test",
+    "e2e:install": "playwright install chromium",
+    "e2e:list": "playwright test --list",
+    "e2e:local": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/e2e-local.ps1"
   },
   "dependencies": {
     "@tanstack/react-query": "5.59.20",
@@ -19,6 +23,7 @@
   },
   "devDependencies": {
     "@eslint/js": "9.13.0",
+    "@playwright/test": "1.62.1",
     "@types/react": "18.3.12",
     "@types/react-dom": "18.3.1",
     "@vitejs/plugin-react": "4.3.3",
