@@ -9,4 +9,7 @@ frontend/node_modules/
 frontend/dist/
 *.log
 *.png
+!frontend/public/icon-192.png
+!frontend/public/icon-512.png
+!frontend/public/maskable-512.png
 .playwright-mcp/

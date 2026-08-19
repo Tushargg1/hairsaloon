@@ -6,7 +6,7 @@ HairSaloon is the Phase 1–10 multi-tenant salon booking MVP described by `00-k
 
 A React 18/Vite SPA serves both the platform host and tenant subdomains. Spring Boot 3.3/Java 17 exposes `/api/platform/**` and host-resolved `/api/salon/**` APIs. PostgreSQL is authoritative for tenants, bookings, reviews, and the notification outbox; Redis caches tenant resolution; Flyway owns schema changes. Authentication is a JWT in an HttpOnly cookie shared across the configured base domain.
 
-Production configuration in `deploy/aws` uses one CloudFront distribution for the apex and `*.domain`: private S3 handles SPA requests and `/api/*` goes to an ALB/ECS service. API caching is disabled and viewer Host, cookies, credential headers, Origin, and query strings are forwarded. This is essential because the backend resolves salons from `Host`. RDS PostgreSQL and encrypted ElastiCache Redis remain private.
+Production configuration in `deploy/aws` uses one CloudFront distribution for the apex and `*.domain`: private S3 handles SPA requests and `/api/*` goes to an ALB/ECS service. A separate private, encrypted, versioned S3 bucket stores salon-prefixed media and is served by its own OAC-protected CloudFront distribution; ECS receives only prefix-scoped object access. API caching is disabled and viewer Host, cookies, credential headers, Origin, and query strings are forwarded. This is essential because the backend resolves salons from `Host`. RDS PostgreSQL and encrypted ElastiCache Redis remain private.
 
 ## Prerequisites
 
@@ -74,21 +74,65 @@ The current API uses stateless cookie JWTs and intentionally disables CSRF prote
 
 ## Platform administrator bootstrap
 
-Bootstrap is off by default. For first local setup only, set `PLATFORM_ADMIN_BOOTSTRAP_ENABLED=true`, a valid unused email, and a password of 8–72 characters; start the backend once. Existing platform-admin accounts are left unchanged, and startup fails if the email belongs to another role. Immediately set bootstrap to false, remove the password from the process/file, restart, and sign in at `/login`. In staging/production supply any temporary bootstrap password only as an ECS task secret and remove/disable it after use; the provided Terraform keeps bootstrap disabled.
+Bootstrap is off by default. For first local setup only, set `PLATFORM_ADMIN_BOOTSTRAP_ENABLED=true`, a valid unused email, and a password of 8–72 characters; start the backend once. Existing platform-admin accounts are left unchanged, and startup fails if the email belongs to another role. Immediately set bootstrap to false, remove the password from the process/file, restart, and sign in at `/manage/login`. In staging/production supply any temporary bootstrap password only as an ECS task secret and remove/disable it after use; the provided Terraform keeps bootstrap disabled.
+
+## Authentication model
+
+Public signup and login (`/signup`, `/login`) are customer-only. Phone is required, email is optional, and a password (8–72 characters) is mandatory. Signup requires a phone-verified OTP proof before the account is created. A forgot-password flow uses the same OTP mechanism to allow customers to reset their password.
+
+Salon owners and platform administrators sign in at `/manage/login` using an email/password privileged-login endpoint. Owners cannot self-register—they are provisioned by a platform admin from `/admin/approvals` using a dedicated owner-creation form. After provisioning, the owner signs in via the management login and proceeds to register their salon.
+
+### OTP and SMS
+
+Phone verification uses a pluggable `SmsGateway` abstraction. In development (`OTP_ALLOW_CODE_LOGGING=true`), codes are logged to stdout at DEBUG level for testing. No external SMS provider is wired yet; a production implementation (Twilio, AWS SNS, etc.) must implement `SmsGateway` and be activated by configuration.
+
+### Rate limiting
+
+Authentication rate limiting uses Redis atomic counters (keyed by HMAC-hashed IP and principal) with an in-memory fallback when Redis is unavailable. Configurable via `AUTH_RATE_LIMIT_*` environment variables.
 ## Sample onboarding flow
 
-1. Bootstrap and sign in as platform admin.
-2. In a separate session, sign up as a salon owner on the platform host and submit the salon form with an available subdomain such as `glamour`.
-3. Approve the pending salon from `/admin/approvals` as the platform admin.
-4. Visit `http://glamour.lvh.me:5173`, sign in as the owner, and configure salon profile, services, staff, working hours, and time off.
-5. Sign up/sign in as a customer on the tenant host, select service/staff/date, create a booking, and view/cancel it in customer bookings.
-6. As owner, progress the appointment to completed; then as that customer submit one review. Public reviews appear on the salon page.
+1. Bootstrap and sign in as platform admin at `/manage/login`.
+2. From `/admin/approvals`, use the "Create salon owner" form to provision an owner account with name, phone, email, and a temporary password.
+3. In a separate browser/session, sign in as the new owner at `/manage/login` using their email and temporary password.
+4. The owner submits the salon registration form with an available subdomain such as `glamour`.
+5. Approve the pending salon from `/admin/approvals` as the platform admin.
+6. Visit `http://glamour.localhost:5173` (or use `lvh.me` if configured), sign in as the owner via `/manage/login`, and configure salon profile, services, staff, working hours, and time off.
+7. Sign up as a customer on the tenant host (requires phone OTP verification), select service/staff/date, create a booking, and view/cancel it in customer bookings.
+8. As owner, use the calendar to progress the appointment to completed; then as that customer submit one review. Public reviews appear on the salon page.
 
 Keep apex and tenant browser sessions on the same base-domain family. A `localhost` cookie is not interchangeable with `.lvh.me`.
 
 ## Email delivery
 
 `EMAIL_PROVIDER=logging` is safe for local development: the outbox processor logs the delivery instead of contacting a provider. Do not use logs containing real customer data as a production delivery mechanism. `EMAIL_PROVIDER=resend` requires `EMAIL_FROM` to be a verified sender and `RESEND_API_KEY` from a secret store. The outbox retry/batch/claim settings in `.env.example` are tunable. Production Terraform passes the optional Resend key through ECS task secrets; no plaintext secret belongs in Vite variables, tfvars, task environment values, logs, or source control.
+
+## Salon media uploads
+
+Media is managed at `/dashboard/media`. The upload flow uses presigned S3 PUT requests:
+1. Owner selects an image type (Gallery/Logo/Staff photo) and file.
+2. Frontend requests a presigned URL from `POST /api/salon/dashboard/media/uploads`.
+3. Frontend uploads directly to S3 using the presigned URL.
+4. Frontend confirms the upload via `POST /api/salon/dashboard/media/uploads/{type}/{uploadId}/confirm`.
+
+Locally, `MEDIA_STORAGE_PROVIDER=disabled` means upload initiation returns an error explaining media is not configured. In production, the ECS task receives the S3 bucket, CDN base URL, region, and object prefix. The configurable `MEDIA_OBJECT_PREFIX` (default `salons`) scopes all keys and IAM policies.
+
+## Web Push notifications
+
+Push is provider-neutral and disabled by default (`PUSH_ENABLED=false`, `PUSH_PROVIDER=disabled`). The backend stores subscriptions and maintains a durable outbox with retry logic, but the actual `PushGateway` interface has only a disabled adapter wired. A production implementation must supply a VAPID-based Web Push delivery provider.
+
+Customers and owners can opt in from `PushOptIn` components. The service worker handles `push` events and `notificationclick` navigation.
+
+## Walk-in appointments
+
+Salon owners can create walk-in bookings from the calendar view at `/dashboard/bookings`. Walk-ins accept a guest name and phone (no customer account required), staff member, service, and start time. They appear in the calendar alongside online bookings with a `WALK_IN` source badge.
+
+## Promotions
+
+Owners manage promotional codes at `/dashboard/promotions`. Promotions support percentage or fixed discounts, date ranges, total and per-customer redemption limits, minimum spend thresholds, and service eligibility filtering. Customers validate a promo code during the booking confirmation step; the price snapshot is immutable and cancellation releases the redemption count.
+
+## Analytics
+
+The analytics dashboard at `/dashboard` provides date-range-bounded daily series charts, key metrics (bookings, revenue, no-show rate), and breakdowns by status, service, and staff member. The backend enforces a maximum 366-day range and zero-fills missing dates.
 
 ## Tests and builds
 
@@ -102,6 +146,7 @@ Set-Location ..\frontend
 npm ci
 npm run lint
 npm run build
+npm run e2e          # runs Playwright Chromium tests (mocked API, no backend needed)
 
 Set-Location ..
 docker compose config
@@ -109,7 +154,9 @@ docker compose config
 docker build -f backend\Dockerfile backend
 ```
 
-`mvnw.cmd verify` runs unit/integration suites and the PostgreSQL Testcontainers concurrency tests when Docker is available. `BookingConcurrencyIT` fires 20 simultaneous requests for one slot and requires exactly one success plus 19 conflicts; `ReviewConcurrencyIT` similarly proves one review. They are conditionally skipped when neither Docker nor `TEST_POSTGRES_URL` is available. For an external disposable PostgreSQL set `TEST_POSTGRES_URL`, `TEST_POSTGRES_USERNAME`, and `TEST_POSTGRES_PASSWORD`—never point concurrency tests at shared/production data.
+`mvnw.cmd verify` runs 80 unit/integration tests and the PostgreSQL Testcontainers concurrency tests when Docker is available. `BookingConcurrencyIT` fires 20 simultaneous requests for one slot and requires exactly one success plus 19 conflicts; `ReviewConcurrencyIT` similarly proves one review; `PostgreSqlMigrationSmokeIT` validates all 12 Flyway migrations (V1–V12) in an isolated schema. They are conditionally skipped when neither Docker nor `TEST_POSTGRES_URL` is available. For an external disposable PostgreSQL set `TEST_POSTGRES_URL`, `TEST_POSTGRES_USERNAME`, and `TEST_POSTGRES_PASSWORD`—never point concurrency tests at shared/production data.
+
+The Playwright E2E suite contains 7 tests covering customer OTP signup flow, public phone login form, PWA manifest/icons/service-worker, and favicon. Tests mock API responses and require only the Vite dev server.
 
 ## Production build and deployment preparation
 
@@ -126,7 +173,7 @@ ECS uses immutable image tags, 100% minimum healthy capacity, 200% maximum, ALB 
 
 RDS has encryption, retained automated backups, a final snapshot, deletion protection, and Terraform destroy prevention. Redis has encryption/auth and snapshots. Before launch, test restores and alarm on ALB health/5xx/latency, ECS task count/CPU/memory, RDS storage/connections/CPU/backups, Redis memory/evictions/replication, CloudFront errors, and spend. Keep logs structured and redact credentials, tokens, cookies, email bodies, and unnecessary personal data.
 
-The templates deliberately accept an existing VPC/subnets and do not create NAT/network foundations. Review CloudFront-origin restrictions, WAF/rate limiting, IAM, secret rotation, KMS, access logs, budgets, RDS Multi-AZ, Redis failover, backup geography, and data retention with the production threat model. ALB, NAT, CloudFront transfer, logs, RDS, Multi-AZ, snapshots, and Redis are continuing costs. Do not apply the templates until the domain, credentials, ownership, saved plan, and rollback window are approved.
+The templates deliberately accept an existing VPC/subnets and do not create NAT/network foundations. Review CloudFront-origin restrictions, media CORS and retention, WAF/rate limiting, IAM, secret rotation, KMS, access logs, budgets, RDS Multi-AZ, Redis failover, backup geography, and data retention with the production threat model. ALB, NAT, CloudFront transfer, logs, S3 media versions, RDS, Multi-AZ, snapshots, and Redis are continuing costs. Do not apply the templates until the domain, credentials, ownership, saved plan, and rollback window are approved.
 
 ## Troubleshooting
 
@@ -143,4 +190,9 @@ The templates deliberately accept an existing VPC/subnets and do not create NAT/
 
 ## Scope
 
-This remains the five-spec MVP. Payments, custom domains, SMS, and multi-branch support are intentionally not included. The governing spec files were not modified.
+This remains the five-spec MVP. Payments, custom domains, and multi-branch support are intentionally not included. The governing spec files were not modified.
+
+### Production transport gaps
+
+- **SMS:** `SmsGateway` has a development logging implementation but no external SMS provider. A production deployment must implement the interface (e.g., Twilio, AWS SNS) and activate it by configuration.
+- **Web Push:** `PushGateway` has durable storage/outbox infrastructure but only a disabled adapter. Real VAPID delivery requires a vetted push provider implementation.
