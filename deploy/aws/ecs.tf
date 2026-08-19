@@ -201,6 +201,15 @@ resource "aws_ecs_task_definition" "backend" {
       { name = "JWT_ISSUER", value = local.name },
       { name = "EMAIL_PROVIDER", value = var.resend_secret_arn == null ? "logging" : "resend" },
       { name = "EMAIL_FROM", value = var.email_from },
+      { name = "MEDIA_STORAGE_PROVIDER", value = "s3" },
+      { name = "MEDIA_S3_BUCKET", value = aws_s3_bucket.media.id },
+      { name = "MEDIA_CDN_BASE_URL", value = "https://${aws_cloudfront_distribution.media.domain_name}" },
+      { name = "MEDIA_S3_REGION", value = var.aws_region },
+      { name = "MEDIA_OBJECT_PREFIX", value = var.media_object_prefix },
+      { name = "PUSH_ENABLED", value = "false" },
+      { name = "PUSH_PROVIDER", value = "disabled" },
+      { name = "VAPID_PUBLIC_KEY", value = var.vapid_public_key },
+      { name = "VAPID_SUBJECT", value = var.vapid_subject },
       { name = "PLATFORM_ADMIN_BOOTSTRAP_ENABLED", value = "false" }
     ]
     secrets = local.app_secrets

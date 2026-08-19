@@ -1,0 +1,30 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+    create-schemas: true
+  datasource:
+    hikari:
+      maximum-pool-size: 25
+  data:
+    redis:
+      repositories:
+        enabled: false
+
+app:
+  base-domain: localhost
+  platform-hosts: localhost
+  auth:
+    jwt:
+      secret: raw:integration-test-only-0123456789abcdefghijklmnopqrstuvwxyz-ABCDEFGHIJKLMNOPQRSTUVWXYZ
+      issuer: postgres-integration-test
+      ttl: 2h
+    cookie:
+      domain: .localhost
+      secure: false
+    bootstrap-platform-admin:
+      enabled: false
+    otp:
+      require-signup-verification: false

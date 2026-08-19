@@ -4,11 +4,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,9 +40,13 @@ class BookingPhase6IntegrationTest {
     @Autowired MockMvc mockMvc;
     @Autowired JdbcTemplate jdbc;
     @Autowired ObjectMapper json;
+    @Autowired com.hairsaloon.auth.TestUserFactory testUsers;
 
     @BeforeEach
     void clean() {
+        jdbc.update("DELETE FROM promotion_redemptions");
+        jdbc.update("DELETE FROM promotion_services");
+        jdbc.update("DELETE FROM promotions");
         jdbc.update("DELETE FROM notification_outbox");
         jdbc.update("DELETE FROM bookings");
         jdbc.update("DELETE FROM staff_services");
@@ -167,6 +173,96 @@ class BookingPhase6IntegrationTest {
             Integer.class, fixture.salonId(), id)).isEqualTo(2);
     }
 
+    @Test
+    void ownerCreatesCustomerlessWalkInWithGuestCalendarFieldsAndNoReview() throws Exception {
+        Fixture fixture = fixture("walkin");
+        LocalDate date = LocalDate.now().plusDays(12);
+        addHours(fixture, date, "09:00", "10:00");
+        int usersBefore = jdbc.queryForObject("SELECT COUNT(*) FROM users", Integer.class);
+        String body = "{\"staffId\":" + fixture.staffId() + ",\"serviceId\":"
+            + fixture.serviceId() + ",\"startDatetime\":\"" + date
+            + "T09:00:00\",\"guestName\":\" Guest Person \","
+            + "\"guestPhone\":\"+1 555 123 4567\"}";
+        MvcResult result = mockMvc.perform(post("/api/salon/dashboard/bookings/walk-ins")
+                .header("Host", fixture.host()).cookie(cookie(fixture.ownerToken()))
+                .contentType(MediaType.APPLICATION_JSON).content(body))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.customerId").doesNotExist())
+            .andExpect(jsonPath("$.bookingSource").value("WALK_IN"))
+            .andExpect(jsonPath("$.guestName").value("Guest Person"))
+            .andExpect(jsonPath("$.guestPhone").value("+1 555 123 4567"))
+            .andExpect(jsonPath("$.originalPrice").value(35.00))
+            .andExpect(jsonPath("$.discountAmount").value(0.00)).andReturn();
+        long id = json.readTree(result.getResponse().getContentAsString()).get("id").asLong();
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM users", Integer.class))
+            .isEqualTo(usersBefore);
+        mockMvc.perform(get("/api/salon/dashboard/bookings").header("Host", fixture.host())
+                .cookie(cookie(fixture.ownerToken())).param("date", date.toString()))
+            .andExpect(status().isOk()).andExpect(jsonPath("$[0].guestName")
+                .value("Guest Person"));
+        mockMvc.perform(post("/api/salon/reviews").header("Host", fixture.host())
+                .cookie(cookie(fixture.customerToken())).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"bookingId\":" + id + ",\"rating\":5}"))
+            .andExpect(status().isNotFound());
+        mockMvc.perform(patch("/api/salon/dashboard/bookings/{id}/cancel", id)
+                .header("Host", fixture.host()).cookie(cookie(fixture.ownerToken())))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("CANCELLED"));
+        mockMvc.perform(patch("/api/salon/dashboard/bookings/{id}/cancel", id)
+                .header("Host", fixture.host()).cookie(cookie(fixture.ownerToken())))
+            .andExpect(status().isOk());
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM notification_outbox WHERE booking_id=?",
+            Integer.class, id)).isZero();
+    }
+
+    @Test
+    void promotionValidationBookingSnapshotsIdempotencyAndReleaseAreTransactional()
+            throws Exception {
+        Fixture fixture = fixture("promo");
+        LocalDate date = LocalDate.now().plusDays(13);
+        addHours(fixture, date, "09:00", "11:00");
+        String promotion = "{\"code\":\" save20 \",\"discountType\":\"PERCENT\","
+            + "\"discountValue\":20,\"startsAt\":\"" + Instant.now().minusSeconds(60)
+            + "\",\"endsAt\":\"" + Instant.now().plusSeconds(86400)
+            + "\",\"totalLimit\":1,\"perCustomerLimit\":1,\"minimumSpend\":30,"
+            + "\"serviceIds\":[" + fixture.serviceId() + "]}";
+        mockMvc.perform(post("/api/salon/dashboard/promotions").header("Host", fixture.host())
+                .cookie(cookie(fixture.ownerToken())).contentType(MediaType.APPLICATION_JSON)
+                .content(promotion))
+            .andExpect(status().isCreated()).andExpect(jsonPath("$.code").value("SAVE20"));
+        mockMvc.perform(post("/api/salon/promotions/validate").header("Host", fixture.host())
+                .cookie(cookie(fixture.customerToken())).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"promoCode\":\"save20\",\"serviceId\":"
+                    + fixture.serviceId() + "}"))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.discountAmount").value(7.00))
+            .andExpect(jsonPath("$.finalPrice").value(28.00));
+        String booking = bookingJson(fixture, date.atTime(9, 0));
+        booking = booking.substring(0, booking.length() - 1) + ",\"promoCode\":\"save20\"}";
+        MvcResult created = mockMvc.perform(post("/api/salon/bookings")
+                .header("Host", fixture.host()).cookie(cookie(fixture.customerToken()))
+                .header("Idempotency-Key", "promo-booking")
+                .contentType(MediaType.APPLICATION_JSON).content(booking))
+            .andExpect(status().isCreated()).andExpect(jsonPath("$.originalPrice").value(35.00))
+            .andExpect(jsonPath("$.discountAmount").value(7.00))
+            .andExpect(jsonPath("$.price").value(28.00))
+            .andExpect(jsonPath("$.promoCode").value("SAVE20")).andReturn();
+        long id = json.readTree(created.getResponse().getContentAsString()).get("id").asLong();
+        mockMvc.perform(post("/api/salon/bookings").header("Host", fixture.host())
+                .cookie(cookie(fixture.customerToken())).header("Idempotency-Key", "promo-booking")
+                .contentType(MediaType.APPLICATION_JSON).content(booking))
+            .andExpect(status().isCreated()).andExpect(jsonPath("$.id").value(id));
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM promotion_redemptions WHERE booking_id=?",
+            Integer.class, id)).isOne();
+        mockMvc.perform(patch("/api/salon/bookings/{id}/cancel", id)
+                .header("Host", fixture.host()).cookie(cookie(fixture.customerToken())))
+            .andExpect(status().isOk());
+        mockMvc.perform(patch("/api/salon/bookings/{id}/cancel", id)
+                .header("Host", fixture.host()).cookie(cookie(fixture.customerToken())))
+            .andExpect(status().isOk());
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM promotion_redemptions "
+            + "WHERE booking_id=? AND status='RELEASED' AND released_at IS NOT NULL",
+            Integer.class, id)).isOne();
+    }
+
     private Fixture fixture(String label) throws Exception {
         String ownerEmail = label + "-owner@example.com";
         String customerEmail = label + "-customer@example.com";
@@ -204,14 +300,9 @@ class BookingPhase6IntegrationTest {
             fixture.salonId(), fixture.staffId(), day,
             java.sql.Time.valueOf(start + ":00"), java.sql.Time.valueOf(end + ":00"));
     }
-    private String signup(String email, String role) throws Exception {
-        MvcResult result = mockMvc.perform(post("/api/platform/auth/signup")
-                .header("Host", "localhost").contentType(MediaType.APPLICATION_JSON)
-                .content("{\"email\":\"" + email
-                    + "\",\"password\":\"Password123!\",\"role\":\"" + role + "\"}"))
-            .andExpect(status().isCreated()).andReturn();
-        String header = result.getResponse().getHeader(HttpHeaders.SET_COOKIE);
-        return header.substring("auth_token=".length(), header.indexOf(';'));
+    private String signup(String email, String role) {
+        return testUsers.create(email,
+            com.hairsaloon.auth.UserRole.valueOf(role)).token();
     }
 
     private static String bookingJson(Fixture fixture, LocalDateTime start) {

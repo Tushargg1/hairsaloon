@@ -36,6 +36,7 @@ class ReviewPhase9IntegrationTest {
     @Autowired MockMvc mockMvc;
     @Autowired JdbcTemplate jdbc;
     @Autowired ObjectMapper json;
+    @Autowired com.hairsaloon.auth.TestUserFactory testUsers;
 
     @BeforeEach
     void clean() {
@@ -303,14 +304,9 @@ class ReviewPhase9IntegrationTest {
             fixture.salonId(), bookingId, fixture.customerId(), rating, comment, createdAt);
     }
 
-    private String signup(String email, String role) throws Exception {
-        MvcResult result = mockMvc.perform(post("/api/platform/auth/signup")
-                .header("Host", "localhost").contentType(MediaType.APPLICATION_JSON)
-                .content("{\"email\":\"" + email
-                    + "\",\"password\":\"Password123!\",\"role\":\"" + role + "\"}"))
-            .andExpect(status().isCreated()).andReturn();
-        String header = result.getResponse().getHeader(HttpHeaders.SET_COOKIE);
-        return header.substring("auth_token=".length(), header.indexOf(';'));
+    private String signup(String email, String role) {
+        return testUsers.create(email,
+            com.hairsaloon.auth.UserRole.valueOf(role)).token();
     }
 
     private String reviewJson(long bookingId, int rating, String comment) throws Exception {

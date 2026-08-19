@@ -41,6 +41,7 @@ import org.springframework.test.web.servlet.MvcResult;
 class DashboardAnalyticsIntegrationTest {
     @Autowired MockMvc mockMvc;
     @Autowired JdbcTemplate jdbc;
+    @Autowired com.hairsaloon.auth.TestUserFactory testUsers;
 
     @TestConfiguration(proxyBeanMethods = false)
     static class FixedTime {
@@ -135,6 +136,34 @@ class DashboardAnalyticsIntegrationTest {
             .andExpect(jsonPath("$.rangeEnd").value("2026-03-01"));
     }
 
+    @Test
+    void customInclusiveRangeIsBoundedZeroFilledAndIncludesAllBreakdowns() throws Exception {
+        Fixture salon = fixture("customrange", "Pacific/Auckland");
+        insert(salon, "2026-04-01T09:00:00", "COMPLETED", "25.00");
+        insert(salon, "2026-04-03T09:00:00", "CONFIRMED", "25.00");
+        mockMvc.perform(get("/api/salon/dashboard/analytics").header("Host", salon.host())
+                .cookie(cookie(salon.ownerToken())).param("startDate", "2026-04-01")
+                .param("endDate", "2026-04-03"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.rangeStart").value("2026-04-01"))
+            .andExpect(jsonPath("$.rangeEnd").value("2026-04-03"))
+            .andExpect(jsonPath("$.dailySeries.length()").value(3))
+            .andExpect(jsonPath("$.dailySeries[1].date").value("2026-04-02"))
+            .andExpect(jsonPath("$.dailySeries[1].bookings").value(0))
+            .andExpect(jsonPath("$.dailySeries[1].revenue").value(0.00))
+            .andExpect(jsonPath("$.serviceBreakdown[0].name").value("Cut"))
+            .andExpect(jsonPath("$.serviceBreakdown[0].bookings").value(2))
+            .andExpect(jsonPath("$.staffBreakdown[0].name").value("Taylor"))
+            .andExpect(jsonPath("$.statusBreakdown.COMPLETED").value(1))
+            .andExpect(jsonPath("$.statusBreakdown.CONFIRMED").value(1))
+            .andExpect(jsonPath("$.revenue").value(25.00));
+        mockMvc.perform(get("/api/salon/dashboard/analytics").header("Host", salon.host())
+                .cookie(cookie(salon.ownerToken())).param("startDate", "2025-01-01")
+                .param("endDate", "2026-01-02"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.error").value("VALIDATION_ERROR"));
+    }
+
     private Fixture fixture(String label, String timezone) throws Exception {
         String ownerEmail = label + "-owner@example.com";
         String customerEmail = label + "-customer@example.com";
@@ -175,14 +204,9 @@ class DashboardAnalyticsIntegrationTest {
             startAt.plusMinutes(30), status, new java.math.BigDecimal(price), "Cut");
     }
 
-    private String signup(String email, String role) throws Exception {
-        MvcResult result = mockMvc.perform(post("/api/platform/auth/signup")
-                .header("Host", "localhost").contentType(MediaType.APPLICATION_JSON)
-                .content("{\"email\":\"" + email
-                    + "\",\"password\":\"Password123!\",\"role\":\"" + role + "\"}"))
-            .andExpect(status().isCreated()).andReturn();
-        String header = result.getResponse().getHeader(HttpHeaders.SET_COOKIE);
-        return header.substring("auth_token=".length(), header.indexOf(';'));
+    private String signup(String email, String role) {
+        return testUsers.create(email,
+            com.hairsaloon.auth.UserRole.valueOf(role)).token();
     }
 
     private static Cookie cookie(String token) { return new Cookie("auth_token", token); }

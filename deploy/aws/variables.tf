@@ -108,6 +108,32 @@ variable "resend_secret_arn" {
   nullable    = true
 }
 
+variable "auth_hmac_secret_arn" {
+  description = "Optional Secrets Manager ARN containing the auth rate-limit/OTP HMAC secret."
+  type        = string
+  default     = null
+  nullable    = true
+}
+
+variable "vapid_private_key_secret_arn" {
+  description = "Optional Secrets Manager ARN containing the Web Push VAPID private key."
+  type        = string
+  default     = null
+  nullable    = true
+}
+
+variable "vapid_public_key" {
+  description = "Public Web Push VAPID key; also provide this to the frontend build."
+  type        = string
+  default     = ""
+}
+
+variable "vapid_subject" {
+  description = "Web Push VAPID contact subject, normally a mailto: URI."
+  type        = string
+  default     = ""
+}
+
 variable "secret_kms_key_arns" {
   description = "Customer-managed KMS key ARNs needed to decrypt supplied secrets, if any."
   type        = list(string)
@@ -194,4 +220,44 @@ variable "tags" {
   description = "Additional tags applied through provider default tags."
   type        = map(string)
   default     = {}
+}
+
+variable "media_bucket_name" {
+  description = "Optional globally unique private media bucket name; null lets AWS generate one."
+  type        = string
+  default     = null
+  nullable    = true
+}
+
+variable "media_object_prefix" {
+  description = "Top-level S3 key prefix reserved for salon media."
+  type        = string
+  default     = "salons"
+
+  validation {
+    condition     = can(regex("^[a-z0-9](?:[a-z0-9/_-]*[a-z0-9])?$", var.media_object_prefix)) && !strcontains(var.media_object_prefix, "//")
+    error_message = "media_object_prefix must be a lowercase, non-empty relative key prefix without leading/trailing slashes or repeated slashes."
+  }
+}
+
+variable "media_noncurrent_version_retention_days" {
+  description = "Days to retain noncurrent media object versions before permanent expiration."
+  type        = number
+  default     = 365
+
+  validation {
+    condition     = var.media_noncurrent_version_retention_days >= 31
+    error_message = "media_noncurrent_version_retention_days must be at least 31."
+  }
+}
+
+variable "media_multipart_upload_abort_days" {
+  description = "Days after initiation when incomplete media multipart uploads are aborted."
+  type        = number
+  default     = 7
+
+  validation {
+    condition     = var.media_multipart_upload_abort_days >= 1
+    error_message = "media_multipart_upload_abort_days must be at least 1."
+  }
 }

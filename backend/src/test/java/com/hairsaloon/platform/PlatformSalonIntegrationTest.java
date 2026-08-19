@@ -44,6 +44,7 @@ class PlatformSalonIntegrationTest {
 
     @Autowired MockMvc mockMvc;
     @Autowired JdbcTemplate jdbc;
+    @Autowired com.hairsaloon.auth.TestUserFactory testUsers;
 
     @BeforeEach
     void prepareDatabase() {
@@ -313,24 +314,14 @@ class PlatformSalonIntegrationTest {
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM salons", Integer.class)).isZero();
     }
 
-    private String signup(String email, String role) throws Exception {
-        MvcResult result = mockMvc.perform(post("/api/platform/auth/signup").header("Host", HOST)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""
-                    {"email":"%s","password":"Password123!","role":"%s"}
-                    """.formatted(email, role)))
-            .andExpect(status().isCreated()).andReturn();
-        String setCookie = result.getResponse().getHeader(HttpHeaders.SET_COOKIE);
-        assertThat(setCookie).isNotNull();
-        return setCookie.substring("auth_token=".length(), setCookie.indexOf(';'));
+    private String signup(String email, String role) {
+        return testUsers.create(email,
+            com.hairsaloon.auth.UserRole.valueOf(role)).token();
     }
 
     private long salon(String ownerEmail, String subdomain, String name, String city,
                        String status) {
-        jdbc.update("""
-            INSERT INTO users (email, password_hash, role, created_at)
-            VALUES (?, 'fixture-hash', 'SALON_OWNER', CURRENT_TIMESTAMP)
-            """, ownerEmail);
+        testUsers.create(ownerEmail, com.hairsaloon.auth.UserRole.SALON_OWNER);
         long ownerId = jdbc.queryForObject("SELECT id FROM users WHERE email = ?",
             Long.class, ownerEmail);
         jdbc.update("""

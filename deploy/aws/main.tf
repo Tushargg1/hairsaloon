@@ -12,6 +12,8 @@ locals {
     var.jwt_secret_arn,
     var.redis_auth_secret_arn,
     var.resend_secret_arn,
+    var.auth_hmac_secret_arn,
+    var.vapid_private_key_secret_arn,
     aws_db_instance.main.master_user_secret[0].secret_arn,
   ])
 
@@ -35,5 +37,11 @@ locals {
   ], var.resend_secret_arn == null ? [] : [{
     name      = "RESEND_API_KEY"
     valueFrom = var.resend_secret_arn
+  }], var.auth_hmac_secret_arn == null ? [] : [{
+    name      = "APP_AUTH_SECURITY_HMAC_SECRET"
+    valueFrom = var.auth_hmac_secret_arn
+  }], var.vapid_private_key_secret_arn == null ? [] : [{
+    name      = "VAPID_PRIVATE_KEY"
+    valueFrom = var.vapid_private_key_secret_arn
   }])
 }

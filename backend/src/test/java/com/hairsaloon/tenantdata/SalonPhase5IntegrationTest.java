@@ -38,6 +38,7 @@ class SalonPhase5IntegrationTest {
     private static final AtomicInteger IDS = new AtomicInteger();
     @Autowired MockMvc mockMvc;
     @Autowired JdbcTemplate jdbc;
+    @Autowired com.hairsaloon.auth.TestUserFactory testUsers;
     private int run;
 
     @BeforeEach
@@ -324,14 +325,8 @@ class SalonPhase5IntegrationTest {
         return new Owner(token, salonId, subdomain + ".localhost");
     }
 
-    private String signup(String email) throws Exception {
-        MvcResult result = mockMvc.perform(post("/api/platform/auth/signup").header("Host", "localhost")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"email\":\"" + email
-                    + "\",\"password\":\"Password123!\",\"role\":\"SALON_OWNER\"}"))
-            .andExpect(status().isCreated()).andReturn();
-        String header = result.getResponse().getHeader(HttpHeaders.SET_COOKIE);
-        return header.substring("auth_token=".length(), header.indexOf(';'));
+    private String signup(String email) {
+        return testUsers.create(email, com.hairsaloon.auth.UserRole.SALON_OWNER).token();
     }
 
     private long service(long salonId, String name, boolean active) {

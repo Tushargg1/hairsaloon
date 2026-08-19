@@ -15,13 +15,24 @@ private_subnet_ids = [
   "<private-subnet-id-b>",
 ]
 
-container_image_tag = "<immutable-release-tag>"
-frontend_bucket_name = "<globally-unique-private-bucket-name>"
+container_image_tag  = "<immutable-release-tag>"
+frontend_bucket_name = "<globally-unique-private-frontend-bucket-name>"
+media_bucket_name    = "<globally-unique-private-media-bucket-name>"
+media_object_prefix  = "salons"
+
+# Media safety defaults: incomplete uploads are removed quickly, while old
+# versions remain recoverable for one year before permanent expiration.
+media_multipart_upload_abort_days       = 7
+media_noncurrent_version_retention_days = 365
 
 # Existing secret ARNs only; never place secret values in Terraform inputs.
-jwt_secret_arn        = "<existing-jwt-secret-arn>"
-redis_auth_secret_arn = "<existing-redis-auth-token-secret-arn>"
-resend_secret_arn     = null
+jwt_secret_arn               = "<existing-jwt-secret-arn>"
+redis_auth_secret_arn        = "<existing-redis-auth-token-secret-arn>"
+auth_hmac_secret_arn         = null
+vapid_private_key_secret_arn = null
+vapid_public_key              = ""
+vapid_subject                 = ""
+resend_secret_arn             = null
 secret_kms_key_arns   = []
 email_from             = "<verified-sender-address-or-empty>"
 
