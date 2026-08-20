@@ -144,7 +144,8 @@ class BookingConcurrencyIT {
         jdbc.update("INSERT INTO promotions (salon_id,code,code_normalized,discount_type,"
                 + "discount_value,starts_at,ends_at,total_limit,minimum_spend,is_active) "
                 + "VALUES (?,'ONEONLY','ONEONLY','FIXED',5.00,?,?,1,0,TRUE)",
-            salonId, Instant.now().minusSeconds(60), Instant.now().plusSeconds(3600));
+            salonId, java.sql.Timestamp.from(Instant.now().minusSeconds(60)),
+            java.sql.Timestamp.from(Instant.now().plusSeconds(3600)));
         String host = subdomain + ".localhost";
         List<HttpRequest> requests = List.of(
             new HttpRequest(host, firstToken, bookingRequest(staffId, serviceId, date, 10)),
