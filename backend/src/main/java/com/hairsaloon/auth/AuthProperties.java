@@ -32,12 +32,20 @@ public class AuthProperties {
     }
 
     public static class Cookie {
-        private String domain = ".yoursite.com";
+        private String domain = "";
         private boolean secure = true;
+        /**
+         * Lax keeps cross-site requests from carrying the session cookie. Use None only
+         * when the frontend is served from a different site than the API, which also
+         * requires secure=true.
+         */
+        private String sameSite = "Lax";
         public String getDomain() { return domain; }
         public void setDomain(String domain) { this.domain = domain; }
         public boolean isSecure() { return secure; }
         public void setSecure(boolean secure) { this.secure = secure; }
+        public String getSameSite() { return sameSite; }
+        public void setSameSite(String sameSite) { this.sameSite = sameSite; }
     }
     public static class BootstrapPlatformAdmin {
         private boolean enabled;

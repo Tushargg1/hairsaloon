@@ -47,6 +47,12 @@ services:
         value: groomit
       - key: AUTH_COOKIE_SECURE
         value: "true"
+      # None is required while the frontend (*.vercel.app) and API
+      # (*.onrender.com) are different sites, because a Lax cookie is not sent
+      # on cross-site requests. Switch back to Lax once both are served under
+      # groomit.in, which restores same-site CSRF protection.
+      - key: AUTH_COOKIE_SAMESITE
+        value: None
       # Leave AUTH_COOKIE_DOMAIN unset while the frontend is on *.vercel.app;
       # a .groomit.in cookie is not valid for a vercel.app origin. Set it to
       # .groomit.in once the custom domain serves the frontend.

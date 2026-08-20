@@ -65,6 +65,7 @@ app:
     cookie:
       domain: "${AUTH_COOKIE_DOMAIN:}"
       secure: "${AUTH_COOKIE_SECURE:true}"
+      same-site: "${AUTH_COOKIE_SAMESITE:Lax}"
     security:
       hmac-secret: "${APP_AUTH_SECURITY_HMAC_SECRET:}"
     rate-limit:
