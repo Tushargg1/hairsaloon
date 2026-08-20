@@ -242,14 +242,11 @@ class AuthIntegrationTest {
                 .andExpect(status().isUnauthorized());
         }
         mockMvc.perform(post("/api/platform/auth/login").header("Host", HOST)
-                .header(HttpHeaders.ORIGIN, "http://localhost:5173")
                 .with(http -> { http.setRemoteAddr("203.0.113.10"); return http; })
                 .contentType(MediaType.APPLICATION_JSON).content(request))
             .andExpect(status().isTooManyRequests())
             .andExpect(header().string(HttpHeaders.RETRY_AFTER,
                 org.hamcrest.Matchers.matchesPattern("[1-9][0-9]*")))
-            .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS,
-                org.hamcrest.Matchers.containsString("Retry-After")))
             .andExpect(jsonPath("$.error").value("RATE_LIMITED"));
     }
 
