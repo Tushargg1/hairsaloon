@@ -1,6 +1,6 @@
-# HairSaloon
+# Groomit
 
-HairSaloon is the Phase 1–10 multi-tenant salon booking MVP described by `00-kiro-prompt.md` through `04-tasks.md`. Phase 10 prepares reviewed deployment configuration only: nothing in this repository applies Terraform, changes AWS/network resources, publishes images, or deploys an application.
+Groomit is a multi-tenant salon booking SaaS platform (groomit.in). Each salon gets its own subdomain: `https://salonname.groomit.in`. The platform site lives at `https://groomit.in`.
 
 ## Architecture
 
@@ -38,7 +38,7 @@ Get-Content .env | Where-Object { $_ -and -not $_.StartsWith('#') } | ForEach-Ob
 Set-Location backend
 .\mvnw.cmd spring-boot:run
 ```
-That backend command is intentionally documented, not run by this Phase 10 work because it is long-running. On startup Flyway automatically validates and applies `backend\src\main\resources\db\migration`; `ddl-auto=validate` prevents Hibernate from silently changing production schema. To inspect migration state, check startup logs or connect with `docker compose exec postgres psql -U hairsaloon -d hairsaloon -c "select version,description,success from flyway_schema_history order by installed_rank;"`.
+That backend command is intentionally documented, not run by this Phase 10 work because it is long-running. On startup Flyway automatically validates and applies `backend\src\main\resources\db\migration`; `ddl-auto=validate` prevents Hibernate from silently changing production schema. To inspect migration state, check startup logs or connect with `docker compose exec postgres psql -U groomit -d groomit -c "select version,description,success from flyway_schema_history order by installed_rank;"`.
 
 In a second PowerShell terminal:
 
@@ -59,12 +59,12 @@ Stop local dependencies with `docker compose down`. Add `-v` only when intention
 For an offline Windows hosts-file setup, run Notepad as Administrator, edit `C:\Windows\System32\drivers\etc\hosts`, and add every hostname explicitly (hosts files do not support wildcards):
 
 ```text
-127.0.0.1 hairsaloon.test
-127.0.0.1 www.hairsaloon.test
-127.0.0.1 glamour.hairsaloon.test
+127.0.0.1 groomit.test
+127.0.0.1 www.groomit.test
+127.0.0.1 glamour.groomit.test
 ```
 
-Then set `BASE_DOMAIN=hairsaloon.test`, platform hosts, cookie domain `.hairsaloon.test`, CORS values, and frontend base domain to match; run `ipconfig /flushdns`. Add another line for each salon subdomain.
+Then set `BASE_DOMAIN=groomit.test`, platform hosts, cookie domain `.groomit.test`, CORS values, and frontend base domain to match; run `ipconfig /flushdns`. Add another line for each salon subdomain.
 
 ### Cookies, CORS, and TLS
 

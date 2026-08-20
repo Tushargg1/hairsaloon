@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hairsaloon-v3'
+const CACHE_NAME = 'groomit-v3'
 const APP_SHELL = [
   '/',
   '/manifest.json',
@@ -75,7 +75,7 @@ self.addEventListener('push', (event) => {
     }
   }
   if (!payload || typeof payload !== 'object') payload = {}
-  const title = typeof payload.title === 'string' ? payload.title : 'HairSaloon update'
+  const title = typeof payload.title === 'string' ? payload.title : 'Groomit update'
   const options = {
     body: typeof payload.body === 'string' ? payload.body : 'You have a new booking update.',
     icon: '/icon-192.png',

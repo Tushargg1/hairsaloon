@@ -6,7 +6,7 @@ variable "aws_region" {
 variable "project_name" {
   description = "Short lowercase name used in resource names."
   type        = string
-  default     = "hairsaloon"
+  default     = "groomit"
   validation {
     condition     = can(regex("^[a-z0-9-]+$", var.project_name))
     error_message = "project_name may contain lowercase letters, digits, and hyphens only."
@@ -149,13 +149,13 @@ variable "email_from" {
 variable "db_name" {
   description = "Initial PostgreSQL database name."
   type        = string
-  default     = "hairsaloon"
+  default     = "groomit"
 }
 
 variable "db_master_username" {
   description = "RDS master username; its password is generated and managed by RDS."
   type        = string
-  default     = "hairsaloon_admin"
+  default     = "groomit_admin"
 }
 
 variable "db_instance_class" {

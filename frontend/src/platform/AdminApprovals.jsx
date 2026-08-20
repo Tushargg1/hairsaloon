@@ -58,7 +58,7 @@ export default function AdminApprovals() {
   return (
     <main className="admin-page page-width">
       <header className="admin-heading">
-        <div><p className="eyebrow">Platform administration</p><h1>Salon approvals</h1><p>Review new businesses before they become visible on HairSaloon.</p></div>
+        <div><p className="eyebrow">Platform administration</p><h1>Salon approvals</h1><p>Review new businesses before they become visible on Groomit.</p></div>
         <div className="count-card"><strong>{pendingQuery.data?.length ?? '—'}</strong><span>Awaiting review</span></div>
       </header>
 

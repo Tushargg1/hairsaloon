@@ -43,9 +43,9 @@ export default function PlatformLayout() {
     <div className="site-frame">
       <a className="skip-link" href="#main-content">Skip to main content</a>
       <header className="site-header">
-        <NavLink className="brand" to="/" aria-label="HairSaloon home">
-          <span className="brand-mark" aria-hidden="true">H</span>
-          <span>HairSaloon</span>
+        <NavLink className="brand" to="/" aria-label="Groomit home">
+          <span className="brand-mark" aria-hidden="true">G</span>
+          <span>Groomit</span>
         </NavLink>
         <nav className="main-nav" aria-label="Main navigation">
           <NavLink to="/salons">Find a salon</NavLink>
@@ -78,7 +78,7 @@ export default function PlatformLayout() {
       </header>
       <div className="site-content" id="main-content" tabIndex="-1"><Outlet /></div>
       <footer className="site-footer">
-        <div><strong>HairSaloon</strong><p>Independent salons, thoughtfully discovered.</p></div>
+        <div><strong>Groomit</strong><p>Independent salons, thoughtfully discovered.</p></div>
         <NavLink to="/salons">Browse salons</NavLink>
       </footer>
     </div>

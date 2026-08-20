@@ -8,10 +8,10 @@
     <version>3.3.5</version>
     <relativePath/>
   </parent>
-  <groupId>com.hairsaloon</groupId>
+  <groupId>com.groomit</groupId>
   <artifactId>backend</artifactId>
   <version>0.0.1-SNAPSHOT</version>
-  <name>hairsaloon-backend</name>
+  <name>groomit-backend</name>
   <description>Multi-tenant salon booking platform backend</description>
   <properties>
     <java.version>17</java.version>

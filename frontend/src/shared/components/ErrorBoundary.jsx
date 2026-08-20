@@ -8,7 +8,7 @@ export default class ErrorBoundary extends Component {
   }
 
   componentDidCatch(error, details) {
-    console.error('HairSaloon UI crashed', error, details)
+    console.error('Groomit UI crashed', error, details)
   }
 
   render() {
@@ -20,7 +20,7 @@ export default class ErrorBoundary extends Component {
           <p className="eyebrow">Unexpected application error</p>
           <h1>Something went wrong.</h1>
           <p>Your information is safe. Reload the page to restore the application.</p>
-          <button className="button" type="button" onClick={() => window.location.reload()}>Reload HairSaloon</button>
+          <button className="button" type="button" onClick={() => window.location.reload()}>Reload Groomit</button>
         </div>
       </main>
     )

@@ -214,7 +214,7 @@ export default function AuthPage({ mode }) {
         {!isSignup && !resetStage && <p className="form-switch"><button className="button button-secondary" type="button" onClick={() => { setResetStage('request'); setStatus({ pending: false, error: '', success: '' }) }}>Forgot password?</button></p>}
         {!isSignup && resetStage && <p className="form-switch"><button className="button button-secondary" type="button" onClick={() => { setResetStage(null); setStatus({ pending: false, error: '', success: '' }) }}>Back to login</button></p>}
         <p className="form-switch">
-          {isSignup ? 'Already have an account?' : 'New to HairSaloon?'}{' '}
+          {isSignup ? 'Already have an account?' : 'New to Groomit?'}{' '}
           <Link to={isSignup ? '/login' : '/signup'}>{isSignup ? 'Log in' : 'Create one'}</Link>
         </p>
       </section>

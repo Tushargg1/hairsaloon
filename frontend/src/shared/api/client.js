@@ -15,7 +15,7 @@ export function classifyApiError(error) {
 }
 
 export function isConnectivityError(error) {
-  const category = error?.hairsaloonErrorType || classifyApiError(error)
+  const category = error?.groomitErrorType || classifyApiError(error)
   return category === 'network' || category === 'timeout'
 }
 
@@ -25,7 +25,7 @@ export function retryAfterSeconds(error) {
 }
 
 export function apiErrorMessage(error, fallback = 'Something went wrong. Please try again.') {
-  const category = error?.hairsaloonErrorType || classifyApiError(error)
+  const category = error?.groomitErrorType || classifyApiError(error)
   if (error?.response?.status === 429) {
     const seconds = retryAfterSeconds(error)
     return seconds
@@ -38,8 +38,8 @@ export function apiErrorMessage(error, fallback = 'Something went wrong. Please 
       return 'You appear to be offline. Check your internet connection and try again.'
     }
     return import.meta.env.DEV
-      ? "HairSaloon can\u2019t reach the backend. Make sure the server is running on port 8080, then try again."
-      : "HairSaloon can\u2019t reach the server right now. Check your connection and try again."
+      ? "Groomit can\u2019t reach the backend. Make sure the server is running on port 8080, then try again."
+      : "Groomit can\u2019t reach the server right now. Check your connection and try again."
   }
   if (category === 'server') return error?.response?.data?.message || 'The server encountered a problem. Please try again shortly.'
   const data = error?.response?.data
@@ -65,7 +65,7 @@ const apiClient = axios.create({
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    error.hairsaloonErrorType = classifyApiError(error)
+    error.groomitErrorType = classifyApiError(error)
     return Promise.reject(error)
   },
 )

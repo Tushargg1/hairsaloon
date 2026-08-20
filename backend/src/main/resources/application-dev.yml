@@ -19,7 +19,15 @@ logging:
     com.hairsaloon: DEBUG
 
 app:
+  base-domain: localhost
+  platform-hosts: localhost,www.localhost
+  cors:
+    allowed-origins: http://localhost:5173
+    allowed-origin-patterns: http://*.localhost:[*]
   auth:
+    cookie:
+      domain: ""
+      secure: false
     otp:
       allow-code-logging: true
 

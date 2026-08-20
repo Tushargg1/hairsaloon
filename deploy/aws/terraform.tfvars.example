@@ -1,9 +1,9 @@
 # Placeholders only. Do not put secret values in this file.
 aws_region = "<deployment-region>"
 
-project_name    = "hairsaloon"
+project_name    = "groomit"
 environment     = "prod"
-domain_name     = "<example.com>"
+domain_name     = "groomit.in"
 route53_zone_id = "<existing-public-hosted-zone-id>"
 vpc_id           = "<existing-vpc-id>"
 public_subnet_ids = [

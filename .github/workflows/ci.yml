@@ -14,13 +14,13 @@ jobs:
       postgres:
         image: postgres:16.4-alpine
         env:
-          POSTGRES_DB: hairsaloon
-          POSTGRES_USER: hairsaloon
-          POSTGRES_PASSWORD: hairsaloon
+          POSTGRES_DB: groomit
+          POSTGRES_USER: groomit
+          POSTGRES_PASSWORD: groomit
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U hairsaloon -d hairsaloon"
+          --health-cmd "pg_isready -U groomit -d groomit"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
@@ -34,12 +34,12 @@ jobs:
           --health-timeout 3s
           --health-retries 10
     env:
-      DATABASE_URL: jdbc:postgresql://localhost:5432/hairsaloon
-      POSTGRES_USER: hairsaloon
-      POSTGRES_PASSWORD: hairsaloon
-      TEST_POSTGRES_URL: jdbc:postgresql://localhost:5432/hairsaloon
-      TEST_POSTGRES_USERNAME: hairsaloon
-      TEST_POSTGRES_PASSWORD: hairsaloon
+      DATABASE_URL: jdbc:postgresql://localhost:5432/groomit
+      POSTGRES_USER: groomit
+      POSTGRES_PASSWORD: groomit
+      TEST_POSTGRES_URL: jdbc:postgresql://localhost:5432/groomit
+      TEST_POSTGRES_USERNAME: groomit
+      TEST_POSTGRES_PASSWORD: groomit
       REDIS_HOST: localhost
       REDIS_PORT: 6379
       SPRING_PROFILES_ACTIVE: dev
@@ -48,7 +48,7 @@ jobs:
       CORS_ALLOWED_ORIGINS: http://lvh.me:5173,http://www.lvh.me:5173
       CORS_ALLOWED_ORIGIN_PATTERNS: http://*.lvh.me:5173
       JWT_SECRET: raw:ci-only-secret-that-is-at-least-sixty-four-bytes-long-and-never-used-outside-ci
-      JWT_ISSUER: hairsaloon-ci
+      JWT_ISSUER: groomit-ci
       AUTH_COOKIE_DOMAIN: .lvh.me
       AUTH_COOKIE_SECURE: false
     steps:

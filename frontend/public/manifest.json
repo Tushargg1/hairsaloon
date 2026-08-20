@@ -1,6 +1,6 @@
 {
-  "name": "HairSaloon",
-  "short_name": "HairSaloon",
+  "name": "Groomit",
+  "short_name": "Groomit",
   "description": "Find and book independent salons near you",
   "id": "/",
   "start_url": "/",

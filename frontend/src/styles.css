@@ -706,7 +706,7 @@ input:focus, select:focus, textarea:focus {
 }
 
 
-/* Magic UI registry patterns, adapted to the HairSaloon design system */
+/* Magic UI registry patterns, adapted to the Groomit design system */
 .magic-grid-pattern {
   position: absolute;
   z-index: -1;

@@ -32,9 +32,9 @@ export default function HomePage() {
           <motion.p className="hero-lede" variants={revealItem}>Discover trusted independent salons, compare the details that matter, and book a space that feels like you.</motion.p>
           <motion.div className="button-row" variants={revealItem}>
             <Link className="button" to={primaryPath}>{primaryLabel}<span aria-hidden="true">→</span></Link>
-            {!user && <Link className="button button-secondary" to="/signup">Join HairSaloon</Link>}
+            {!user && <Link className="button button-secondary" to="/signup">Join Groomit</Link>}
           </motion.div>
-          <motion.ul className="hero-proof" variants={revealItem} aria-label="HairSaloon benefits">
+          <motion.ul className="hero-proof" variants={revealItem} aria-label="Groomit benefits">
             <li><span aria-hidden="true">01</span>Discover</li><li><span aria-hidden="true">02</span>Compare</li><li><span aria-hidden="true">03</span>Book</li>
           </motion.ul>
         </motion.div>
