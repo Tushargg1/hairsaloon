@@ -1,88 +1,98 @@
-import { stagger } from 'motion'
-import { motion, useReducedMotion } from 'motion/react'
 import { Link } from 'react-router-dom'
-import AnimatedGridPattern from '../shared/components/AnimatedGridPattern.jsx'
-import Marquee from '../shared/components/Marquee.jsx'
 import useAuth from '../shared/auth/useAuth.js'
+import Icon from '../shared/components/Icon.jsx'
+import BrassButton from '../shared/components/BrassButton.jsx'
 
-const heroGroup = { hidden: {}, visible: { transition: { delayChildren: stagger(0.09) } } }
-const revealItem = {
-  hidden: { opacity: 0, y: 22 },
-  visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 260, damping: 26 } },
-}
-const featureGroup = { hidden: {}, visible: { transition: { delayChildren: stagger(0.12) } } }
-const serviceTags = ['Precision cuts', 'Balayage', 'Natural hair', 'Barbering', 'Braids', 'Colour', 'Blowouts', 'Styling']
+const HERO_BG = 'https://lh3.googleusercontent.com/aida-public/AB6AXuDJPIJ2JIxb3RVCeuZEKylrHaYkC9iBqr1ESDbu9hSDBMoaFnzyU30DbmY1hKpWulO2us3e3P1JsUXsjJk6hl7eRxx2By1ce08JGuW6fpEBpz6r6xrHAXom9gvHa6d4KIQ5TDgSAiw4r2DXNctX9_txwNfl026hs7P8mhismD8NaTSlW76CLZmE8PeWYe-YCVdv9UZpLROZgR_dHY3OdUK_u6oL9eaDNvA9VPY7pyeh-vMJI9gKrKEUBMz3aWqfHch-dA'
+
+const stats = [
+  { icon: 'storefront', value: '500+', label: 'Premium Salons' },
+  { icon: 'event_available', value: '50k+', label: 'Bookings Made' },
+  { icon: 'star', value: '4.9/5', label: 'Client Reviews' },
+]
 
 export default function HomePage() {
   const { user } = useAuth()
-  const shouldReduceMotion = useReducedMotion()
-  const initialState = shouldReduceMotion ? false : 'hidden'
-  const isAdmin = user?.role === 'PLATFORM_ADMIN'
-  const isOwner = user?.role === 'SALON_OWNER'
-  const primaryPath = isAdmin ? '/admin/approvals' : isOwner ? '/salon-signup' : '/salons'
-  const primaryLabel = isAdmin ? 'Review approvals' : isOwner ? 'List your salon' : 'Explore salons'
-  const hoverLift = shouldReduceMotion ? undefined : { y: -6, scale: 1.015 }
 
   return (
-    <main className="home-page">
-      <section className="hero page-width">
-        <motion.div className="hero-copy" variants={heroGroup} initial={initialState} animate="visible">
-          <motion.p className="eyebrow" variants={revealItem}>Your next great hair day starts here</motion.p>
-          <motion.h1 variants={revealItem}>Find your place.<br /><em>Own your style.</em></motion.h1>
-          <motion.p className="hero-lede" variants={revealItem}>Discover trusted independent salons, compare the details that matter, and book a space that feels like you.</motion.p>
-          <motion.div className="button-row" variants={revealItem}>
-            <Link className="button" to={primaryPath}>{primaryLabel}<span aria-hidden="true">→</span></Link>
-            {!user && <Link className="button button-secondary" to="/signup">Join Groomit</Link>}
-          </motion.div>
-          <motion.ul className="hero-proof" variants={revealItem} aria-label="Groomit benefits">
-            <li><span aria-hidden="true">01</span>Discover</li><li><span aria-hidden="true">02</span>Compare</li><li><span aria-hidden="true">03</span>Book</li>
-          </motion.ul>
-        </motion.div>
+    <main className="flex-grow">
+      {/* Hero Section */}
+      <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
+        {/* Background */}
+        <div className="absolute inset-0 z-0">
+          <div
+            className="w-full h-full bg-cover bg-center bg-no-repeat"
+            style={{ backgroundImage: `url('${HERO_BG}')` }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px]" />
+        </div>
 
-        <motion.div className="hero-art" initial={shouldReduceMotion ? false : { opacity: 0, scale: .96, rotate: 1.5 }} animate={{ opacity: 1, scale: 1, rotate: 0 }} transition={{ type: 'spring', stiffness: 120, damping: 22, delay: .12 }} aria-hidden="true">
-          <AnimatedGridPattern />
-          <motion.div className="hero-orbit" animate={shouldReduceMotion ? undefined : { rotate: 360 }} transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}><span>Cut</span><span>Colour</span><span>Care</span></motion.div>
-          <div className="hero-monogram"><small>EST.</small><strong>HS</strong><small>2026</small></div>
-          <motion.div className="hero-float-card hero-float-card-top" whileHover={hoverLift} transition={{ type: 'spring', stiffness: 360, damping: 24 }}><span>Find your next look</span><strong>Independent talent</strong><small>Near you</small></motion.div>
-          <motion.div className="hero-float-card hero-float-card-bottom" whileHover={hoverLift} transition={{ type: 'spring', stiffness: 360, damping: 24 }}><span className="float-rating">★★★★★</span><strong>Trusted choices</strong><small>Details up front</small></motion.div>
-        </motion.div>
+        {/* Content */}
+        <div className="relative z-10 container mx-auto px-4 md:px-6 max-w-[1280px] flex flex-col items-center text-center mt-20">
+          <h1 className="font-display text-display-lg-mobile md:text-display-lg text-on-surface mb-6 text-shadow-lg max-w-4xl leading-tight">
+            Book Your Next Look
+          </h1>
+          <p className="font-body text-body-lg text-on-surface-variant mb-20 max-w-2xl">
+            Discover and reserve appointments at the finest premium grooming establishments. Experience craftsmanship and heritage in every cut.
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto justify-center">
+            <BrassButton to="/salons" size="lg" icon={<Icon name="search" className="text-[20px]" />}>
+              Explore Salons
+            </BrassButton>
+            {!user && (
+              <BrassButton to="/signup" size="lg" variant="outline">
+                Join Groomit
+              </BrassButton>
+            )}
+          </div>
+
+          {/* Floating Stats */}
+          <div className="mt-24 grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl">
+            {stats.map((stat) => (
+              <div
+                key={stat.label}
+                className="glass-panel rounded-lg p-6 text-center flex flex-col items-center transform transition-transform hover:-translate-y-1 duration-300 amber-glow"
+              >
+                <Icon name={stat.icon} filled className="text-secondary text-4xl mb-2" />
+                <h3 className="font-display text-headline-md text-secondary-fixed mb-1">{stat.value}</h3>
+                <p className="font-body text-label-sm text-on-surface-variant tracking-wider uppercase">{stat.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
 
-      <motion.section className="value-strip" variants={featureGroup} initial={initialState} whileInView="visible" viewport={{ once: true, amount: .45 }}>
-        <motion.div variants={revealItem}><span className="value-number">01</span><strong>Curated discovery</strong><span>Search with practical filters</span></motion.div>
-        <motion.div variants={revealItem}><span className="value-number">02</span><strong>Independent experts</strong><span>Support local salon talent</span></motion.div>
-        <motion.div variants={revealItem}><span className="value-number">03</span><strong>Clear choices</strong><span>Ratings and details up front</span></motion.div>
-      </motion.section>
-
-      <section className="service-ribbon" aria-label="Popular salon services">
-        <p className="sr-only">Popular services</p>
-        <Marquee>{serviceTags.map((service) => <span className="service-ribbon-item" key={service}><i aria-hidden="true" />{service}</span>)}</Marquee>
+      {/* How It Works */}
+      <section className="py-20 px-4 md:px-6 max-w-[1280px] mx-auto">
+        <h2 className="font-display text-headline-md text-on-surface text-center mb-12">How It Works</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {[
+            { step: '01', icon: 'search', title: 'Discover', desc: 'Browse curated premium salons in your city.' },
+            { step: '02', icon: 'compare_arrows', title: 'Compare', desc: 'View services, prices, reviews, and availability.' },
+            { step: '03', icon: 'event_available', title: 'Book', desc: 'Reserve your slot in seconds. No calls needed.' },
+          ].map((item) => (
+            <div key={item.step} className="glass-surface metallic-border rounded-lg p-8 text-center flex flex-col items-center group hover:-translate-y-1 transition-transform duration-300">
+              <span className="font-display text-brass text-sm mb-4 tracking-widest">{item.step}</span>
+              <Icon name={item.icon} filled className="text-secondary text-4xl mb-4" />
+              <h3 className="font-display text-headline-sm text-on-surface mb-2">{item.title}</h3>
+              <p className="font-body text-body-md text-on-surface-variant">{item.desc}</p>
+            </div>
+          ))}
+        </div>
       </section>
 
-      <section className="page-width editorial-section">
-        <motion.div className="editorial-intro" initial={initialState} whileInView="visible" viewport={{ once: true, amount: .5 }} variants={revealItem}>
-          <p className="eyebrow">Built for both sides of the chair</p><h2>Beauty is personal.<br />Finding it should be simple.</h2>
-        </motion.div>
-        <motion.div className="home-bento" variants={featureGroup} initial={initialState} whileInView="visible" viewport={{ once: true, amount: .2 }}>
-          <motion.article className="bento-card bento-discover" variants={revealItem} whileHover={hoverLift}>
-            <div className="bento-visual bento-search-mockup"><span>Find a salon</span><div>City or postcode <b>Search</b></div><small>Colour · Cuts · Natural hair</small></div>
-            <div className="bento-copy"><span>01 / Discover</span><h3>Search your way</h3><p>Explore by city, service, rating, or salon name—without the endless tabs.</p></div>
-          </motion.article>
-          <motion.article className="bento-card bento-compare" variants={revealItem} whileHover={hoverLift}>
-            <div className="bento-rating"><strong>4.9</strong><span>★★★★★</span><small>Trusted salon reviews</small></div>
-            <div className="bento-copy"><span>02 / Compare</span><h3>Meet your match</h3><p>See the details and reputation behind every salon.</p></div>
-          </motion.article>
-          <motion.article className="bento-card bento-grow" variants={revealItem} whileHover={hoverLift}>
-            <div className="bento-calendar"><span>Today</span><i /><i /><i /></div>
-            <div className="bento-copy"><span>03 / Grow</span><h3>Run a calmer day</h3><p>Owners manage services, staff, bookings, and reviews in one place.</p></div>
-          </motion.article>
-        </motion.div>
+      {/* CTA */}
+      <section className="py-20 px-4 md:px-6 max-w-[1280px] mx-auto text-center">
+        <div className="glass-panel rounded-2xl p-12 md:p-16">
+          <h2 className="font-display text-headline-md text-on-surface mb-4">Own a Salon?</h2>
+          <p className="font-body text-body-lg text-on-surface-variant mb-8 max-w-xl mx-auto">
+            List your business on Groomit and reach thousands of customers looking for premium grooming services.
+          </p>
+          <BrassButton to="/signup" size="lg">Get Started Free</BrassButton>
+        </div>
       </section>
-
-      <motion.section className="home-cta page-width" initial={initialState} whileInView="visible" viewport={{ once: true, amount: .4 }} variants={revealItem}>
-        <div><p className="eyebrow">Ready when you are</p><h2>Your chair is waiting.</h2></div>
-        <Link className="button button-light" to={primaryPath}>{primaryLabel}<span aria-hidden="true">→</span></Link>
-      </motion.section>
     </main>
   )
 }

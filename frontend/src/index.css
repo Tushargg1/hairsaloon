@@ -1,0 +1,165 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-background text-on-background min-h-screen;
+    background-image: radial-gradient(circle at top right, #31291b, #191206);
+  }
+}
+
+@layer components {
+  .glass-panel {
+    background-color: rgba(35, 15, 8, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(139, 105, 66, 0.3);
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.7);
+  }
+
+  .glass-surface {
+    background-color: rgba(35, 15, 8, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .brass-gradient {
+    background: linear-gradient(135deg, #B8860B 0%, #C8956C 100%);
+    color: #2C1810;
+  }
+
+  .brass-gradient:hover {
+    box-shadow: 0 0 25px rgba(255, 191, 0, 0.25);
+  }
+
+  .amber-glow {
+    box-shadow: 0 0 20px rgba(255, 191, 0, 0.15);
+  }
+
+  .amber-glow-hover:hover {
+    box-shadow: 0 0 25px rgba(255, 191, 0, 0.25);
+  }
+
+  .metallic-border {
+    border: 1px solid rgba(139, 105, 66, 0.5);
+  }
+
+  .input-glass {
+    @apply bg-[rgba(25,18,6,0.7)] text-on-surface rounded transition-all;
+    border: 1px solid rgba(139, 105, 66, 0.4);
+  }
+
+  .input-glass:focus {
+    border-color: #B8860B;
+    box-shadow: inset 0 0 10px rgba(184, 134, 11, 0.1);
+    outline: none;
+  }
+
+  .input-glass::placeholder {
+    @apply text-outline;
+  }
+
+  .barber-slot {
+    border: 1px solid rgba(139, 105, 66, 0.5);
+    @apply transition-all duration-200 rounded text-on-surface-variant;
+  }
+
+  .barber-slot:hover:not(:disabled) {
+    @apply text-secondary border-secondary;
+  }
+
+  .barber-slot.selected {
+    @apply brass-gradient font-bold;
+    box-shadow: 0 0 10px rgba(184, 134, 11, 0.2);
+  }
+
+  .barber-slot:disabled {
+    @apply text-outline bg-surface-container-low cursor-not-allowed line-through;
+  }
+
+  .status-chip {
+    @apply px-2 py-0.5 rounded-full text-label-sm font-body;
+  }
+
+  .status-confirmed {
+    @apply bg-[rgba(168,144,72,0.15)] text-[#A89048];
+  }
+
+  .status-completed {
+    @apply bg-[rgba(168,144,72,0.15)] text-[#A89048];
+  }
+
+  .status-cancelled {
+    @apply bg-[rgba(155,59,59,0.15)] text-[#9B3B3B];
+  }
+
+  .status-no-show {
+    @apply bg-[rgba(155,59,59,0.15)] text-[#9B3B3B];
+  }
+}
+
+@layer utilities {
+  .text-shadow-lg {
+    text-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  }
+}
+
+/* Dashboard legacy class compatibility */
+@layer components {
+  .page-width { @apply max-w-[1280px] mx-auto px-4; }
+  .manager-heading { @apply mb-6; }
+  .manager-heading .eyebrow { @apply font-body text-label-md text-secondary tracking-wider uppercase mb-1; }
+  .manager-heading h2 { @apply font-display text-headline-sm text-on-surface; }
+  .manager-heading p { @apply font-body text-body-md text-on-surface-variant mt-1; }
+  .manager-list { @apply flex flex-col gap-3; }
+  .manager-item { @apply flex justify-between items-center py-3 px-4 bg-surface-container/50 rounded-lg border border-outline-variant/20; }
+  .manager-item h3 { @apply font-body text-title-lg text-on-surface text-base; }
+  .manager-item p { @apply font-body text-body-md text-on-surface-variant; }
+  .manager-status { @apply font-body text-label-sm text-[#A89048]; }
+  .manager-status.inactive { @apply text-on-surface-variant; }
+  .manager-loading { @apply text-on-surface-variant py-8 text-center; }
+  .manager-form { @apply glass-panel rounded-xl p-6 flex flex-col gap-4; }
+  .manager-form label { @apply font-body text-label-sm text-on-surface-variant block; }
+  .manager-form input, .manager-form select, .manager-form textarea { @apply input-glass w-full rounded py-2 px-3 text-body-md mt-1; }
+  .manager-form .button { @apply brass-gradient px-6 py-2 rounded font-body text-label-md transition-all; }
+  .manager-form .button-secondary { @apply bg-transparent border border-outline-variant text-on-surface-variant hover:bg-surface-container-high; }
+  .manager-form .button-ghost { @apply bg-transparent text-on-surface-variant hover:text-secondary border-none; }
+
+  .form-status { @apply font-body text-body-md rounded px-3 py-2 my-2; }
+  .form-status.error { @apply text-error bg-error-container/20; }
+  .form-status.success { @apply text-[#A89048] bg-[rgba(168,144,72,0.1)]; }
+
+  .button { @apply brass-gradient px-4 py-2 rounded font-body text-label-md transition-all inline-flex items-center gap-1; }
+  .button-secondary { @apply bg-transparent border border-secondary text-secondary hover:bg-secondary/10; background: none; }
+  .button-ghost { @apply bg-transparent text-on-surface-variant hover:text-secondary; background: none; border: none; }
+  .button-small { @apply px-3 py-1.5 text-label-sm; }
+  .button-full { @apply w-full justify-center; }
+
+  .public-state { @apply glass-panel rounded-lg p-8 text-center; }
+  .public-state h2, .public-state h3 { @apply font-display text-headline-sm text-on-surface mb-2; }
+  .public-state p { @apply font-body text-body-md text-on-surface-variant mb-4; }
+
+  .muted { @apply text-on-surface-variant; }
+  .optional { @apply text-on-surface-variant text-label-sm; }
+
+  .calendar-grid { @apply grid gap-2; }
+  .calendar-slot { @apply bg-surface-container/50 rounded border border-outline-variant/20 p-3; }
+  .calendar-slot h4 { @apply font-body text-title-lg text-on-surface text-sm; }
+  .calendar-slot p { @apply font-body text-label-sm text-on-surface-variant; }
+
+  .slot-grid { @apply grid grid-cols-3 sm:grid-cols-4 gap-2; }
+  .slot-grid button { @apply barber-slot py-2 text-center font-body text-label-md; }
+
+  .table-scroll { @apply overflow-x-auto; }
+  .table-scroll table { @apply w-full text-left; }
+  .table-scroll thead { @apply border-b border-outline-variant/30; }
+  .table-scroll th { @apply font-body text-label-md text-on-surface-variant py-2 px-3; }
+  .table-scroll td { @apply font-body text-body-md text-on-surface py-2 px-3 border-b border-outline-variant/10; }
+}

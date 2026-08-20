@@ -2,118 +2,109 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { approveSalon, createOwner, errorMessage, getPendingSalons, salonKeys } from './salon-api.js'
 import { salonUrl } from './platform-config.js'
+import GlassPanel from '../shared/components/GlassPanel.jsx'
+import BrassButton from '../shared/components/BrassButton.jsx'
+import InputField from '../shared/components/InputField.jsx'
+import Icon from '../shared/components/Icon.jsx'
 
 export default function AdminApprovals() {
   const queryClient = useQueryClient()
   const [feedback, setFeedback] = useState('')
-  const [ownerForm, setOwnerForm] = useState({
-    name: '', phone: '', email: '', temporaryPassword: '',
-  })
+  const [ownerForm, setOwnerForm] = useState({ name: '', phone: '', email: '', temporaryPassword: '' })
   const [ownerFeedback, setOwnerFeedback] = useState({ type: '', message: '' })
   const pendingQuery = useQuery({ queryKey: salonKeys.pending, queryFn: getPendingSalons })
   const provisioning = useMutation({
     mutationFn: createOwner,
-    onSuccess: () => {
-      setOwnerForm({ name: '', phone: '', email: '', temporaryPassword: '' })
-      setOwnerFeedback({ type: 'success', message: 'Salon owner account created successfully.' })
-    },
+    onSuccess: () => { setOwnerForm({ name: '', phone: '', email: '', temporaryPassword: '' }); setOwnerFeedback({ type: 'success', message: 'Owner account created.' }) },
     onError: (error) => {
       const fields = error?.response?.data?.fieldErrors
-      if (fields && typeof fields === 'object' && Object.keys(fields).length > 0) {
-        const detail = Object.entries(fields).map(([f, m]) => `${f}: ${m}`).join('. ')
-        setOwnerFeedback({ type: 'error', message: detail + '.' })
-      } else {
-        setOwnerFeedback({
-          type: 'error',
-          message: errorMessage(error, 'Unable to create the salon owner account.'),
-        })
-      }
+      if (fields && Object.keys(fields).length) setOwnerFeedback({ type: 'error', message: Object.entries(fields).map(([f, m]) => `${f}: ${m}`).join('. ') })
+      else setOwnerFeedback({ type: 'error', message: errorMessage(error, 'Unable to create owner.') })
     },
   })
   const approval = useMutation({
     mutationFn: approveSalon,
-    onSuccess: (salon) => {
-      setFeedback(`${salon?.name || 'Salon'} approved successfully.`)
-      queryClient.invalidateQueries({ queryKey: salonKeys.pending })
-      queryClient.invalidateQueries({ queryKey: salonKeys.all })
-    },
-    onError: (error) => setFeedback(errorMessage(error, 'Approval failed. Please try again.')),
+    onSuccess: (salon) => { setFeedback(`${salon?.name || 'Salon'} approved!`); queryClient.invalidateQueries({ queryKey: salonKeys.pending }); queryClient.invalidateQueries({ queryKey: salonKeys.all }) },
+    onError: (error) => setFeedback(errorMessage(error, 'Approval failed.')),
   })
 
-  function updateOwner(event) {
-    setOwnerForm((current) => ({ ...current, [event.target.name]: event.target.value }))
-  }
-
-  function submitOwner(event) {
-    event.preventDefault()
-    setOwnerFeedback({ type: '', message: '' })
-    provisioning.mutate({
-      name: ownerForm.name.trim(),
-      phone: ownerForm.phone.trim(),
-      email: ownerForm.email.trim(),
-      temporaryPassword: ownerForm.temporaryPassword,
-    })
-  }
+  function updateOwner(e) { setOwnerForm((c) => ({ ...c, [e.target.name]: e.target.value })) }
+  function submitOwner(e) { e.preventDefault(); setOwnerFeedback({ type: '', message: '' }); provisioning.mutate({ name: ownerForm.name.trim(), phone: ownerForm.phone.trim(), email: ownerForm.email.trim(), temporaryPassword: ownerForm.temporaryPassword }) }
 
   return (
-    <main className="admin-page page-width">
-      <header className="admin-heading">
-        <div><p className="eyebrow">Platform administration</p><h1>Salon approvals</h1><p>Review new businesses before they become visible on Groomit.</p></div>
-        <div className="count-card"><strong>{pendingQuery.data?.length ?? '—'}</strong><span>Awaiting review</span></div>
-      </header>
+    <main className="max-w-[1280px] mx-auto px-4 py-12">
+      {/* Header */}
+      <div className="flex justify-between items-start mb-8">
+        <div>
+          <p className="font-body text-label-md text-secondary tracking-wider uppercase mb-1">Platform administration</p>
+          <h1 className="font-display text-headline-md text-on-surface">Salon Approvals</h1>
+          <p className="font-body text-body-md text-on-surface-variant mt-1">Review new businesses before they go live on Groomit.</p>
+        </div>
+        <div className="glass-panel rounded-lg px-6 py-4 text-center amber-glow">
+          <strong className="font-display text-headline-md text-secondary-fixed block">{pendingQuery.data?.length ?? '—'}</strong>
+          <span className="font-body text-label-sm text-on-surface-variant">Awaiting review</span>
+        </div>
+      </div>
 
-      <section className="form-card" aria-labelledby="owner-provisioning-heading">
-        <p className="eyebrow">Account provisioning</p>
-        <h2 id="owner-provisioning-heading">Create salon owner</h2>
-        <p>Create the owner’s account before they register their salon.</p>
-        <form onSubmit={submitOwner}>
-          <label>Owner name<input name="name" type="text" autoComplete="name" required maxLength="160" value={ownerForm.name} onChange={updateOwner} /></label>
-          <label>Phone number<input name="phone" type="tel" inputMode="tel" autoComplete="tel" required minLength="10" maxLength="15" value={ownerForm.phone} onChange={updateOwner} /></label>
-          <label>Email address<input name="email" type="email" autoComplete="email" required maxLength="320" value={ownerForm.email} onChange={updateOwner} /></label>
-          <label>Temporary password<input name="temporaryPassword" type="password" autoComplete="new-password" required minLength="12" maxLength="72" value={ownerForm.temporaryPassword} onChange={updateOwner} /></label>
-          {ownerFeedback.message && (
-            <p className={`form-status ${ownerFeedback.type}`} role={ownerFeedback.type === 'error' ? 'alert' : 'status'}>{ownerFeedback.message}</p>
-          )}
-          <button className="button" disabled={provisioning.isPending} type="submit">
-            {provisioning.isPending ? 'Creating owner…' : 'Create salon owner'}
-          </button>
+      {/* Owner Provisioning */}
+      <GlassPanel className="mb-8 max-w-xl">
+        <p className="font-body text-label-md text-secondary tracking-wider uppercase mb-1">Account provisioning</p>
+        <h2 className="font-display text-headline-sm text-on-surface mb-2">Create Salon Owner</h2>
+        <p className="font-body text-body-md text-on-surface-variant mb-6">Create the owner's account first; they'll register their salon after signing in.</p>
+        <form onSubmit={submitOwner} className="flex flex-col gap-4">
+          <InputField label="Owner name" icon="person" name="name" value={ownerForm.name} onChange={updateOwner} required maxLength={160} />
+          <InputField label="Phone" icon="phone_iphone" type="tel" name="phone" value={ownerForm.phone} onChange={updateOwner} required minLength={10} maxLength={15} inputMode="tel" />
+          <InputField label="Email" icon="mail" type="email" name="email" value={ownerForm.email} onChange={updateOwner} required maxLength={320} />
+          <InputField label="Temporary password" icon="lock" type="password" name="temporaryPassword" value={ownerForm.temporaryPassword} onChange={updateOwner} required minLength={12} maxLength={72} />
+          {ownerFeedback.message && <p className={`font-body text-body-md rounded px-3 py-2 ${ownerFeedback.type === 'error' ? 'text-error bg-error-container/20' : 'text-[#A89048] bg-[rgba(168,144,72,0.1)]'}`}>{ownerFeedback.message}</p>}
+          <BrassButton type="submit" disabled={provisioning.isPending} className="w-full">{provisioning.isPending ? 'Creating...' : 'Create Salon Owner'}</BrassButton>
         </form>
-      </section>
+      </GlassPanel>
 
-      {feedback && <p className={`form-status ${approval.isError ? 'error' : 'success'}`} role="status">{feedback}</p>}
+      {feedback && <p className={`font-body text-body-md rounded px-3 py-2 mb-6 ${approval.isError ? 'text-error bg-error-container/20' : 'text-[#A89048] bg-[rgba(168,144,72,0.1)]'}`}>{feedback}</p>}
 
+      {/* Pending Salons */}
       {pendingQuery.isLoading ? (
-        <section className="approval-list" aria-label="Loading pending salons">
-          {[1, 2, 3].map((item) => <div className="approval-card skeleton" key={item} />)}
-        </section>
+        <div className="flex flex-col gap-4">{[1, 2, 3].map((i) => <div key={i} className="glass-surface metallic-border rounded-lg h-32 animate-pulse" />)}</div>
       ) : pendingQuery.isError ? (
-        <section className="state-card" role="alert"><h2>Couldn’t load applications</h2><p>{errorMessage(pendingQuery.error)}</p><button className="button button-secondary" onClick={() => pendingQuery.refetch()}>Try again</button></section>
-      ) : pendingQuery.data.length === 0 ? (
-        <section className="state-card success-empty"><span aria-hidden="true">✓</span><h2>You’re all caught up</h2><p>There are no salons waiting for approval.</p></section>
+        <GlassPanel className="text-center"><p className="text-error mb-4">{errorMessage(pendingQuery.error)}</p><BrassButton onClick={() => pendingQuery.refetch()} variant="outline">Try again</BrassButton></GlassPanel>
+      ) : !pendingQuery.data?.length ? (
+        <GlassPanel className="text-center">
+          <Icon name="check_circle" filled className="text-[#A89048] text-4xl mb-4" />
+          <h2 className="font-display text-headline-sm text-on-surface mb-2">All caught up</h2>
+          <p className="font-body text-body-md text-on-surface-variant">No salons waiting for approval.</p>
+        </GlassPanel>
       ) : (
-        <section className="approval-list" aria-label="Pending salon applications">
+        <div className="flex flex-col gap-4">
           {pendingQuery.data.map((salon) => (
-            <article className="approval-card" key={salon.id}>
-              <div className="approval-logo">
-                {salon.logoUrl ? <img src={salon.logoUrl} alt={`${salon.name} logo`} /> : <span>{salon.name?.slice(0, 1) || 'S'}</span>}
+            <div key={salon.id} className="glass-surface metallic-border rounded-lg p-6 flex flex-col md:flex-row gap-6">
+              {/* Logo */}
+              <div className="w-16 h-16 rounded-full bg-surface-container-high flex items-center justify-center border border-outline-variant/50 flex-shrink-0">
+                {salon.logoUrl ? <img src={salon.logoUrl} alt="" className="w-full h-full object-cover rounded-full" /> : <span className="font-display text-secondary text-xl">{salon.name?.[0] || 'S'}</span>}
               </div>
-              <div className="approval-main">
-                <div className="approval-title"><div><span className="status-pill pending">{salon.status || 'PENDING'}</span><h2>{salon.name}</h2><a href={salonUrl(salon.subdomain)}>{salon.subdomain}</a></div></div>
-                <p>{salon.description || 'No description supplied.'}</p>
-                <dl className="approval-details">
-                  <div><dt>Location</dt><dd>{salon.address || '—'}{salon.city ? `, ${salon.city}` : ''}</dd></div>
-                  <div><dt>Salon contact</dt><dd>{salon.email || '—'}<br />{salon.phone || '—'}</dd></div>
-                  <div><dt>Owner / timezone</dt><dd>{salon.ownerEmail || '—'}<br />{salon.timezone || '—'}</dd></div>
-                </dl>
+              {/* Details */}
+              <div className="flex-grow">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="bg-[rgba(168,144,72,0.15)] text-[#A89048] px-2 py-0.5 rounded-full font-body text-label-sm">{salon.status || 'PENDING'}</span>
+                  <h2 className="font-display text-title-lg text-on-surface">{salon.name}</h2>
+                </div>
+                <a href={salonUrl(salon.subdomain)} className="font-body text-label-sm text-secondary hover:underline">{salon.subdomain}.groomit.in</a>
+                <p className="font-body text-body-md text-on-surface-variant mt-2">{salon.description || 'No description.'}</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-3 font-body text-label-sm text-on-surface-variant">
+                  <span><strong className="text-on-surface">Location:</strong> {salon.address || '—'}{salon.city ? `, ${salon.city}` : ''}</span>
+                  <span><strong className="text-on-surface">Contact:</strong> {salon.email || '—'}</span>
+                  <span><strong className="text-on-surface">Owner:</strong> {salon.ownerEmail || '—'}</span>
+                </div>
               </div>
-              <div className="approval-actions">
-                <button className="button" disabled={approval.isPending} onClick={() => { setFeedback(''); approval.mutate(salon.id) }}>
-                  {approval.isPending && approval.variables === salon.id ? 'Approving…' : 'Approve salon'}
-                </button>
+              {/* Action */}
+              <div className="flex items-center flex-shrink-0">
+                <BrassButton onClick={() => { setFeedback(''); approval.mutate(salon.id) }} disabled={approval.isPending}>
+                  {approval.isPending && approval.variables === salon.id ? 'Approving...' : 'Approve'}
+                </BrassButton>
               </div>
-            </article>
+            </div>
           ))}
-        </section>
+        </div>
       )}
     </main>
   )

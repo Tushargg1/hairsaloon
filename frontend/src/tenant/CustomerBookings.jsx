@@ -5,17 +5,42 @@ import {
   cancelMyBooking, createReview, errorMessage, getAvailability, getMyBookings,
   rescheduleMyBooking, tenantKeys,
 } from './tenant-api.js'
+import GlassPanel from '../shared/components/GlassPanel.jsx'
+import BrassButton from '../shared/components/BrassButton.jsx'
+import Icon from '../shared/components/Icon.jsx'
+import StatusChip from '../shared/components/StatusChip.jsx'
+import StarRating from '../shared/components/StarRating.jsx'
 
-const tomorrow = () => {
-  const value = new Date()
-  value.setDate(value.getDate() + 1)
-  return value.toISOString().slice(0, 10)
-}
-const formatWhen = (value) => new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
+const tomorrow = () => { const d = new Date(); d.setDate(d.getDate() + 1); return d.toISOString().slice(0, 10) }
+const formatWhen = (v) => new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(v))
 
 function BookingCard({ booking, onCancel, onReschedule, onReview, busy, reviewSuccess }) {
-  const completed = booking.status === 'COMPLETED'
-  return <article className="booking-list-card"><div><span className={`booking-status ${booking.status.toLowerCase()}`}>{booking.status.replace('_', ' ')}</span><h3>{booking.serviceName}</h3><p>{formatWhen(booking.startDatetime)} · {booking.staffName}</p>{reviewSuccess && <p className="review-success" role="status">Thank you. Your review was submitted.</p>}</div>{booking.status === 'CONFIRMED' && <div className="button-row"><button className="button button-small button-secondary" onClick={() => onReschedule(booking)}>Reschedule</button><button className="button button-small button-ghost" disabled={busy} onClick={() => onCancel(booking.id)}>Cancel</button></div>}{completed && <div>{booking.reviewed ? <span className="reviewed-label">Reviewed</span> : <button className="button button-small button-secondary" onClick={() => onReview(booking)}>Write a review</button>}</div>}</article>
+  return (
+    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 py-4 px-4 bg-surface-container/50 rounded-lg border border-outline-variant/20">
+      <div className="flex-grow">
+        <div className="flex items-center gap-2 mb-1">
+          <StatusChip status={booking.status} />
+        </div>
+        <h3 className="font-body text-title-lg text-on-surface text-base">{booking.serviceName}</h3>
+        <p className="font-body text-body-md text-on-surface-variant">{formatWhen(booking.startDatetime)} · {booking.staffName}</p>
+        {reviewSuccess && <p className="text-[#A89048] text-label-sm mt-1">Thank you for your review!</p>}
+      </div>
+      <div className="flex gap-2 flex-shrink-0">
+        {booking.status === 'CONFIRMED' && (
+          <>
+            <button onClick={() => onReschedule(booking)} className="border border-secondary text-secondary px-3 py-1.5 rounded font-body text-label-sm hover:bg-secondary/10 transition-colors">Reschedule</button>
+            <button onClick={() => onCancel(booking.id)} disabled={busy} className="border border-outline-variant text-on-surface-variant px-3 py-1.5 rounded font-body text-label-sm hover:text-error hover:border-error transition-colors disabled:opacity-50">Cancel</button>
+          </>
+        )}
+        {booking.status === 'COMPLETED' && !booking.reviewed && (
+          <button onClick={() => onReview(booking)} className="border border-secondary text-secondary px-3 py-1.5 rounded font-body text-label-sm hover:bg-secondary/10 transition-colors">Write review</button>
+        )}
+        {booking.status === 'COMPLETED' && booking.reviewed && (
+          <span className="font-body text-label-sm text-[#A89048] flex items-center gap-1"><Icon name="check_circle" filled className="text-[14px]" /> Reviewed</span>
+        )}
+      </div>
+    </div>
+  )
 }
 
 export default function CustomerBookings() {
@@ -23,9 +48,10 @@ export default function CustomerBookings() {
   const [reschedule, setReschedule] = useState(null)
   const [date, setDate] = useState(tomorrow)
   const [reviewing, setReviewing] = useState(null)
-  const [rating, setRating] = useState('')
+  const [rating, setRating] = useState(0)
   const [comment, setComment] = useState('')
   const [reviewSuccess, setReviewSuccess] = useState(null)
+
   const bookings = useQuery({ queryKey: tenantKeys.myBookings, queryFn: getMyBookings })
   const slots = useQuery({
     queryKey: tenantKeys.availability(reschedule?.serviceId, date, reschedule?.staffId),
@@ -34,38 +60,101 @@ export default function CustomerBookings() {
   })
   const refresh = () => queryClient.invalidateQueries({ queryKey: tenantKeys.myBookings })
   const cancel = useMutation({ mutationFn: cancelMyBooking, onSuccess: refresh })
-  const move = useMutation({
-    mutationFn: rescheduleMyBooking,
-    onSuccess: () => { setReschedule(null); refresh() },
-    onError: (error) => { if (error?.response?.status === 409) slots.refetch() },
-  })
+  const move = useMutation({ mutationFn: rescheduleMyBooking, onSuccess: () => { setReschedule(null); refresh() }, onError: (e) => { if (e?.response?.status === 409) slots.refetch() } })
   const review = useMutation({
     mutationFn: createReview,
-    onSuccess: (_, payload) => {
-      setReviewSuccess(payload.bookingId); setReviewing(null); setRating(''); setComment('')
-      queryClient.invalidateQueries({ queryKey: tenantKeys.publicReviewsRoot })
-      queryClient.invalidateQueries({ queryKey: tenantKeys.dashboardReviewsRoot })
-      refresh()
-    },
-    onError: (error) => { if (error?.response?.status === 409) refresh() },
+    onSuccess: (_, payload) => { setReviewSuccess(payload.bookingId); setReviewing(null); setRating(0); setComment(''); refresh() },
   })
-  const now = new Date()
-  const upcoming = bookings.data?.filter((item) => item.status === 'CONFIRMED' && new Date(item.startDatetime) >= now) || []
-  const past = bookings.data?.filter((item) => !upcoming.includes(item)) || []
-  const reviewConflict = review.error?.response?.status === 409 && review.error?.response?.data?.error === 'REVIEW_EXISTS'
-  function requestCancel(id) { if (globalThis.confirm('Cancel this appointment?')) cancel.mutate(id) }
-  function openReview(booking) { review.reset(); setReviewSuccess(null); setRating(''); setComment(''); setReviewing(booking) }
-  function closeReview() { if (!review.isPending) { review.reset(); setReviewing(null); setRating(''); setComment('') } }
-  function submitReview(event) { event.preventDefault(); review.mutate({ bookingId: reviewing.id, rating: Number(rating), comment: comment.trim() }) }
 
-  if (bookings.isLoading) return <main className="page-width booking-page"><div className="manager-loading" aria-live="polite">Loading your bookings…</div></main>
-  if (bookings.isError) return <main className="page-width booking-page"><div className="public-state" role="alert"><h3>Bookings unavailable</h3><p>{errorMessage(bookings.error)}</p><button className="button button-small" onClick={() => bookings.refetch()}>Try again</button></div></main>
-  return <main className="page-width booking-page">
-    <header className="page-heading compact"><p className="eyebrow">My account</p><h1>Your appointments.</h1><Link className="button" to="/book">Book another appointment</Link></header>
-    {(cancel.isError || move.isError) && <p className="form-status error" role="alert">{errorMessage(cancel.error || move.error)}</p>}
-    {reschedule && <section className="reschedule-panel"><div><h2>Reschedule {reschedule.serviceName}</h2><p>Your original appointment stays confirmed until a new time succeeds.</p></div><label>New date<input type="date" min={new Date().toISOString().slice(0, 10)} value={date} onChange={(event) => setDate(event.target.value)} /></label>{slots.isLoading ? <p>Finding times…</p> : slots.data?.length ? <div className="slot-grid">{slots.data.map((slot) => <button disabled={move.isPending} key={slot.startDatetime} onClick={() => move.mutate({ id: reschedule.id, startDatetime: slot.startDatetime })}><strong>{new Date(slot.startDatetime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</strong></button>)}</div> : <p>No available times on this date.</p>}<button className="button button-ghost button-small" onClick={() => setReschedule(null)}>Keep original</button></section>}
-    {reviewing && <section className="review-form-panel" aria-labelledby={`review-title-${reviewing.id}`}><form onSubmit={submitReview}><div><p className="eyebrow">Completed appointment</p><h2 id={`review-title-${reviewing.id}`}>Review {reviewing.serviceName}</h2></div><fieldset><legend>Rating <span aria-hidden="true">*</span></legend><div className="rating-options">{[1, 2, 3, 4, 5].map((value) => <label key={value}><input type="radio" name="rating" value={value} checked={rating === String(value)} onChange={(event) => setRating(event.target.value)} required /><span aria-hidden="true">{value} ★</span><span className="sr-only">{value} out of 5 stars</span></label>)}</div></fieldset><label>Comment <span className="optional">(optional)</span><textarea maxLength="1000" rows="5" value={comment} onChange={(event) => setComment(event.target.value)} /></label><small className="character-count">{comment.length}/1000 characters</small>{review.isError && <p className="form-status error" role="alert">{reviewConflict ? 'You have already reviewed this appointment.' : errorMessage(review.error, 'Your review could not be submitted.')}</p>}<div className="button-row"><button className="button" type="submit" disabled={review.isPending}>{review.isPending ? 'Submitting review…' : 'Submit review'}</button><button className="button button-ghost" type="button" disabled={review.isPending} onClick={closeReview}>Cancel</button></div></form></section>}
-    <section className="booking-group"><h2>Upcoming</h2>{upcoming.length ? upcoming.map((item) => <BookingCard booking={item} busy={cancel.isPending} key={item.id} onCancel={requestCancel} onReschedule={setReschedule} onReview={openReview} reviewSuccess={reviewSuccess === item.id} />) : <div className="public-state"><h3>No upcoming appointments</h3><p>Choose a service when you’re ready.</p></div>}</section>
-    <section className="booking-group"><h2>Past and cancelled</h2>{past.length ? past.map((item) => <BookingCard booking={item} busy={cancel.isPending} key={item.id} onCancel={requestCancel} onReschedule={setReschedule} onReview={openReview} reviewSuccess={reviewSuccess === item.id} />) : <p className="muted">No past bookings yet.</p>}</section>
-  </main>
+  const now = new Date()
+  const upcoming = bookings.data?.filter((i) => i.status === 'CONFIRMED' && new Date(i.startDatetime) >= now) || []
+  const past = bookings.data?.filter((i) => !upcoming.includes(i)) || []
+
+  function requestCancel(id) { if (globalThis.confirm('Cancel this appointment?')) cancel.mutate(id) }
+  function submitReview(e) { e.preventDefault(); review.mutate({ bookingId: reviewing.id, rating, comment: comment.trim() }) }
+
+  if (bookings.isLoading) return <main className="max-w-[1280px] mx-auto px-4 py-12"><p className="text-on-surface-variant">Loading bookings...</p></main>
+  if (bookings.isError) return <main className="max-w-[1280px] mx-auto px-4 py-12"><GlassPanel className="text-center"><p className="text-error mb-4">{errorMessage(bookings.error)}</p><BrassButton onClick={() => bookings.refetch()} variant="outline">Try again</BrassButton></GlassPanel></main>
+
+  return (
+    <main className="max-w-[1280px] mx-auto px-4 py-12">
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <p className="font-body text-label-md text-secondary tracking-wider uppercase mb-1">My account</p>
+          <h1 className="font-display text-headline-md text-on-surface">Your Appointments</h1>
+        </div>
+        <BrassButton to="/book" icon={<Icon name="add" className="text-[18px]" />}>Book New</BrassButton>
+      </div>
+
+      {(cancel.isError || move.isError) && <p className="text-error bg-error-container/20 rounded px-3 py-2 mb-4">{errorMessage(cancel.error || move.error)}</p>}
+
+      {/* Reschedule Panel */}
+      {reschedule && (
+        <GlassPanel className="mb-8">
+          <h2 className="font-display text-headline-sm text-on-surface mb-4">Reschedule {reschedule.serviceName}</h2>
+          <p className="font-body text-body-md text-on-surface-variant mb-4">Original appointment stays confirmed until a new time is selected.</p>
+          <div className="mb-4">
+            <label className="font-body text-label-md text-on-surface-variant block mb-2">New date</label>
+            <input type="date" min={new Date().toISOString().slice(0, 10)} value={date} onChange={(e) => setDate(e.target.value)} className="input-glass rounded py-2 px-3 text-body-md" />
+          </div>
+          {slots.isLoading ? <p className="text-on-surface-variant">Finding times...</p> : slots.data?.length ? (
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-4">
+              {slots.data.map((s) => (
+                <button key={s.startDatetime} disabled={move.isPending} onClick={() => move.mutate({ id: reschedule.id, startDatetime: s.startDatetime })}
+                  className="barber-slot py-2 text-center font-body text-label-md">
+                  {new Date(s.startDatetime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                </button>
+              ))}
+            </div>
+          ) : <p className="text-on-surface-variant mb-4">No times available on this date.</p>}
+          <button onClick={() => setReschedule(null)} className="font-body text-label-md text-on-surface-variant hover:text-secondary transition-colors">Keep original</button>
+        </GlassPanel>
+      )}
+
+      {/* Review Modal */}
+      {reviewing && (
+        <GlassPanel className="mb-8">
+          <form onSubmit={submitReview} className="flex flex-col gap-4">
+            <h2 className="font-display text-headline-sm text-on-surface">Review {reviewing.serviceName}</h2>
+            <div>
+              <label className="font-body text-label-md text-on-surface-variant block mb-2">Rating</label>
+              <StarRating rating={rating} interactive onChange={setRating} size={24} />
+            </div>
+            <div>
+              <label className="font-body text-label-md text-on-surface-variant block mb-2">Comment (optional)</label>
+              <textarea maxLength={1000} rows={4} value={comment} onChange={(e) => setComment(e.target.value)}
+                className="input-glass w-full rounded py-2 px-3 text-body-md resize-none" />
+              <span className="font-body text-label-sm text-outline">{comment.length}/1000</span>
+            </div>
+            {review.isError && <p className="text-error text-body-md">{errorMessage(review.error)}</p>}
+            <div className="flex gap-3">
+              <BrassButton type="submit" disabled={review.isPending || !rating}>{review.isPending ? 'Submitting...' : 'Submit review'}</BrassButton>
+              <button type="button" onClick={() => { setReviewing(null); setRating(0); setComment('') }} disabled={review.isPending}
+                className="border border-outline-variant text-on-surface-variant px-4 py-2 rounded font-body text-label-md hover:bg-surface-container-high transition-colors">Cancel</button>
+            </div>
+          </form>
+        </GlassPanel>
+      )}
+
+      {/* Upcoming */}
+      <section className="mb-10">
+        <h2 className="font-display text-headline-sm text-on-surface mb-4 flex items-center gap-2">
+          <Icon name="upcoming" className="text-secondary" /> Upcoming
+        </h2>
+        {upcoming.length ? (
+          <div className="flex flex-col gap-3">{upcoming.map((b) => <BookingCard key={b.id} booking={b} busy={cancel.isPending} onCancel={requestCancel} onReschedule={setReschedule} onReview={() => { setReviewing(b); setReviewSuccess(null); setRating(0); setComment('') }} reviewSuccess={reviewSuccess === b.id} />)}</div>
+        ) : <p className="font-body text-body-md text-on-surface-variant">No upcoming appointments. Ready to book?</p>}
+      </section>
+
+      {/* Past */}
+      <section>
+        <h2 className="font-display text-headline-sm text-on-surface mb-4 flex items-center gap-2">
+          <Icon name="history" className="text-secondary" /> Past & Cancelled
+        </h2>
+        {past.length ? (
+          <div className="flex flex-col gap-3">{past.map((b) => <BookingCard key={b.id} booking={b} busy={cancel.isPending} onCancel={requestCancel} onReschedule={setReschedule} onReview={() => { setReviewing(b); setReviewSuccess(null); setRating(0); setComment('') }} reviewSuccess={reviewSuccess === b.id} />)}</div>
+        ) : <p className="font-body text-body-md text-on-surface-variant">No past bookings yet.</p>}
+      </section>
+    </main>
+  )
 }

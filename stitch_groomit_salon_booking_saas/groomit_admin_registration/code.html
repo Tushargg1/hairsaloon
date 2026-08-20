@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Groomit - Admin &amp; Registration</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Playfair+Display:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed-dim": "#ffb4aa",
+                        "primary-fixed": "#ffdbd2",
+                        "tertiary-container": "#55110d",
+                        "on-secondary-fixed": "#2e1500",
+                        "on-error-container": "#ffdad6",
+                        "on-tertiary-fixed": "#400203",
+                        "outline-variant": "#534340",
+                        "tertiary": "#ffb4aa",
+                        "surface-container": "#261f11",
+                        "primary-container": "#4a1c10",
+                        "secondary-container": "#643e1c",
+                        "secondary-fixed-dim": "#f3bb90",
+                        "surface-tint": "#ffb4a2",
+                        "on-primary-container": "#c5806e",
+                        "primary-fixed-dim": "#ffb4a2",
+                        "on-error": "#690005",
+                        "surface-container-low": "#221b0d",
+                        "error": "#ffb4ab",
+                        "outline": "#a08c88",
+                        "on-tertiary": "#5d1712",
+                        "on-tertiary-container": "#d9756a",
+                        "secondary-fixed": "#ffdcc2",
+                        "on-secondary": "#4a2808",
+                        "background": "#191206",
+                        "secondary": "#f3bb90",
+                        "surface-container-high": "#31291b",
+                        "on-tertiary-fixed-variant": "#7b2d26",
+                        "surface-container-lowest": "#130d03",
+                        "on-surface-variant": "#d8c2bd",
+                        "error-container": "#93000a",
+                        "on-primary": "#522216",
+                        "on-primary-fixed-variant": "#6d382a",
+                        "on-secondary-container": "#e0aa80",
+                        "on-primary-fixed": "#370e04",
+                        "surface-variant": "#3c3425",
+                        "inverse-on-surface": "#382f21",
+                        "surface": "#191206",
+                        "surface-dim": "#191206",
+                        "inverse-surface": "#efe1cb",
+                        "surface-container-highest": "#3c3425",
+                        "surface-bright": "#413829",
+                        "on-surface": "#efe1cb",
+                        "primary": "#ffb4a2",
+                        "on-secondary-fixed-variant": "#643e1c",
+                        "tertiary-fixed": "#ffdad5",
+                        "inverse-primary": "#8a4e3f",
+                        "on-background": "#efe1cb"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "md": "24px",
+                        "base": "8px",
+                        "sm": "12px",
+                        "xs": "4px",
+                        "margin-mobile": "16px",
+                        "gutter": "24px",
+                        "container-max": "1280px",
+                        "xl": "80px",
+                        "lg": "48px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Inter"],
+                        "headline-md": ["Playfair Display"],
+                        "body-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "title-lg": ["Inter"],
+                        "headline-sm": ["Playfair Display"],
+                        "display-lg": ["Playfair Display"],
+                        "label-md": ["Inter"],
+                        "display-lg-mobile": ["Playfair Display"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "headline-md": ["32px", { "lineHeight": "40px", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "title-lg": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-sm": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "display-lg-mobile": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.01em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .glass-panel {
+            background-color: rgba(35, 15, 8, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(139, 105, 66, 0.3);
+        }
+        .vintage-input {
+            background-color: rgba(35, 15, 8, 0.95);
+            border: 1px solid rgba(139, 105, 66, 0.5);
+            color: #efe1cb;
+        }
+        .vintage-input:focus {
+            border-color: #f3bb90;
+            box-shadow: inset 0 0 8px rgba(243, 187, 144, 0.2);
+            outline: none;
+        }
+        .btn-gold {
+            background: linear-gradient(to right, #B8860B, #C8956C);
+            color: #2C1810;
+        }
+        .btn-gold:hover {
+            box-shadow: 0 0 20px rgba(255, 191, 0, 0.15);
+        }
+        .btn-crimson {
+            background-color: rgba(155, 59, 59, 0.15);
+            color: #9B3B3B;
+            border: 1px solid rgba(155, 59, 59, 0.5);
+        }
+        .btn-crimson:hover {
+            background-color: rgba(155, 59, 59, 0.25);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen font-body-md bg-[url('placeholder')] bg-cover bg-fixed bg-center" data-alt="A luxurious, vintage 1920s barbershop interior with warm, dim amber lighting. Rich mahogany wood panels, antique brass fixtures, and a classic leather barber chair in the center. The mood is exclusive, masculine, and sophisticated.">
+<div class="fixed inset-0 bg-background/80 backdrop-blur-sm z-[-1]"></div>
+<!-- TopNavBar -->
+<nav class="bg-[#230F08]/85 backdrop-blur-xl docked full-width top-0 border-b border-outline-variant/30 shadow-md sticky z-50">
+<div class="flex justify-between items-center w-full px-base lg:px-xl py-xs max-w-container-max mx-auto">
+<div class="font-display-lg text-secondary-fixed tracking-tight">Groomit</div>
+<div class="hidden md:flex space-x-md">
+<a class="text-on-surface-variant hover:text-secondary-fixed transition-colors font-label-md text-label-md" href="#">Landing</a>
+<a class="text-secondary border-b-2 border-secondary pb-1 font-label-md text-label-md scale-95 duration-200" href="#">Directory</a>
+<a class="text-on-surface-variant hover:text-secondary-fixed transition-colors font-label-md text-label-md" href="#">About</a>
+<a class="text-on-surface-variant hover:text-secondary-fixed transition-colors font-label-md text-label-md" href="#">Pricing</a>
+</div>
+<button class="text-primary font-label-md text-label-md hover:text-secondary-fixed transition-colors">Login/Signup</button>
+</div>
+</nav>
+<div class="flex max-w-container-max mx-auto min-h-[calc(100vh-80px)] pt-md pb-xl px-margin-mobile md:px-gutter gap-lg">
+<!-- SideNavBar (Simulated for layout context) -->
+<aside class="hidden lg:flex flex-col w-64 h-[calc(100vh-100px)] sticky top-[100px] glass-panel rounded-lg p-md">
+<div class="mb-lg">
+<h2 class="font-headline-sm text-secondary mb-xs">Deluxe Saloon</h2>
+<p class="font-label-sm text-on-surface-variant">Owner Dashboard</p>
+</div>
+<nav class="flex-1 space-y-sm">
+<a class="flex items-center gap-sm px-sm py-xs rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/50 transition-all ease-in-out font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">dashboard</span> Overview
+                </a>
+<a class="flex items-center gap-sm px-sm py-xs rounded text-secondary bg-secondary-container/10 border-l-4 border-secondary transition-all ease-in-out font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">calendar_month</span> Appointments
+                </a>
+<a class="flex items-center gap-sm px-sm py-xs rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/50 transition-all ease-in-out font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">content_cut</span> Services
+                </a>
+<a class="flex items-center gap-sm px-sm py-xs rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/50 transition-all ease-in-out font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">group</span> Staff
+                </a>
+<a class="flex items-center gap-sm px-sm py-xs rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/50 transition-all ease-in-out font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">bar_chart</span> Analytics
+                </a>
+</nav>
+<button class="btn-gold w-full py-sm rounded font-label-md text-label-md mt-auto mb-lg">Add New Service</button>
+<div class="space-y-sm pt-md border-t border-outline-variant/30">
+<a class="flex items-center gap-sm px-sm py-xs rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/50 transition-all ease-in-out font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">settings</span> Settings
+                </a>
+<a class="flex items-center gap-sm px-sm py-xs rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/50 transition-all ease-in-out font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">help</span> Support
+                </a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 space-y-xl w-full">
+<!-- Salon Registration Section -->
+<section class="glass-panel rounded-xl p-lg max-w-3xl mx-auto shadow-2xl relative overflow-hidden">
+<div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#B8860B] to-[#C8956C]"></div>
+<header class="text-center mb-xl">
+<h1 class="font-headline-md text-secondary-fixed mb-sm">Establish Your Presence</h1>
+<p class="font-body-md text-on-surface-variant">Register your salon on the Groomit network.</p>
+</header>
+<!-- Stepper -->
+<div class="flex items-center justify-between mb-xl relative">
+<div class="absolute left-0 top-1/2 w-full h-0.5 bg-outline-variant/50 -z-10 transform -translate-y-1/2"></div>
+<div class="flex flex-col items-center">
+<div class="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-on-secondary font-label-md mb-xs shadow-[0_0_15px_rgba(255,191,0,0.2)]">1</div>
+<span class="font-label-sm text-secondary">Subdomain</span>
+</div>
+<div class="flex flex-col items-center">
+<div class="w-8 h-8 rounded-full bg-surface-container-high border border-outline-variant text-on-surface-variant flex items-center justify-center font-label-md mb-xs">2</div>
+<span class="font-label-sm text-on-surface-variant">Salon Info</span>
+</div>
+<div class="flex flex-col items-center">
+<div class="w-8 h-8 rounded-full bg-surface-container-high border border-outline-variant text-on-surface-variant flex items-center justify-center font-label-md mb-xs">3</div>
+<span class="font-label-sm text-on-surface-variant">Location</span>
+</div>
+</div>
+<form class="space-y-lg">
+<div class="space-y-md">
+<div>
+<label class="block font-label-md text-secondary-fixed mb-xs">Desired Subdomain</label>
+<div class="flex rounded-md shadow-sm">
+<span class="inline-flex items-center px-sm rounded-l-md border border-r-0 border-outline-variant/50 bg-surface-container-lowest text-on-surface-variant font-body-md sm:text-sm">
+                                    https://
+                                </span>
+<input class="flex-1 block w-full rounded-none vintage-input px-sm py-sm focus:ring-0 sm:text-sm" placeholder="the-gentlemans-cut" type="text"/>
+<span class="inline-flex items-center px-sm rounded-r-md border border-l-0 border-outline-variant/50 bg-surface-container-lowest text-on-surface-variant font-body-md sm:text-sm">
+                                    .groomit.com
+                                </span>
+</div>
+<p class="mt-xs font-label-sm text-on-surface-variant">This will be your unique booking link.</p>
+</div>
+</div>
+<div class="flex justify-end pt-md border-t border-outline-variant/30">
+<button class="btn-gold px-xl py-sm rounded font-label-md text-label-md transition-all" type="button">Next Step</button>
+</div>
+</form>
+</section>
+<!-- Admin Panel Section -->
+<section class="glass-panel rounded-xl p-lg shadow-2xl">
+<header class="flex justify-between items-end mb-lg border-b border-outline-variant/30 pb-sm">
+<div>
+<h2 class="font-headline-md text-secondary-fixed">Approval Queue</h2>
+<p class="font-body-md text-on-surface-variant mt-xs">Pending salon registrations requiring administrative review.</p>
+</div>
+<div class="text-right">
+<span class="font-display-lg text-primary">3</span>
+<p class="font-label-sm text-on-surface-variant">Pending Reviews</p>
+</div>
+</header>
+<div class="space-y-sm">
+<!-- Queue Item 1 -->
+<div class="bg-surface-container-lowest/50 border border-outline-variant/30 rounded-lg p-md flex flex-col md:flex-row items-start md:items-center justify-between gap-md hover:bg-surface-container-lowest transition-colors">
+<div class="flex items-start gap-md w-full md:w-auto">
+<img class="w-16 h-16 rounded object-cover border border-outline-variant/50" data-alt="A vintage style logo for a barbershop featuring a classic straight razor and a top hat in gold and dark brown tones, luxurious aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAJRmkkkZVrkvilfStHkznToxee5neKXPGwpcrSW25pIvlfVEo1GP2m4EyJ2NJv5tEdcR9tMJcav6VLsCa8LhTzdVpM9ADugFZI-41ys_kKwxJjBnLGKIlL7LItYqMmAYR-UPe7RCY5ZGAlKgVScA4AJ8qP62XbMDKP521amN-BmE4rgBqarJUKveHwZGBo-rRLoUW2Yj9aUcUz68mIII7Ct_aguFAgjPstLyopKvtBPqsgFd_yDj61"/>
+<div>
+<h3 class="font-title-lg text-secondary">The Royal Crown Barbers</h3>
+<p class="font-body-md text-on-surface-variant text-sm mt-xs"><span class="material-symbols-outlined text-[16px] align-text-bottom mr-xs text-secondary/70">location_on</span>London, UK</p>
+<p class="font-label-sm text-on-surface-variant/70 mt-xs">Requested: royalcrown.groomit.com</p>
+</div>
+</div>
+<div class="flex gap-sm w-full md:w-auto justify-end">
+<button class="btn-crimson px-sm py-xs rounded font-label-md flex items-center gap-xs transition-colors"><span class="material-symbols-outlined text-[18px]">close</span> Reject</button>
+<button class="btn-gold px-sm py-xs rounded font-label-md flex items-center gap-xs transition-shadow"><span class="material-symbols-outlined text-[18px]">check</span> Approve</button>
+</div>
+</div>
+<!-- Queue Item 2 -->
+<div class="bg-surface-container-lowest/50 border border-outline-variant/30 rounded-lg p-md flex flex-col md:flex-row items-start md:items-center justify-between gap-md hover:bg-surface-container-lowest transition-colors">
+<div class="flex items-start gap-md w-full md:w-auto">
+<div class="w-16 h-16 rounded bg-surface-container-high border border-outline-variant/50 flex items-center justify-center text-on-surface-variant font-display-lg">S</div>
+<div>
+<h3 class="font-title-lg text-secondary">Sharper Image Salon</h3>
+<p class="font-body-md text-on-surface-variant text-sm mt-xs"><span class="material-symbols-outlined text-[16px] align-text-bottom mr-xs text-secondary/70">location_on</span>New York, NY</p>
+<p class="font-label-sm text-on-surface-variant/70 mt-xs">Requested: sharper.groomit.com</p>
+</div>
+</div>
+<div class="flex gap-sm w-full md:w-auto justify-end">
+<button class="btn-crimson px-sm py-xs rounded font-label-md flex items-center gap-xs transition-colors"><span class="material-symbols-outlined text-[18px]">close</span> Reject</button>
+<button class="btn-gold px-sm py-xs rounded font-label-md flex items-center gap-xs transition-shadow"><span class="material-symbols-outlined text-[18px]">check</span> Approve</button>
+</div>
+</div>
+</div>
+</section>
+</main>
+</div>
+<!-- Footer -->
+<footer class="bg-surface-container-highest border-t border-outline-variant/50 mt-xl">
+<div class="flex flex-col md:flex-row justify-between items-center w-full px-base lg:px-xl py-lg max-w-container-max mx-auto">
+<div class="font-headline-sm text-secondary-fixed mb-sm md:mb-0">Groomit</div>
+<div class="flex gap-md font-label-sm text-label-sm">
+<a class="text-on-surface-variant hover:text-primary transition-colors" href="#">Terms of Service</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors" href="#">Contact Us</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors" href="#">Careers</a>
+</div>
+<div class="text-on-surface font-body-md text-body-md mt-sm md:mt-0">
+                © 1924 Groomit Premium SaaS. Handcrafted for the Modern Gentleman.
+            </div>
+</div>
+</footer>
+</body></html>

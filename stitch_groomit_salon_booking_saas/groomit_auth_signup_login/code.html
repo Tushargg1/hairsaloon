@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Groomit - Authentication</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Playfair+Display:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "tertiary-fixed-dim": "#ffb4aa",
+                        "primary-fixed": "#ffdbd2",
+                        "tertiary-container": "#55110d",
+                        "on-secondary-fixed": "#2e1500",
+                        "on-error-container": "#ffdad6",
+                        "on-tertiary-fixed": "#400203",
+                        "outline-variant": "#534340",
+                        "tertiary": "#ffb4aa",
+                        "surface-container": "#261f11",
+                        "primary-container": "#4a1c10",
+                        "secondary-container": "#643e1c",
+                        "secondary-fixed-dim": "#f3bb90",
+                        "surface-tint": "#ffb4a2",
+                        "on-primary-container": "#c5806e",
+                        "primary-fixed-dim": "#ffb4a2",
+                        "on-error": "#690005",
+                        "surface-container-low": "#221b0d",
+                        "error": "#ffb4ab",
+                        "outline": "#a08c88",
+                        "on-tertiary": "#5d1712",
+                        "on-tertiary-container": "#d9756a",
+                        "secondary-fixed": "#ffdcc2",
+                        "on-secondary": "#4a2808",
+                        "background": "#191206",
+                        "secondary": "#f3bb90",
+                        "surface-container-high": "#31291b",
+                        "on-tertiary-fixed-variant": "#7b2d26",
+                        "surface-container-lowest": "#130d03",
+                        "on-surface-variant": "#d8c2bd",
+                        "error-container": "#93000a",
+                        "on-primary": "#522216",
+                        "on-primary-fixed-variant": "#6d382a",
+                        "on-secondary-container": "#e0aa80",
+                        "on-primary-fixed": "#370e04",
+                        "surface-variant": "#3c3425",
+                        "inverse-on-surface": "#382f21",
+                        "surface": "#191206",
+                        "surface-dim": "#191206",
+                        "inverse-surface": "#efe1cb",
+                        "surface-container-highest": "#3c3425",
+                        "surface-bright": "#413829",
+                        "on-surface": "#efe1cb",
+                        "primary": "#ffb4a2",
+                        "on-secondary-fixed-variant": "#643e1c",
+                        "tertiary-fixed": "#ffdad5",
+                        "inverse-primary": "#8a4e3f",
+                        "on-background": "#efe1cb"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    spacing: {
+                        "md": "24px",
+                        "base": "8px",
+                        "sm": "12px",
+                        "xs": "4px",
+                        "margin-mobile": "16px",
+                        "gutter": "24px",
+                        "container-max": "1280px",
+                        "xl": "80px",
+                        "lg": "48px"
+                    },
+                    fontFamily: {
+                        "body-lg": ["Inter"],
+                        "headline-md": ["Playfair Display"],
+                        "body-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "title-lg": ["Inter"],
+                        "headline-sm": ["Playfair Display"],
+                        "display-lg": ["Playfair Display"],
+                        "label-md": ["Inter"],
+                        "display-lg-mobile": ["Playfair Display"]
+                    },
+                    fontSize: {
+                        "body-lg": ["18px", { lineHeight: "28px", fontWeight: "400" }],
+                        "headline-md": ["32px", { lineHeight: "40px", fontWeight: "600" }],
+                        "body-md": ["16px", { lineHeight: "24px", fontWeight: "400" }],
+                        "label-sm": ["12px", { lineHeight: "16px", fontWeight: "500" }],
+                        "title-lg": ["20px", { lineHeight: "28px", fontWeight: "600" }],
+                        "headline-sm": ["24px", { lineHeight: "32px", fontWeight: "600" }],
+                        "display-lg": ["48px", { lineHeight: "56px", letterSpacing: "-0.02em", fontWeight: "700" }],
+                        "label-md": ["14px", { lineHeight: "20px", letterSpacing: "0.05em", fontWeight: "600" }],
+                        "display-lg-mobile": ["36px", { lineHeight: "44px", letterSpacing: "-0.01em", fontWeight: "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .glass-panel {
+            background-color: rgba(35, 15, 8, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(139, 105, 66, 0.3);
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.7);
+        }
+        .btn-gradient {
+            background: linear-gradient(135deg, #B8860B 0%, #C8956C 100%);
+            color: #2C1810;
+        }
+        .btn-gradient:hover {
+            box-shadow: 0 0 20px rgba(255, 191, 0, 0.25);
+        }
+        .input-glass {
+            background-color: rgba(25, 18, 6, 0.7);
+            border: 1px solid rgba(139, 105, 66, 0.4);
+            color: #efe1cb;
+        }
+        .input-glass:focus {
+            border-color: #B8860B;
+            box-shadow: inset 0 0 10px rgba(184, 134, 11, 0.1);
+            outline: none;
+        }
+        .tab-active {
+            border-bottom: 2px solid #B8860B;
+            color: #f3bb90;
+        }
+        .tab-inactive {
+            color: #d8c2bd;
+            border-bottom: 2px solid transparent;
+        }
+        .step-active {
+            background-color: #B8860B;
+        }
+        .step-inactive {
+            background-color: rgba(139, 105, 66, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen relative overflow-hidden font-body-md flex flex-col">
+<!-- Background Image -->
+<div class="absolute inset-0 z-0">
+<div class="w-full h-full bg-cover bg-center opacity-40 mix-blend-overlay" data-alt="A warmly lit, vintage 1920s barbershop interior with dark mahogany wood paneling, antique leather chairs, and brass fixtures, creating a luxurious and nostalgic atmosphere." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAlRph_NbANkQiitgPiFLyVCbA-xOK3Gr9WsN5qB2N-1j9PleSEIpMOhq4dls0GnT2gy0iyQVU_OMKlgRDKlOh9FpoSaV-FXEJ82dwhTj8QBLv02JDQDsLOe96tu7pe55ixfK7E3D9ZT4xU87tAte5pegfITWQy66DODqQxeE_C0S5s4ZB0aeCGINQzzFWidbQSp5iNyh0VyjiIvU1tbQ-PCnK3PMMnZSSjcPdMMs8GJV5utDtNIf0sLxDMu1RoqbsLGQ');"></div>
+<div class="absolute inset-0 bg-background/80"></div>
+</div>
+<!-- Main Content -->
+<main class="relative z-10 flex-grow flex items-center justify-center p-margin-mobile md:p-gutter w-full max-w-container-max mx-auto">
+<div class="w-full max-w-4xl grid md:grid-cols-2 gap-md md:gap-xl items-start">
+<!-- Left Side: Branding / Intro (Visible mainly on desktop) -->
+<div class="hidden md:flex flex-col justify-center h-full pr-md">
+<img alt="Groomit Logo" class="w-32 h-32 object-contain mb-lg filter drop-shadow-xl" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAT3fgmFWcjefPOrhqlSWOkWmbkwUCDM9Lprp7E9TdOKENjzGNpSryedgin14d6WMqmrdHGJory3r5PqqOsXO6CXDKCJOAvX7tVp7c74l8z2u2xdw6KgGdChqzIywySKH5n-d2PboukYfw58l8ltWATvpuUi5iJ75llsTFPUEMWB4YgaxAWA9tbD1djKXfY6bC6QfshVq6nZPfvtV4Hgkt1nrYa3ivPSLG5IHNikmcwUMmR9evD5wwq"/>
+<h1 class="font-display-lg text-display-lg text-secondary-fixed mb-sm">A cut above the rest.</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-md">Experience the tradition of fine grooming. Sign in to manage your appointments, preferences, and discover premium services.</p>
+</div>
+<!-- Right Side: Auth Forms -->
+<div class="w-full max-w-md mx-auto">
+<!-- Mobile Logo -->
+<div class="md:hidden flex justify-center mb-lg">
+<img alt="Groomit Logo" class="w-24 h-24 object-contain filter drop-shadow-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAT3fgmFWcjefPOrhqlSWOkWmbkwUCDM9Lprp7E9TdOKENjzGNpSryedgin14d6WMqmrdHGJory3r5PqqOsXO6CXDKCJOAvX7tVp7c74l8z2u2xdw6KgGdChqzIywySKH5n-d2PboukYfw58l8ltWATvpuUi5iJ75llsTFPUEMWB4YgaxAWA9tbD1djKXfY6bC6QfshVq6nZPfvtV4Hgkt1nrYa3ivPSLG5IHNikmcwUMmR9evD5wwq"/>
+</div>
+<div class="glass-panel rounded-xl p-md md:p-lg relative overflow-hidden">
+<!-- Tabs -->
+<div class="flex border-b border-outline-variant/30 mb-lg">
+<button class="flex-1 pb-sm font-title-lg text-title-lg text-center transition-colors tab-active" id="tab-login" onclick="switchTab('login')">Log In</button>
+<button class="flex-1 pb-sm font-title-lg text-title-lg text-center transition-colors tab-inactive" id="tab-signup" onclick="switchTab('signup')">Sign Up</button>
+</div>
+<!-- Login Form -->
+<div class="block animate-fade-in" id="form-login">
+<form class="flex flex-col gap-md">
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-xs">Phone Number</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-on-surface-variant">phone_iphone</span>
+<input class="input-glass w-full rounded pl-xl pr-sm py-sm font-body-md text-body-md transition-all" placeholder="(555) 000-0000" type="tel"/>
+</div>
+</div>
+<div>
+<div class="flex justify-between items-center mb-xs">
+<label class="block font-label-sm text-label-sm text-on-surface-variant">Password</label>
+<a class="font-label-sm text-label-sm text-secondary hover:text-secondary-fixed transition-colors" href="#">Forgot?</a>
+</div>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-on-surface-variant">lock</span>
+<input class="input-glass w-full rounded pl-xl pr-sm py-sm font-body-md text-body-md transition-all" placeholder="••••••••" type="password"/>
+</div>
+</div>
+<button class="btn-gradient w-full rounded-lg py-sm font-label-md text-label-md mt-sm transition-all flex justify-center items-center gap-xs" type="button">
+                                Log In <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</form>
+</div>
+<!-- Signup Form (3-Step Flow) -->
+<div class="hidden" id="form-signup">
+<!-- Progress Indicators -->
+<div class="flex justify-center gap-sm mb-lg">
+<div class="w-12 h-1 rounded-full step-active transition-colors duration-300" id="step-dot-1"></div>
+<div class="w-12 h-1 rounded-full step-inactive transition-colors duration-300" id="step-dot-2"></div>
+<div class="w-12 h-1 rounded-full step-inactive transition-colors duration-300" id="step-dot-3"></div>
+</div>
+<!-- Step 1: Phone -->
+<div class="block animate-fade-in" id="signup-step-1">
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-sm">Let's get started</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-md">Enter your phone number to receive a verification code.</p>
+<div class="mb-lg">
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-xs">Phone Number</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-on-surface-variant">phone_iphone</span>
+<input class="input-glass w-full rounded pl-xl pr-sm py-sm font-body-md text-body-md transition-all" placeholder="(555) 000-0000" type="tel"/>
+</div>
+</div>
+<button class="btn-gradient w-full rounded-lg py-sm font-label-md text-label-md transition-all" onclick="nextStep(2)" type="button">
+                                Send OTP
+                            </button>
+</div>
+<!-- Step 2: Verify Code -->
+<div class="hidden animate-fade-in" id="signup-step-2">
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-sm">Verify Number</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-md">We sent a code to (555) ***-**89.</p>
+<div class="mb-lg">
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-xs text-center">Verification Code</label>
+<div class="flex justify-center gap-xs">
+<input class="input-glass w-12 h-14 rounded text-center font-title-lg text-title-lg transition-all focus:border-secondary" maxlength="1" type="text"/>
+<input class="input-glass w-12 h-14 rounded text-center font-title-lg text-title-lg transition-all focus:border-secondary" maxlength="1" type="text"/>
+<input class="input-glass w-12 h-14 rounded text-center font-title-lg text-title-lg transition-all focus:border-secondary" maxlength="1" type="text"/>
+<input class="input-glass w-12 h-14 rounded text-center font-title-lg text-title-lg transition-all focus:border-secondary" maxlength="1" type="text"/>
+</div>
+<div class="text-center mt-sm">
+<a class="font-label-sm text-label-sm text-secondary hover:text-secondary-fixed transition-colors" href="#">Resend Code</a>
+</div>
+</div>
+<div class="flex gap-sm">
+<button class="w-1/3 border border-outline-variant rounded-lg py-sm font-label-md text-label-md text-on-surface-variant hover:bg-surface-variant transition-colors" onclick="prevStep(1)" type="button">
+                                    Back
+                                </button>
+<button class="w-2/3 btn-gradient rounded-lg py-sm font-label-md text-label-md transition-all" onclick="nextStep(3)" type="button">
+                                    Verify
+                                </button>
+</div>
+</div>
+<!-- Step 3: Details -->
+<div class="hidden animate-fade-in" id="signup-step-3">
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-sm">Create Account</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-md">Just a few more details to complete your profile.</p>
+<form class="flex flex-col gap-md">
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-xs">Email Address</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-on-surface-variant">mail</span>
+<input class="input-glass w-full rounded pl-xl pr-sm py-sm font-body-md text-body-md transition-all" placeholder="gentleman@example.com" type="email"/>
+</div>
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-xs">Password</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-on-surface-variant">lock</span>
+<input class="input-glass w-full rounded pl-xl pr-sm py-sm font-body-md text-body-md transition-all" placeholder="Create a strong password" type="password"/>
+</div>
+</div>
+<div class="flex gap-sm mt-sm">
+<button class="w-1/3 border border-outline-variant rounded-lg py-sm font-label-md text-label-md text-on-surface-variant hover:bg-surface-variant transition-colors" onclick="prevStep(2)" type="button">
+                                        Back
+                                    </button>
+<button class="w-2/3 btn-gradient rounded-lg py-sm font-label-md text-label-md transition-all" type="button">
+                                        Complete
+                                    </button>
+</div>
+</form>
+</div>
+</div>
+</div>
+<p class="text-center font-label-sm text-label-sm text-on-surface-variant/70 mt-lg">
+                    By proceeding, you agree to our <a class="text-secondary hover:underline" href="#">Terms of Service</a> and <a class="text-secondary hover:underline" href="#">Privacy Policy</a>.
+                </p>
+</div>
+</div>
+</main>
+<script>
+        function switchTab(tab) {
+            const loginForm = document.getElementById('form-login');
+            const signupForm = document.getElementById('form-signup');
+            const loginTab = document.getElementById('tab-login');
+            const signupTab = document.getElementById('tab-signup');
+
+            if (tab === 'login') {
+                loginForm.classList.remove('hidden');
+                loginForm.classList.add('block');
+                signupForm.classList.remove('block');
+                signupForm.classList.add('hidden');
+                
+                loginTab.classList.replace('tab-inactive', 'tab-active');
+                signupTab.classList.replace('tab-active', 'tab-inactive');
+                
+                // Reset signup flow when switching away
+                setTimeout(() => {
+                    nextStep(1);
+                }, 300);
+            } else {
+                signupForm.classList.remove('hidden');
+                signupForm.classList.add('block');
+                loginForm.classList.remove('block');
+                loginForm.classList.add('hidden');
+                
+                signupTab.classList.replace('tab-inactive', 'tab-active');
+                loginTab.classList.replace('tab-active', 'tab-inactive');
+            }
+        }
+
+        function nextStep(step) {
+            // Hide all steps
+            for(let i=1; i<=3; i++) {
+                document.getElementById(`signup-step-${i}`).classList.add('hidden');
+                document.getElementById(`signup-step-${i}`).classList.remove('block');
+            }
+            // Show target step
+            document.getElementById(`signup-step-${step}`).classList.remove('hidden');
+            document.getElementById(`signup-step-${step}`).classList.add('block');
+
+            // Update dots
+            for(let i=1; i<=3; i++) {
+                const dot = document.getElementById(`step-dot-${i}`);
+                if (i <= step) {
+                    dot.classList.replace('step-inactive', 'step-active');
+                } else {
+                    dot.classList.replace('step-active', 'step-inactive');
+                }
+            }
+        }
+
+        function prevStep(step) {
+            nextStep(step);
+        }
+    </script>
+</body></html>

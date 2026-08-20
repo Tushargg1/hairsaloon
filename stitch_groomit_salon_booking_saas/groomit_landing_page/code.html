@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Groomit - Book Your Next Look</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Playfair+Display:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed-dim": "#ffb4aa",
+                        "primary-fixed": "#ffdbd2",
+                        "tertiary-container": "#55110d",
+                        "on-secondary-fixed": "#2e1500",
+                        "on-error-container": "#ffdad6",
+                        "on-tertiary-fixed": "#400203",
+                        "outline-variant": "#534340",
+                        "tertiary": "#ffb4aa",
+                        "surface-container": "#261f11",
+                        "primary-container": "#4a1c10",
+                        "secondary-container": "#643e1c",
+                        "secondary-fixed-dim": "#f3bb90",
+                        "surface-tint": "#ffb4a2",
+                        "on-primary-container": "#c5806e",
+                        "primary-fixed-dim": "#ffb4a2",
+                        "on-error": "#690005",
+                        "surface-container-low": "#221b0d",
+                        "error": "#ffb4ab",
+                        "outline": "#a08c88",
+                        "on-tertiary": "#5d1712",
+                        "on-tertiary-container": "#d9756a",
+                        "secondary-fixed": "#ffdcc2",
+                        "on-secondary": "#4a2808",
+                        "background": "#191206",
+                        "secondary": "#f3bb90",
+                        "surface-container-high": "#31291b",
+                        "on-tertiary-fixed-variant": "#7b2d26",
+                        "surface-container-lowest": "#130d03",
+                        "on-surface-variant": "#d8c2bd",
+                        "error-container": "#93000a",
+                        "on-primary": "#522216",
+                        "on-primary-fixed-variant": "#6d382a",
+                        "on-secondary-container": "#e0aa80",
+                        "on-primary-fixed": "#370e04",
+                        "surface-variant": "#3c3425",
+                        "inverse-on-surface": "#382f21",
+                        "surface": "#191206",
+                        "surface-dim": "#191206",
+                        "inverse-surface": "#efe1cb",
+                        "surface-container-highest": "#3c3425",
+                        "surface-bright": "#413829",
+                        "on-surface": "#efe1cb",
+                        "primary": "#ffb4a2",
+                        "on-secondary-fixed-variant": "#643e1c",
+                        "tertiary-fixed": "#ffdad5",
+                        "inverse-primary": "#8a4e3f",
+                        "on-background": "#efe1cb"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "md": "24px",
+                        "base": "8px",
+                        "sm": "12px",
+                        "xs": "4px",
+                        "margin-mobile": "16px",
+                        "gutter": "24px",
+                        "container-max": "1280px",
+                        "xl": "80px",
+                        "lg": "48px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Inter"],
+                        "headline-md": ["Playfair Display"],
+                        "body-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "title-lg": ["Inter"],
+                        "headline-sm": ["Playfair Display"],
+                        "display-lg": ["Playfair Display"],
+                        "label-md": ["Inter"],
+                        "display-lg-mobile": ["Playfair Display"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "headline-md": ["32px", { "lineHeight": "40px", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "title-lg": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-sm": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "display-lg-mobile": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.01em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(35, 15, 8, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(139, 105, 66, 0.3);
+        }
+        .amber-glow {
+            box-shadow: 0 0 20px rgba(255, 191, 0, 0.15);
+        }
+        .brass-gradient {
+            background: linear-gradient(135deg, #B8860B 0%, #C8956C 100%);
+        }
+        .brass-gradient:hover {
+            box-shadow: 0 0 25px rgba(255, 191, 0, 0.25);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col font-body-md antialiased">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-[#230F08]/85 backdrop-blur-xl border-b border-outline-variant/30 shadow-md transition-all duration-300">
+<div class="flex justify-between items-center w-full px-base lg:px-xl py-xs max-w-container-max mx-auto h-20">
+<!-- Brand -->
+<div class="flex items-center gap-sm">
+<img alt="Groomit Logo" class="h-10 w-10 object-contain rounded-full shadow-sm border border-outline-variant/50" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAT3fgmFWcjefPOrhqlSWOkWmbkwUCDM9Lprp7E9TdOKENjzGNpSryedgin14d6WMqmrdHGJory3r5PqqOsXO6CXDKCJOAvX7tVp7c74l8z2u2xdw6KgGdChqzIywySKH5n-d2PboukYfw58l8ltWATvpuUi5iJ75llsTFPUEMWB4YgaxAWA9tbD1djKXfY6bC6QfshVq6nZPfvtV4Hgkt1nrYa3ivPSLG5IHNikmcwUMmR9evD5wwq"/>
+<span class="font-display-lg text-secondary-fixed tracking-tight text-[28px]">Groomit</span>
+</div>
+<!-- Navigation Links (Desktop) -->
+<div class="hidden md:flex items-center gap-md">
+<a class="font-label-md text-label-md text-secondary border-b-2 border-secondary pb-1 scale-95 duration-200" href="#">Landing</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-secondary-fixed transition-colors" href="#">Directory</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-secondary-fixed transition-colors" href="#">About</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-secondary-fixed transition-colors" href="#">Pricing</a>
+</div>
+<!-- Trailing Action -->
+<div class="hidden md:block">
+<button class="brass-gradient text-[#2C1810] font-label-md px-sm py-xs rounded transition-all duration-300 hover:scale-105 shadow-sm">
+                    Login/Signup
+                </button>
+</div>
+<!-- Mobile Menu Toggle -->
+<button class="md:hidden text-secondary p-xs rounded hover:bg-surface-variant transition-colors">
+<span class="material-symbols-outlined" data-weight="fill">menu</span>
+</button>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="flex-grow pt-20">
+<!-- Hero Section -->
+<section class="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
+<!-- Background Image with Overlay -->
+<div class="absolute inset-0 z-0">
+<div class="w-full h-full bg-cover bg-center bg-no-repeat" data-alt="A luxurious, vintage 1920s barbershop interior with rich mahogany wood paneling, warm ambient amber lighting, classic leather barber chairs, and brass fixtures. The scene feels premium, exclusive, and masterfully crafted, establishing a sophisticated high-end aesthetic." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDJPIJ2JIxb3RVCeuZEKylrHaYkC9iBqr1ESDbu9hSDBMoaFnzyU30DbmY1hKpWulO2us3e3P1JsUXsjJk6hl7eRxx2By1ce08JGuW6fpEBpz6r6xrHAXom9gvHa6d4KIQ5TDgSAiw4r2DXNctX9_txwNfl026hs7P8mhismD8NaTSlW76CLZmE8PeWYe-YCVdv9UZpLROZgR_dHY3OdUK_u6oL9eaDNvA9VPY7pyeh-vMJI9gKrKEUBMz3aWqfHch-dA');">
+</div>
+<!-- Gradients for depth and legibility -->
+<div class="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent"></div>
+<div class="absolute inset-0 bg-black/30 backdrop-blur-[2px]"></div>
+</div>
+<!-- Hero Content -->
+<div class="relative z-10 container mx-auto px-margin-mobile md:px-gutter max-w-container-max flex flex-col items-center text-center mt-xl">
+<h1 class="font-display-lg-mobile md:font-display-lg text-on-surface mb-md text-shadow-lg max-w-4xl leading-tight">
+                    Book Your Next Look
+                </h1>
+<p class="font-body-lg text-on-surface-variant mb-xl max-w-2xl">
+                    Discover and reserve appointments at the finest premium grooming establishments. Experience craftsmanship and heritage in every cut.
+                </p>
+<div class="flex flex-col sm:flex-row gap-md w-full sm:w-auto justify-center">
+<button class="brass-gradient text-[#2C1810] font-label-md text-label-md px-lg py-sm rounded-md transition-all duration-300 hover:scale-105 shadow-lg flex items-center justify-center gap-xs">
+<span class="material-symbols-outlined text-[20px]" data-weight="fill">search</span>
+                        Explore Salons
+                    </button>
+</div>
+<!-- Floating Glass-morphic Stats -->
+<div class="mt-24 grid grid-cols-1 md:grid-cols-3 gap-md w-full max-w-5xl">
+<div class="glass-panel rounded-lg p-md text-center flex flex-col items-center transform transition-transform hover:-translate-y-1 duration-300 amber-glow">
+<span class="material-symbols-outlined text-secondary text-4xl mb-xs" data-weight="fill">storefront</span>
+<h3 class="font-headline-md text-secondary-fixed mb-xs">500+</h3>
+<p class="font-label-sm text-on-surface-variant tracking-wider uppercase">Premium Salons</p>
+</div>
+<div class="glass-panel rounded-lg p-md text-center flex flex-col items-center transform transition-transform hover:-translate-y-1 duration-300 amber-glow">
+<span class="material-symbols-outlined text-secondary text-4xl mb-xs" data-weight="fill">event_available</span>
+<h3 class="font-headline-md text-secondary-fixed mb-xs">50k+</h3>
+<p class="font-label-sm text-on-surface-variant tracking-wider uppercase">Bookings Made</p>
+</div>
+<div class="glass-panel rounded-lg p-md text-center flex flex-col items-center transform transition-transform hover:-translate-y-1 duration-300 amber-glow">
+<span class="material-symbols-outlined text-secondary text-4xl mb-xs" data-weight="fill">star</span>
+<h3 class="font-headline-md text-secondary-fixed mb-xs">4.9/5</h3>
+<p class="font-label-sm text-on-surface-variant tracking-wider uppercase">Client Reviews</p>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container-highest border-t border-outline-variant/50 w-full mt-auto">
+<div class="flex flex-col md:flex-row justify-between items-center w-full px-base lg:px-xl py-lg max-w-container-max mx-auto gap-md">
+<div class="flex flex-col items-center md:items-start gap-xs">
+<span class="font-headline-sm text-secondary-fixed">Groomit</span>
+<p class="font-body-md text-body-md text-on-surface text-center md:text-left">
+                    © 1924 Groomit Premium SaaS. Handcrafted for the Modern Gentleman.
+                </p>
+</div>
+<div class="flex flex-wrap justify-center gap-md">
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="#">Terms of Service</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="#">Privacy Policy</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="#">Contact Us</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="#">Careers</a>
+</div>
+</div>
+</footer>
+</body></html>
