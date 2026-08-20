@@ -29,9 +29,11 @@ services:
       # constraint depends on, so the database user needs permission to create
       # extensions or startup will fail.
       - key: DATABASE_URL
-        sync: false
+        value: jdbc:postgresql://groomit-groomitindia.i.aivencloud.com:23652/defaultdb?sslmode=require
       - key: POSTGRES_USER
-        sync: false
+        value: avnadmin
+      # Never committed: this repository is public. Paste the Aiven password
+      # into the Render dashboard when prompted.
       - key: POSTGRES_PASSWORD
         sync: false
 
@@ -55,8 +57,9 @@ services:
       - key: PLATFORM_HOSTS
         value: groomit.in,www.groomit.in
       # Exact origins for credentialed requests; wildcards are not permitted here.
+      # Add or replace the Vercel origin once a custom domain is in place.
       - key: CORS_ALLOWED_ORIGINS
-        sync: false
+        value: https://groomit.in,https://www.groomit.in,https://hairsaloon-gamma.vercel.app
       - key: CORS_ALLOWED_ORIGIN_PATTERNS
         value: https://*.groomit.in,https://*.vercel.app
 
