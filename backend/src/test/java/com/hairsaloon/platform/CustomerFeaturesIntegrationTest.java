@@ -24,7 +24,11 @@ import org.springframework.test.web.servlet.MockMvc;
     "spring.datasource.url=jdbc:h2:mem:customer-features;MODE=PostgreSQL;DB_CLOSE_DELAY=-1",
     "spring.datasource.username=sa", "spring.datasource.password=",
     "spring.datasource.driver-class-name=org.h2.Driver", "spring.flyway.enabled=false",
-    "spring.jpa.hibernate.ddl-auto=create-drop", "spring.data.redis.repositories.enabled=false",
+    "spring.jpa.hibernate.ddl-auto=create-drop",
+    "spring.jpa.defer-datasource-initialization=true",
+    "spring.sql.init.mode=always",
+    "spring.sql.init.schema-locations=classpath:customer-features-schema.sql",
+    "spring.data.redis.repositories.enabled=false",
     "app.base-domain=localhost", "app.platform-hosts=localhost",
     "app.auth.jwt.secret=raw:0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-extra-secret",
     "app.auth.jwt.issuer=customer-features-test", "app.auth.jwt.ttl=2h",
@@ -41,14 +45,7 @@ class CustomerFeaturesIntegrationTest {
 
     @BeforeEach
     void clean() {
-        jdbc.execute("DROP TABLE IF EXISTS user_favorites");
-        jdbc.execute("""
-            CREATE TABLE user_favorites (
-              id BIGINT AUTO_INCREMENT PRIMARY KEY,
-              user_id BIGINT NOT NULL, salon_id BIGINT NOT NULL,
-              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-              UNIQUE (user_id, salon_id))
-            """);
+        jdbc.update("DELETE FROM user_favorites");
         try { jdbc.update("DELETE FROM notification_outbox"); } catch (Exception ignored) {}
         try { jdbc.update("DELETE FROM bookings"); } catch (Exception ignored) {}
         try { jdbc.update("DELETE FROM salon_staff"); } catch (Exception ignored) {}
