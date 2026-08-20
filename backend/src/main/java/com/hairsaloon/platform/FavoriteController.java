@@ -2,6 +2,7 @@ package com.hairsaloon.platform;
 
 import com.hairsaloon.auth.AuthenticatedUser;
 import java.util.List;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -33,10 +34,19 @@ class FavoriteController {
     @PostMapping("/{salonId}")
     ResponseEntity<Void> add(@AuthenticationPrincipal AuthenticatedUser user,
                               @PathVariable long salonId) {
-        jdbc.update("""
-            INSERT INTO user_favorites (user_id, salon_id) VALUES (?, ?)
-            ON CONFLICT (user_id, salon_id) DO NOTHING
-            """, user.id(), salonId);
+        Integer activeSalon = jdbc.queryForObject(
+            "SELECT COUNT(*) FROM salons WHERE id = ? AND status = 'ACTIVE'",
+            Integer.class, salonId);
+        if (activeSalon == null || activeSalon == 0) {
+            throw new PlatformApiException(HttpStatus.NOT_FOUND, "SALON_NOT_FOUND",
+                "Salon not found");
+        }
+        try {
+            jdbc.update("INSERT INTO user_favorites (user_id, salon_id) VALUES (?, ?)",
+                user.id(), salonId);
+        } catch (DuplicateKeyException alreadySaved) {
+            // Adding an existing favorite is idempotent.
+        }
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
