@@ -13,7 +13,8 @@ final class SalonDtos {
     record SalonResponse(Long id, String subdomain, String name, String description,
                          String address, String city, String phone, String email,
                          String logoUrl, String timezone, SalonStatus status,
-                         BigDecimal rating, long reviewCount, Instant createdAt) {
+                         BigDecimal rating, long reviewCount, BigDecimal latitude,
+                         BigDecimal longitude, BigDecimal distanceKm, Instant createdAt) {
     }
 
     record PageResponse<T>(List<T> content, int page, int size, long totalElements,

@@ -149,12 +149,45 @@ export default function PushOptIn({ role }) {
   const canEnable = status === 'disabled' || status === 'error'
   const canDisable = status === 'enabled'
 
-  return <aside className="public-state page-width" aria-live="polite" aria-busy={pending}>
-    <div>
-      <strong>Booking notifications</strong>
-      <p>{message}</p>
-    </div>
-    {canEnable && <button className="button button-small" type="button" disabled={pending || !vapidPublicKey} onClick={enable}>{pending ? 'Enabling…' : 'Enable notifications'}</button>}
-    {canDisable && <button className="button button-ghost button-small" type="button" disabled={pending} onClick={disable}>{pending ? 'Disabling…' : 'Turn off notifications'}</button>}
-  </aside>
+  // Nothing actionable to show: stay out of the way rather than occupying a
+  // permanent strip on every page.
+  if (!canEnable && !canDisable) return null
+
+  return (
+    <aside
+      className="border-b border-outline-variant/30 bg-surface-container/60 backdrop-blur-sm"
+      aria-live="polite"
+      aria-busy={pending}
+    >
+      <div className="max-w-[1280px] mx-auto px-4 py-2 flex flex-wrap items-center gap-3">
+        <span className="material-symbols-outlined text-secondary text-[20px]" aria-hidden="true">
+          notifications
+        </span>
+        <p className="font-body text-label-sm text-on-surface-variant flex-grow">
+          <strong className="text-on-surface font-semibold">Booking notifications:</strong>{' '}
+          {message}
+        </p>
+        {canEnable && (
+          <button
+            className="button button-small"
+            type="button"
+            disabled={pending || !vapidPublicKey}
+            onClick={enable}
+          >
+            {pending ? 'Enabling…' : 'Enable'}
+          </button>
+        )}
+        {canDisable && (
+          <button
+            className="button button-ghost button-small"
+            type="button"
+            disabled={pending}
+            onClick={disable}
+          >
+            {pending ? 'Disabling…' : 'Turn off'}
+          </button>
+        )}
+      </div>
+    </aside>
+  )
 }

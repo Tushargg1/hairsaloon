@@ -102,6 +102,11 @@ export default function ManagementLoginPage() {
             {status.pending ? 'Signing in…' : retryIn > 0 ? `Try again in ${retryIn}s` : 'Sign in to management'}
           </button>
         </form>
+        {platformHost && (
+          <p className="form-switch">
+            New salon owner? <Link to="/for-business">Register your salon</Link>
+          </p>
+        )}
         <p className="form-switch"><Link to={platformHost ? '/login' : '/'}>{platformHost ? 'Customer login' : 'Back to salon home'}</Link></p>
       </section>
     </main>

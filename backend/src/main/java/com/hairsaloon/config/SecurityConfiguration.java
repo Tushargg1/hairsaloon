@@ -35,7 +35,8 @@ public class SecurityConfiguration {
             .authorizeHttpRequests(requests -> requests
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
-                .requestMatchers("/api/platform/auth/signup", "/api/platform/auth/login",
+                .requestMatchers("/api/platform/auth/signup",
+                    "/api/platform/auth/business-signup", "/api/platform/auth/login",
                     "/api/platform/auth/logout", "/api/platform/auth/otp/**",
                     "/api/platform/privileged-auth/login").permitAll()
                 .requestMatchers("/api/platform/auth/me").authenticated()

@@ -9,6 +9,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import java.math.BigDecimal;
 import java.time.Instant;
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -58,6 +59,12 @@ public class Salon {
     @Column(name = "cancellation_window_minutes", nullable = false)
     private int cancellationWindowMinutes = 120;
 
+    @Column(precision = 9, scale = 6)
+    private BigDecimal latitude;
+
+    @Column(precision = 9, scale = 6)
+    private BigDecimal longitude;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -68,6 +75,14 @@ public class Salon {
     public Salon(Long ownerId, String subdomain, String name, String description,
                  String address, String city, String phone, String email,
                  String logoUrl, String timezone) {
+        this(ownerId, subdomain, name, description, address, city, phone, email,
+            logoUrl, timezone, null, null);
+    }
+
+    public Salon(Long ownerId, String subdomain, String name, String description,
+                 String address, String city, String phone, String email,
+                 String logoUrl, String timezone, BigDecimal latitude,
+                 BigDecimal longitude) {
         this.ownerId = ownerId;
         this.subdomain = subdomain;
         this.name = name;
@@ -78,6 +93,8 @@ public class Salon {
         this.email = email;
         this.logoUrl = logoUrl;
         this.timezone = timezone;
+        this.latitude = latitude;
+        this.longitude = longitude;
         this.status = SalonStatus.PENDING;
     }
 
@@ -112,5 +129,12 @@ public class Salon {
     public String getTimezone() { return timezone; }
     public SalonStatus getStatus() { return status; }
     public int getCancellationWindowMinutes() { return cancellationWindowMinutes; }
+    public BigDecimal getLatitude() { return latitude; }
+    public BigDecimal getLongitude() { return longitude; }
     public Instant getCreatedAt() { return createdAt; }
+
+    public void updateCoordinates(BigDecimal latitude, BigDecimal longitude) {
+        this.latitude = latitude;
+        this.longitude = longitude;
+    }
 }

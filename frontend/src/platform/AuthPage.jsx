@@ -6,7 +6,6 @@ import { errorMessage } from './salon-api.js'
 import GlassPanel from '../shared/components/GlassPanel.jsx'
 import BrassButton from '../shared/components/BrassButton.jsx'
 import InputField from '../shared/components/InputField.jsx'
-import Icon from '../shared/components/Icon.jsx'
 
 const AUTH_BG = 'https://lh3.googleusercontent.com/aida-public/AB6AXuAlRph_NbANkQiitgPiFLyVCbA-xOK3Gr9WsN5qB2N-1j9PleSEIpMOhq4dls0GnT2gy0iyQVU_OMKlgRDKlOh9FpoSaV-FXEJ82dwhTj8QBLv02JDQDsLOe96tu7pe55ixfK7E3D9ZT4xU87tAte5pegfITWQy66DODqQxeE_C0S5s4ZB0aeCGINQzzFWidbQSp5iNyh0VyjiIvU1tbQ-PCnK3PMMnZSSjcPdMMs8GJV5utDtNIf0sLxDMu1RoqbsLGQ'
 
@@ -342,7 +341,9 @@ export default function AuthPage({ mode }) {
           </GlassPanel>
 
           <p className="text-center font-body text-label-sm text-on-surface-variant/70 mt-6">
-            By proceeding, you agree to our <a href="#" className="text-secondary hover:underline">Terms of Service</a> and <a href="#" className="text-secondary hover:underline">Privacy Policy</a>.
+            By proceeding, you agree to our{' '}
+            <Link to="/terms" className="text-secondary hover:underline">Terms of Service</Link> and{' '}
+            <Link to="/privacy" className="text-secondary hover:underline">Privacy Policy</Link>.
           </p>
         </div>
       </div>

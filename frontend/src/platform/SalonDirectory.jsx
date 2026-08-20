@@ -1,5 +1,5 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { errorMessage, getSalons, salonKeys } from './salon-api.js'
 import { salonUrl } from './platform-config.js'
@@ -9,7 +9,12 @@ import Icon from '../shared/components/Icon.jsx'
 import BrassButton from '../shared/components/BrassButton.jsx'
 import StarRating from '../shared/components/StarRating.jsx'
 
-const defaults = { city: '', service: '', rating: '', search: '', page: '0' }
+const defaults = {
+  city: '', service: '', rating: '', search: '', page: '0',
+  latitude: '', longitude: '', radiusKm: '',
+}
+
+const RADIUS_OPTIONS = [2, 5, 10, 25, 50]
 
 function salonInitials(name = 'Salon') {
   return name.split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase()
@@ -33,6 +38,7 @@ export default function SalonDirectory() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [favorites, setFavorites] = useState(new Set())
   const [favoriteStatus, setFavoriteStatus] = useState({ pendingId: null, error: '' })
+  const [geoStatus, setGeoStatus] = useState({ pending: false, error: '' })
   const urlFilters = Object.fromEntries(
     Object.keys(defaults).map((key) => [key, searchParams.get(key) || defaults[key]]),
   )
@@ -75,13 +81,79 @@ export default function SalonDirectory() {
     placeholderData: keepPreviousData,
   })
   const page = normalizePage(salonsQuery.data, queryFilters.page)
+  const nearbyActive = Boolean(urlFilters.latitude && urlFilters.longitude)
 
   function update(e) { setForm((c) => ({ ...c, [e.target.name]: e.target.value })) }
+
+  function commit(values) {
+    const next = new URLSearchParams()
+    Object.entries({ ...values, page: '0' }).forEach(([k, v]) => { if (v) next.set(k, v) })
+    setSearchParams(next)
+  }
+
+  // Refs keep the latest form and commit available to the mount-time effect below
+  // without making requestLocation depend on every render.
+  const formRef = useRef(form)
+  const commitRef = useRef(commit)
+  formRef.current = form
+  commitRef.current = commit
+
   function applyFilters(e) {
     e.preventDefault()
-    const next = new URLSearchParams()
-    Object.entries({ ...form, page: '0' }).forEach(([k, v]) => { if (v) next.set(k, v) })
-    setSearchParams(next)
+    commit(form)
+  }
+
+  /**
+   * Asks the browser for coordinates and immediately runs a proximity search.
+   * Reads the form through a ref so it stays correct when called from an effect.
+   * Coordinates live only in the URL for this search; we never persist them.
+   */
+  const requestLocation = useCallback(() => {
+    if (!navigator.geolocation) {
+      setGeoStatus({ pending: false, error: 'Your browser does not support location search.' })
+      return
+    }
+    setGeoStatus({ pending: true, error: '' })
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const next = {
+          ...formRef.current,
+          latitude: position.coords.latitude.toFixed(6),
+          longitude: position.coords.longitude.toFixed(6),
+          radiusKm: formRef.current.radiusKm || '10',
+          city: '',
+        }
+        setForm(next)
+        setGeoStatus({ pending: false, error: '' })
+        commitRef.current(next)
+      },
+      (error) => {
+        const message = error.code === error.PERMISSION_DENIED
+          ? 'Location permission denied. Search by city instead.'
+          : 'Could not determine your location. Search by city instead.'
+        setGeoStatus({ pending: false, error: message })
+      },
+      { enableHighAccuracy: false, timeout: 10_000, maximumAge: 300_000 },
+    )
+  }, [])
+
+  // Arriving with ?nearby=1 (from the home page CTA) prompts for location once.
+  useEffect(() => {
+    if (!searchParams.get('nearby')) return
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current)
+      next.delete('nearby')
+      return next
+    }, { replace: true })
+    requestLocation()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  function clearLocation() {
+    const next = { ...form, latitude: '', longitude: '', radiusKm: '' }
+    setForm(next)
+    setGeoStatus({ pending: false, error: '' })
+    commit(next)
   }
   function changePage(p) {
     const next = new URLSearchParams(searchParams)
@@ -98,6 +170,39 @@ export default function SalonDirectory() {
         <form onSubmit={applyFilters} className="glass-surface metallic-border rounded-lg p-6 sticky top-24">
           <h2 className="font-display text-headline-sm text-secondary mb-6 border-b border-outline-variant/50 pb-3">Refine Search</h2>
 
+          {/* Nearby search */}
+          <div className="mb-6">
+            <label className="font-body text-label-md text-on-surface mb-1 block">Near me</label>
+            {nearbyActive ? (
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2 bg-[rgba(168,144,72,0.12)] border border-secondary/40 rounded px-3 py-2">
+                  <Icon name="my_location" filled className="text-secondary text-[18px]" />
+                  <span className="font-body text-label-sm text-secondary flex-grow">
+                    Within {form.radiusKm || 10} km
+                  </span>
+                  <button type="button" onClick={clearLocation} aria-label="Clear location filter"
+                    className="text-on-surface-variant hover:text-error transition-colors">
+                    <Icon name="close" className="text-[18px]" />
+                  </button>
+                </div>
+                <select name="radiusKm" value={form.radiusKm || '10'}
+                  onChange={(e) => { const next = { ...form, radiusKm: e.target.value }; setForm(next); commit(next) }}
+                  className="w-full bg-espresso metallic-border rounded text-on-surface px-3 py-2 focus:outline-none focus:border-brass-light text-body-md">
+                  {RADIUS_OPTIONS.map((r) => <option key={r} value={r}>Within {r} km</option>)}
+                </select>
+              </div>
+            ) : (
+              <button type="button" onClick={requestLocation} disabled={geoStatus.pending}
+                className="w-full flex items-center justify-center gap-2 border border-secondary text-secondary py-2 rounded font-body text-label-md hover:bg-secondary/10 transition-colors disabled:opacity-50">
+                <Icon name="my_location" className="text-[18px]" />
+                {geoStatus.pending ? 'Locating...' : 'Use my location'}
+              </button>
+            )}
+            {geoStatus.error && (
+              <p className="font-body text-label-sm text-error mt-1">{geoStatus.error}</p>
+            )}
+          </div>
+
           <div className="mb-6">
             <label className="font-body text-label-md text-on-surface mb-1 block">Search</label>
             <div className="relative">
@@ -110,7 +215,13 @@ export default function SalonDirectory() {
           <div className="mb-6">
             <label className="font-body text-label-md text-on-surface mb-1 block">City</label>
             <input name="city" value={form.city} onChange={update} placeholder="e.g. Mumbai"
-              className="w-full bg-espresso metallic-border rounded text-on-surface px-3 py-2 focus:outline-none focus:border-brass-light focus:ring-1 focus:ring-brass-light transition-colors placeholder-outline-variant text-body-md" />
+              disabled={nearbyActive}
+              className="w-full bg-espresso metallic-border rounded text-on-surface px-3 py-2 focus:outline-none focus:border-brass-light focus:ring-1 focus:ring-brass-light transition-colors placeholder-outline-variant text-body-md disabled:opacity-40 disabled:cursor-not-allowed" />
+            {nearbyActive && (
+              <p className="font-body text-label-sm text-outline mt-1">
+                Disabled while searching by distance.
+              </p>
+            )}
           </div>
 
           <div className="mb-6">
@@ -140,9 +251,14 @@ export default function SalonDirectory() {
       <section className="flex-grow">
         <div className="mb-6 flex justify-between items-end border-b border-outline-variant/30 pb-3">
           <div>
-            <h1 className="font-display text-headline-md text-on-surface">Discover Premium Salons</h1>
+            <h1 className="font-display text-headline-md text-on-surface">
+              {nearbyActive ? 'Salons Near You' : 'Discover Premium Salons'}
+            </h1>
             <p className="font-body text-body-lg text-on-surface-variant mt-1">
-              {salonsQuery.isLoading ? 'Searching...' : `${page.totalElements} salon${page.totalElements === 1 ? '' : 's'} found`}
+              {salonsQuery.isLoading
+                ? 'Searching...'
+                : `${page.totalElements} salon${page.totalElements === 1 ? '' : 's'} found`
+                  + (nearbyActive ? ` within ${urlFilters.radiusKm || 10} km` : '')}
             </p>
           </div>
         </div>
@@ -206,7 +322,13 @@ export default function SalonDirectory() {
                     {salon.description || 'A premium grooming establishment ready to serve you.'}
                   </p>
                   <div className="mt-3 flex justify-between items-center border-t border-outline-variant/30 pt-3">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
+                      {salon.distanceKm != null && (
+                        <span className="font-body text-label-sm text-secondary flex items-center gap-1">
+                          <Icon name="near_me" filled className="text-[14px]" />
+                          {Number(salon.distanceKm).toFixed(1)} km
+                        </span>
+                      )}
                       {salon.reviewCount != null && (
                         <span className="font-body text-label-sm text-on-surface-variant">{salon.reviewCount} reviews</span>
                       )}

@@ -48,7 +48,7 @@ class PostgreSqlMigrationSmokeIT {
                 while (rows.next()) versions.add(rows.getString(1));
             }
             assertThat(versions).containsExactly(
-                "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13");
+                "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14");
             assertThat(scalar(statement, "SELECT to_regclass('push_subscriptions')::text"))
                 .isEqualTo("push_subscriptions");
             assertThat(scalar(statement, "SELECT to_regclass('push_outbox')::text"))

@@ -9,6 +9,7 @@ import com.hairsaloon.platform.SalonDtos.SubdomainResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import java.math.BigDecimal;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,8 +37,12 @@ class PlatformSalonController {
             @RequestParam(required = false) String rating,
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String page,
-            @RequestParam(required = false) String size) {
-        return this.service.directory(city, service, rating, search, page, size);
+            @RequestParam(required = false) String size,
+            @RequestParam(required = false) String latitude,
+            @RequestParam(required = false) String longitude,
+            @RequestParam(required = false) String radiusKm) {
+        return this.service.directory(city, service, rating, search, page, size,
+            latitude, longitude, radiusKm);
     }
 
     @GetMapping("/check-subdomain")
@@ -51,7 +56,7 @@ class PlatformSalonController {
                          @Valid @RequestBody CreateSalonRequest request) {
         return service.create(owner, request.subdomain(), request.name(), request.description(),
             request.address(), request.city(), request.phone(), request.email(),
-            request.logoUrl(), request.timezone());
+            request.logoUrl(), request.timezone(), request.latitude(), request.longitude());
     }
 
     @JsonIgnoreProperties(ignoreUnknown = false)
@@ -64,7 +69,9 @@ class PlatformSalonController {
         @Size(max = 32) String phone,
         @Size(max = 320) String email,
         @Size(max = 2048) String logoUrl,
-        @NotBlank @Size(max = 64) String timezone) {
+        @NotBlank @Size(max = 64) String timezone,
+        BigDecimal latitude,
+        BigDecimal longitude) {
 
         @JsonAnySetter
         void rejectUnknownProperty(String property, Object value) {

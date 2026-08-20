@@ -1,6 +1,5 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import { checkSubdomain, createSalon, errorMessage, salonKeys } from './salon-api.js'
 import { baseDomain, salonUrl } from './platform-config.js'
 import GlassPanel from '../shared/components/GlassPanel.jsx'
@@ -8,7 +7,11 @@ import BrassButton from '../shared/components/BrassButton.jsx'
 import InputField from '../shared/components/InputField.jsx'
 import Icon from '../shared/components/Icon.jsx'
 
-const initialForm = { subdomain: '', name: '', description: '', address: '', city: '', phone: '', email: '', logoUrl: '', timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC' }
+const initialForm = {
+  subdomain: '', name: '', description: '', address: '', city: '', phone: '', email: '',
+  logoUrl: '', timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+  latitude: '', longitude: '',
+}
 const STEPS = ['Identity', 'Details', 'Review']
 
 export default function SalonSignup() {
@@ -16,6 +19,7 @@ export default function SalonSignup() {
   const [form, setForm] = useState(initialForm)
   const [createdSalon, setCreatedSalon] = useState(null)
   const [fieldErrors, setFieldErrors] = useState({})
+  const [geoStatus, setGeoStatus] = useState({ pending: false, error: '' })
   const validSubdomain = /^[a-z0-9](?:[a-z0-9-]{1,28}[a-z0-9])?$/.test(form.subdomain)
   const availability = useQuery({ queryKey: salonKeys.availability(form.subdomain), queryFn: () => checkSubdomain(form.subdomain), enabled: validSubdomain, staleTime: 30_000, retry: false })
   const createMutation = useMutation({
@@ -31,7 +35,47 @@ export default function SalonSignup() {
     setFieldErrors((c) => { if (c[e.target.name]) { const n = { ...c }; delete n[e.target.name]; return n } return c })
   }
   function next(e) { e.preventDefault(); if (step === 1 && (!availability.data?.available || !validSubdomain)) return; setStep((c) => Math.min(3, c + 1)) }
-  function submit(e) { e.preventDefault(); createMutation.mutate(form) }
+
+  function submit(e) {
+    e.preventDefault()
+    // Coordinates are optional; send null rather than empty strings so the API
+    // treats them as absent instead of failing numeric parsing.
+    createMutation.mutate({
+      ...form,
+      latitude: form.latitude === '' ? null : Number(form.latitude),
+      longitude: form.longitude === '' ? null : Number(form.longitude),
+    })
+  }
+
+  function captureLocation() {
+    if (!navigator.geolocation) {
+      setGeoStatus({ pending: false, error: 'Your browser does not support location.' })
+      return
+    }
+    setGeoStatus({ pending: true, error: '' })
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setForm((c) => ({
+          ...c,
+          latitude: position.coords.latitude.toFixed(6),
+          longitude: position.coords.longitude.toFixed(6),
+        }))
+        setGeoStatus({ pending: false, error: '' })
+      },
+      (error) => setGeoStatus({
+        pending: false,
+        error: error.code === error.PERMISSION_DENIED
+          ? 'Permission denied. You can add your location later.'
+          : 'Could not get your location. You can add it later.',
+      }),
+      { enableHighAccuracy: true, timeout: 10_000 },
+    )
+  }
+
+  function clearLocation() {
+    setForm((c) => ({ ...c, latitude: '', longitude: '' }))
+    setGeoStatus({ pending: false, error: '' })
+  }
 
   if (createdSalon) {
     return (
@@ -125,6 +169,38 @@ export default function SalonSignup() {
               <InputField label="Timezone" icon="schedule" name="timezone" value={form.timezone} onChange={update} required maxLength={80} />
             </div>
             <InputField label="Logo URL (optional)" icon="image" type="url" name="logoUrl" value={form.logoUrl} onChange={update} maxLength={500} placeholder="https://..." />
+
+            {/* Map location so customers can find the salon by distance */}
+            <div>
+              <label className="font-body text-label-sm text-on-surface-variant block mb-1">
+                Map location <span className="text-outline">(optional but recommended)</span>
+              </label>
+              {form.latitude && form.longitude ? (
+                <div className="flex items-center gap-2 bg-[rgba(168,144,72,0.12)] border border-secondary/40 rounded px-3 py-2.5">
+                  <Icon name="place" filled className="text-secondary text-[18px]" />
+                  <span className="font-body text-label-sm text-secondary flex-grow">
+                    {form.latitude}, {form.longitude}
+                  </span>
+                  <button type="button" onClick={clearLocation} aria-label="Clear location"
+                    className="text-on-surface-variant hover:text-error transition-colors">
+                    <Icon name="close" className="text-[18px]" />
+                  </button>
+                </div>
+              ) : (
+                <button type="button" onClick={captureLocation} disabled={geoStatus.pending}
+                  className="w-full flex items-center justify-center gap-2 border border-secondary text-secondary py-2.5 rounded font-body text-label-md hover:bg-secondary/10 transition-colors disabled:opacity-50">
+                  <Icon name="my_location" className="text-[18px]" />
+                  {geoStatus.pending ? 'Getting location...' : 'Use my current location'}
+                </button>
+              )}
+              <p className="font-body text-label-sm text-outline mt-1">
+                Stand at your salon and tap this so nearby customers can find you.
+              </p>
+              {geoStatus.error && (
+                <p className="font-body text-label-sm text-error mt-1">{geoStatus.error}</p>
+              )}
+            </div>
+
             <div className="flex justify-between mt-4">
               <button type="button" onClick={() => setStep(1)} className="font-body text-label-md text-on-surface-variant hover:text-secondary transition-colors flex items-center gap-1"><Icon name="arrow_back" className="text-[18px]" /> Back</button>
               <BrassButton type="submit">Review</BrassButton>
@@ -137,7 +213,16 @@ export default function SalonSignup() {
           <form onSubmit={submit} className="flex flex-col gap-5">
             <h2 className="font-display text-headline-sm text-on-surface mb-2">Review & Submit</h2>
             <div className="bg-surface-container rounded-lg p-4 border border-bronze-muted/50 flex flex-col gap-2">
-              {[['Salon', form.name], ['Address', `${form.subdomain}.${baseDomain}`], ['Location', `${form.address}, ${form.city}`], ['Contact', `${form.email} / ${form.phone}`], ['Timezone', form.timezone]].map(([k, v]) => (
+              {[
+                ['Salon', form.name],
+                ['Web address', `${form.subdomain}.${baseDomain}`],
+                ['Address', `${form.address}, ${form.city}`],
+                ['Contact', `${form.email} / ${form.phone}`],
+                ['Timezone', form.timezone],
+                ['Map location', form.latitude && form.longitude
+                  ? `${form.latitude}, ${form.longitude}`
+                  : 'Not set — you can add it later'],
+              ].map(([k, v]) => (
                 <div key={k} className="flex justify-between text-body-md"><span className="text-on-surface-variant">{k}</span><span className="text-on-surface font-medium text-right">{v}</span></div>
               ))}
             </div>

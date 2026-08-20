@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
 import PublicReviews from './PublicReviews.jsx'
 import Icon from '../shared/components/Icon.jsx'
 import BrassButton from '../shared/components/BrassButton.jsx'

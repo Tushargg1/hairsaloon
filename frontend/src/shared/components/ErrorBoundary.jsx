@@ -16,7 +16,7 @@ export default class ErrorBoundary extends Component {
     return (
       <main className="fatal-error-page" role="alert">
         <div className="fatal-error-card">
-          <span className="brand-mark" aria-hidden="true">H</span>
+          <span className="brand-mark" aria-hidden="true">G</span>
           <p className="eyebrow">Unexpected application error</p>
           <h1>Something went wrong.</h1>
           <p>Your information is safe. Reload the page to restore the application.</p>

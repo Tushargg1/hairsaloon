@@ -100,6 +100,86 @@ class IdentitySecurityIntegrationTest {
             .andExpect(jsonPath("$.error").value("PHONE_EXISTS"));
     }
 
+    @Test
+    void businessSignupCreatesOwnerThatCanUsePrivilegedLoginButNotCustomerLogin()
+            throws Exception {
+        String body = businessSignup("Priya Owner", "9811100011", "Priya@Salon.com");
+
+        mockMvc.perform(post("/api/platform/auth/business-signup").header("Host", "localhost")
+                .contentType(MediaType.APPLICATION_JSON).content(body))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.role").value("SALON_OWNER"))
+            .andExpect(jsonPath("$.name").value("Priya Owner"))
+            .andExpect(jsonPath("$.email").value("priya@salon.com"))
+            .andExpect(jsonPath("$.passwordHash").doesNotExist())
+            .andExpect(header().string(HttpHeaders.SET_COOKIE,
+                org.hamcrest.Matchers.containsString("auth_token=")));
+
+        User owner = users.findByEmailIgnoreCase("priya@salon.com").orElseThrow();
+        assertThat(owner.getRole()).isEqualTo(UserRole.SALON_OWNER);
+
+        // Owners authenticate by email; the customer phone login must not accept them.
+        mockMvc.perform(post("/api/platform/auth/login").header("Host", "localhost")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"phone\":\"9811100011\",\"password\":\"Password123!\"}"))
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.error").value("INVALID_CREDENTIALS"));
+
+        mockMvc.perform(post("/api/platform/privileged-auth/login").header("Host", "localhost")
+                .contentType(MediaType.APPLICATION_JSON).content(login("priya@salon.com")))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.role").value("SALON_OWNER"));
+    }
+
+    @Test
+    void businessSignupRequiresEmailAndRejectsDuplicateIdentifiers() throws Exception {
+        // Email is mandatory because it is the owner's login identifier.
+        mockMvc.perform(post("/api/platform/auth/business-signup").header("Host", "localhost")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"No Email\",\"phone\":\"9811100022\","
+                    + "\"password\":\"Password123!\"}"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.error").value("VALIDATION_ERROR"))
+            .andExpect(jsonPath("$.fieldErrors.email").exists());
+
+        mockMvc.perform(post("/api/platform/auth/business-signup").header("Host", "localhost")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(businessSignup("First Owner", "9811100033", "first@salon.com")))
+            .andExpect(status().isCreated());
+
+        mockMvc.perform(post("/api/platform/auth/business-signup").header("Host", "localhost")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(businessSignup("Same Phone", "9811100033", "other@salon.com")))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.error").value("PHONE_EXISTS"));
+
+        mockMvc.perform(post("/api/platform/auth/business-signup").header("Host", "localhost")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(businessSignup("Same Email", "9811100044", "FIRST@salon.com")))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.error").value("EMAIL_EXISTS"));
+    }
+
+    @Test
+    void businessSignupCannotSelfAssignPlatformAdmin() throws Exception {
+        // The role is assigned server-side, so a caller-supplied "role" cannot escalate.
+        mockMvc.perform(post("/api/platform/auth/business-signup").header("Host", "localhost")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"Escalate\",\"phone\":\"9811100055\","
+                    + "\"email\":\"escalate@salon.com\",\"password\":\"Password123!\","
+                    + "\"role\":\"PLATFORM_ADMIN\"}"))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.role").value("SALON_OWNER"));
+
+        assertThat(users.findByEmailIgnoreCase("escalate@salon.com").orElseThrow().getRole())
+            .isEqualTo(UserRole.SALON_OWNER);
+    }
+
+    private static String businessSignup(String name, String phone, String email) {
+        return "{\"name\":\"" + name + "\",\"phone\":\"" + phone + "\",\"email\":\"" + email
+            + "\",\"password\":\"Password123!\"}";
+    }
+
     private static String login(String email) {
         return "{\"email\":\"" + email + "\",\"password\":\"Password123!\"}";
     }

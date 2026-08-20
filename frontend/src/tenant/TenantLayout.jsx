@@ -15,13 +15,22 @@ export default function TenantLayout() {
   const { user, loading, logout } = useAuth()
   const navigate = useNavigate()
   const [loggingOut, setLoggingOut] = useState(false)
+  const [logoutError, setLogoutError] = useState('')
   const profileQuery = useQuery({ queryKey: tenantKeys.profile, queryFn: getSalonProfile })
   const salonName = profileQuery.data?.name || profileQuery.data?.salonName || tenantNameFallback()
   const pushEligible = user?.role === 'CUSTOMER' || user?.role === 'SALON_OWNER'
 
   async function handleLogout() {
     setLoggingOut(true)
-    try { await logout(); navigate('/') } catch {} finally { setLoggingOut(false) }
+    setLogoutError('')
+    try {
+      await logout()
+      navigate('/')
+    } catch {
+      setLogoutError('Could not log out. Please try again.')
+    } finally {
+      setLoggingOut(false)
+    }
   }
 
   return (
@@ -48,6 +57,9 @@ export default function TenantLayout() {
           </div>
 
           <div className="hidden md:flex items-center gap-3">
+            {logoutError && (
+              <span className="font-body text-label-sm text-error" role="alert">{logoutError}</span>
+            )}
             {loading ? <span className="font-body text-label-sm text-on-surface-variant">...</span> : user ? (
               <>
                 {user.role === 'SALON_OWNER' && <NavLink to="/dashboard" className="font-body text-label-md text-secondary hover:text-secondary-fixed transition-colors">Dashboard</NavLink>}

@@ -2,6 +2,7 @@ package com.hairsaloon.platform;
 
 import com.hairsaloon.auth.AuthenticatedUser;
 import com.hairsaloon.platform.PlatformSalonQueryRepository.DirectoryResult;
+import com.hairsaloon.platform.PlatformSalonQueryRepository.GeoFilter;
 import com.hairsaloon.platform.SalonDtos.PageResponse;
 import com.hairsaloon.platform.SalonDtos.PendingSalonResponse;
 import com.hairsaloon.platform.SalonDtos.SalonResponse;
@@ -32,17 +33,66 @@ class PlatformSalonService {
         this.queries = queries;
     }
 
+    private static final double DEFAULT_RADIUS_KM = 10;
+    private static final double MAX_RADIUS_KM = 100;
+
     @Transactional(readOnly = true)
     PageResponse<SalonResponse> directory(String city, String service, String rating,
-                                          String search, String page, String size) {
+                                          String search, String page, String size,
+                                          String latitude, String longitude,
+                                          String radiusKm) {
         int pageNumber = integer(page, "page", 0, Integer.MAX_VALUE, 0);
         int pageSize = integer(size, "size", 1, 100, 20);
         BigDecimal minimumRating = rating(rating);
         DirectoryResult result = queries.findDirectory(
             normalizedFilter(city, 120, "city"),
             likeFilter(service, 160, "service"), minimumRating,
-            likeFilter(search, 200, "search"), pageNumber, pageSize);
+            likeFilter(search, 200, "search"), pageNumber, pageSize,
+            geoFilter(latitude, longitude, radiusKm));
         return PageResponse.of(result.salons(), pageNumber, pageSize, result.total());
+    }
+
+    /**
+     * Builds the proximity constraint. Latitude and longitude must be supplied together;
+     * a lone value is a client bug worth surfacing rather than silently ignoring.
+     */
+    private static GeoFilter geoFilter(String latitude, String longitude, String radiusKm) {
+        boolean hasLat = latitude != null && !latitude.isBlank();
+        boolean hasLng = longitude != null && !longitude.isBlank();
+        if (!hasLat && !hasLng) {
+            return GeoFilter.NONE;
+        }
+        if (hasLat != hasLng) {
+            throw validation(hasLat ? "longitude" : "latitude",
+                "is required when searching by location");
+        }
+        BigDecimal lat = coordinate(latitude, "latitude", 90);
+        BigDecimal lng = coordinate(longitude, "longitude", 180);
+        double radius = DEFAULT_RADIUS_KM;
+        if (radiusKm != null && !radiusKm.isBlank()) {
+            try {
+                radius = Double.parseDouble(radiusKm.trim());
+            } catch (NumberFormatException invalid) {
+                throw validation("radiusKm", "must be a number");
+            }
+            if (!(radius > 0) || radius > MAX_RADIUS_KM) {
+                throw validation("radiusKm",
+                    "must be greater than 0 and at most " + (int) MAX_RADIUS_KM);
+            }
+        }
+        return new GeoFilter(lat, lng, radius);
+    }
+
+    private static BigDecimal coordinate(String input, String field, int bound) {
+        try {
+            BigDecimal value = new BigDecimal(input.trim());
+            if (value.abs().compareTo(BigDecimal.valueOf(bound)) > 0) {
+                throw validation(field, "must be between -" + bound + " and " + bound);
+            }
+            return value;
+        } catch (NumberFormatException invalid) {
+            throw validation(field, "must be a decimal number");
+        }
     }
 
     @Transactional(readOnly = true)
@@ -65,7 +115,8 @@ class PlatformSalonService {
     @Transactional
     SalonResponse create(AuthenticatedUser owner, String subdomain, String name,
                          String description, String address, String city, String phone,
-                         String email, String logoUrl, String timezone) {
+                         String email, String logoUrl, String timezone,
+                         BigDecimal latitude, BigDecimal longitude) {
         SubdomainPolicy.Result candidate = SubdomainPolicy.inspect(subdomain);
         if (!candidate.valid() || candidate.reserved()) {
             throw validation("subdomain", candidate.reserved()
@@ -77,10 +128,21 @@ class PlatformSalonService {
         if (salons.existsBySubdomain(candidate.normalized())) {
             throw conflict("SUBDOMAIN_TAKEN", "This subdomain is already taken");
         }
+        if ((latitude == null) != (longitude == null)) {
+            throw validation(latitude == null ? "latitude" : "longitude",
+                "must be supplied together with the other coordinate");
+        }
+        if (latitude != null && latitude.abs().compareTo(BigDecimal.valueOf(90)) > 0) {
+            throw validation("latitude", "must be between -90 and 90");
+        }
+        if (longitude != null && longitude.abs().compareTo(BigDecimal.valueOf(180)) > 0) {
+            throw validation("longitude", "must be between -180 and 180");
+        }
         Salon salon = new Salon(owner.id(), candidate.normalized(),
             text(name, 160, "name", true), text(description, 5000, "description", false),
             text(address, 500, "address", true), text(city, 120, "city", true),
-            phone(phone), email(email), logoUrl(logoUrl), timezone(timezone));
+            phone(phone), email(email), logoUrl(logoUrl), timezone(timezone),
+            latitude, longitude);
         try {
             return response(salons.saveAndFlush(salon));
         } catch (DataIntegrityViolationException uniqueRace) {
@@ -109,7 +171,8 @@ class PlatformSalonService {
         return new SalonResponse(salon.getId(), salon.getSubdomain(), salon.getName(),
             salon.getDescription(), salon.getAddress(), salon.getCity(), salon.getPhone(),
             salon.getEmail(), salon.getLogoUrl(), salon.getTimezone(), salon.getStatus(),
-            ZERO_RATING, 0, salon.getCreatedAt());
+            ZERO_RATING, 0, salon.getLatitude(), salon.getLongitude(), null,
+            salon.getCreatedAt());
     }
 
     private static int integer(String input, String field, int min, int max, int fallback) {

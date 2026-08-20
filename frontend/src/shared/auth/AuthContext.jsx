@@ -53,6 +53,18 @@ export function AuthProvider({ children }) {
     }
   }, [])
 
+  const businessSignup = useCallback(async (credentials) => {
+    try {
+      const { data } = await apiClient.post('/api/platform/auth/business-signup', credentials)
+      setUser(data)
+      setBackendStatus('online')
+      return data
+    } catch (error) {
+      if (isConnectivityError(error)) setBackendStatus('offline')
+      throw error
+    }
+  }, [])
+
   const login = useCallback(async (credentials) => {
     try {
       const { data } = await apiClient.post('/api/platform/auth/login', credentials)
@@ -124,12 +136,13 @@ export function AuthProvider({ children }) {
 
   const value = useMemo(
     () => ({
-      user, signup, login, privilegedLogin, requestOtp, verifyOtp, resetPassword,
-      logout, loading, backendStatus, refreshSession, retryBackend: refreshSession,
+      user, signup, businessSignup, login, privilegedLogin, requestOtp, verifyOtp,
+      resetPassword, logout, loading, backendStatus, refreshSession,
+      retryBackend: refreshSession,
     }),
     [
-      user, signup, login, privilegedLogin, requestOtp, verifyOtp, resetPassword,
-      logout, loading, backendStatus, refreshSession,
+      user, signup, businessSignup, login, privilegedLogin, requestOtp, verifyOtp,
+      resetPassword, logout, loading, backendStatus, refreshSession,
     ],
   )
 

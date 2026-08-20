@@ -111,55 +111,427 @@
   }
 }
 
-/* Dashboard legacy class compatibility */
+/* ---------------------------------------------------------------------------
+ * Semantic class compatibility layer.
+ *
+ * Pages written before the Tailwind migration (dashboard managers, review
+ * displays, tenant login, the bookings calendar) still use semantic class
+ * names. Rather than rewrite that markup, these rules re-express the old
+ * classes in the Heritage Gold & Walnut design tokens so every screen renders
+ * consistently.
+ * ------------------------------------------------------------------------- */
 @layer components {
-  .page-width { @apply max-w-[1280px] mx-auto px-4; }
-  .manager-heading { @apply mb-6; }
-  .manager-heading .eyebrow { @apply font-body text-label-md text-secondary tracking-wider uppercase mb-1; }
-  .manager-heading h2 { @apply font-display text-headline-sm text-on-surface; }
-  .manager-heading p { @apply font-body text-body-md text-on-surface-variant mt-1; }
-  .manager-list { @apply flex flex-col gap-3; }
-  .manager-item { @apply flex justify-between items-center py-3 px-4 bg-surface-container/50 rounded-lg border border-outline-variant/20; }
-  .manager-item h3 { @apply font-body text-title-lg text-on-surface text-base; }
-  .manager-item p { @apply font-body text-body-md text-on-surface-variant; }
-  .manager-status { @apply font-body text-label-sm text-[#A89048]; }
-  .manager-status.inactive { @apply text-on-surface-variant; }
-  .manager-loading { @apply text-on-surface-variant py-8 text-center; }
-  .manager-form { @apply glass-panel rounded-xl p-6 flex flex-col gap-4; }
-  .manager-form label { @apply font-body text-label-sm text-on-surface-variant block; }
-  .manager-form input, .manager-form select, .manager-form textarea { @apply input-glass w-full rounded py-2 px-3 text-body-md mt-1; }
-  .manager-form .button { @apply brass-gradient px-6 py-2 rounded font-body text-label-md transition-all; }
-  .manager-form .button-secondary { @apply bg-transparent border border-outline-variant text-on-surface-variant hover:bg-surface-container-high; }
-  .manager-form .button-ghost { @apply bg-transparent text-on-surface-variant hover:text-secondary border-none; }
+  /* --- Layout shells --- */
+  .page-width { @apply max-w-[1280px] mx-auto px-4 w-full; }
+  .state-page { @apply max-w-[1280px] mx-auto px-4 py-20 text-center font-body text-body-lg text-on-surface-variant; }
+  .fatal-error-page { @apply min-h-screen flex items-center justify-center px-4; }
+  .fatal-error-card { @apply glass-panel rounded-xl p-10 text-center max-w-lg; }
+  .fatal-error-card h1 { @apply font-display text-headline-md text-on-surface mb-3; }
+  .fatal-error-card p { @apply font-body text-body-md text-on-surface-variant mb-6; }
+  .fatal-error-card .eyebrow { @apply block mb-2; }
+  .brand-mark {
+    @apply w-12 h-12 rounded-full bg-secondary-container border border-outline-variant/50
+           inline-flex items-center justify-center font-display font-bold text-secondary
+           text-2xl mb-4;
+  }
+  .scrollbar-none { scrollbar-width: none; }
+  .scrollbar-none::-webkit-scrollbar { display: none; }
 
-  .form-status { @apply font-body text-body-md rounded px-3 py-2 my-2; }
+  /* --- Shared typography helpers --- */
+  .eyebrow { @apply font-body text-label-md text-secondary tracking-wider uppercase; }
+  .card-kicker { @apply font-body text-label-sm text-outline tracking-wider uppercase; }
+  .muted { @apply text-on-surface-variant; }
+  .optional { @apply text-outline font-normal; }
+
+  /* --- Buttons --- */
+  .button {
+    @apply brass-gradient px-4 py-2 rounded font-body text-label-md transition-all
+           inline-flex items-center justify-center gap-1 border-0 cursor-pointer;
+  }
+  .button:hover { @apply shadow-amber-glow-lg; }
+  .button:disabled { @apply opacity-50 cursor-not-allowed; }
+  .button-secondary {
+    @apply bg-transparent border border-secondary text-secondary hover:bg-secondary/10;
+    background-image: none;
+  }
+  .button-ghost {
+    @apply bg-transparent border-0 text-on-surface-variant hover:text-secondary;
+    background-image: none;
+  }
+  .button-light {
+    @apply bg-on-surface text-espresso hover:opacity-90;
+    background-image: none;
+  }
+  .button-small { @apply px-3 py-1.5 text-label-sm; }
+  .button-full { @apply w-full; }
+  .button-row { @apply flex flex-wrap gap-3; }
+
+  /* --- Forms --- */
+  .form-card { @apply glass-panel rounded-xl p-6 md:p-8; }
+  .form-card h2 { @apply font-display text-headline-sm text-on-surface mb-4; }
+  .form-card > p { @apply font-body text-body-md text-on-surface-variant mb-4; }
+  .form-card form { @apply flex flex-col gap-4; }
+  .form-switch { @apply font-body text-label-sm text-on-surface-variant; }
+  .form-switch a { @apply text-secondary hover:underline; }
+  .checkbox-field { @apply flex items-center gap-2; }
+
+  .form-status { @apply font-body text-body-md rounded px-3 py-2; }
   .form-status.error { @apply text-error bg-error-container/20; }
   .form-status.success { @apply text-[#A89048] bg-[rgba(168,144,72,0.1)]; }
 
-  .button { @apply brass-gradient px-4 py-2 rounded font-body text-label-md transition-all inline-flex items-center gap-1; }
-  .button-secondary { @apply bg-transparent border border-secondary text-secondary hover:bg-secondary/10; background: none; }
-  .button-ghost { @apply bg-transparent text-on-surface-variant hover:text-secondary; background: none; border: none; }
-  .button-small { @apply px-3 py-1.5 text-label-sm; }
-  .button-full { @apply w-full justify-center; }
+  /* Inputs inside legacy label-wrapped fields */
+  .form-card label,
+  .manager-section label,
+  .manager-create-card label,
+  .manager-edit-form label,
+  .staff-subform label,
+  .walk-in-form label,
+  .calendar-toolbar label,
+  .auth-page label {
+    @apply font-body text-label-sm text-on-surface-variant flex flex-col gap-1;
+  }
+  .form-card input, .form-card select, .form-card textarea,
+  .manager-section input, .manager-section select, .manager-section textarea,
+  .staff-subform input, .staff-subform select, .staff-subform textarea,
+  .walk-in-form input, .walk-in-form select, .walk-in-form textarea,
+  .calendar-toolbar select, .calendar-toolbar input,
+  .auth-page input, .auth-page select, .auth-page textarea {
+    @apply input-glass w-full rounded py-2 px-3 text-body-md;
+  }
+  .form-card input[type="checkbox"],
+  .manager-section input[type="checkbox"],
+  .staff-subform input[type="checkbox"] {
+    @apply w-auto accent-secondary;
+  }
+  .span-2 { @apply md:col-span-2; }
 
-  .public-state { @apply glass-panel rounded-lg p-8 text-center; }
-  .public-state h2, .public-state h3 { @apply font-display text-headline-sm text-on-surface mb-2; }
-  .public-state p { @apply font-body text-body-md text-on-surface-variant mb-4; }
+  /* --- Auth pages (tenant customer login) --- */
+  .auth-page { @apply max-w-[1000px] mx-auto px-4 py-12 grid md:grid-cols-2 gap-8 items-center; }
+  .auth-intro .eyebrow { @apply mb-2 block; }
+  .auth-intro h1 { @apply font-display text-headline-md text-on-surface mb-3; }
+  .auth-intro p { @apply font-body text-body-lg text-on-surface-variant; }
 
-  .muted { @apply text-on-surface-variant; }
-  .optional { @apply text-on-surface-variant text-label-sm; }
+  /* --- Generic state cards --- */
+  .state-card, .public-state { @apply glass-panel rounded-xl p-8 text-center; }
+  .state-card h1, .state-card h2, .state-card h3,
+  .public-state h2, .public-state h3 {
+    @apply font-display text-headline-sm text-on-surface mb-2;
+  }
+  .state-card p, .public-state p { @apply font-body text-body-md text-on-surface-variant mb-4; }
+  .dashboard-state { @apply mt-4; }
+  .public-loading, .manager-loading { @apply font-body text-body-md text-on-surface-variant py-8 text-center; }
 
-  .calendar-grid { @apply grid gap-2; }
-  .calendar-slot { @apply bg-surface-container/50 rounded border border-outline-variant/20 p-3; }
-  .calendar-slot h4 { @apply font-body text-title-lg text-on-surface text-sm; }
-  .calendar-slot p { @apply font-body text-label-sm text-on-surface-variant; }
+  .success-card { @apply glass-panel rounded-xl p-10 text-center max-w-lg mx-auto; }
+  .success-card h1 { @apply font-display text-headline-md text-on-surface mb-3; }
+  .success-icon {
+    @apply brass-gradient w-16 h-16 rounded-full inline-flex items-center justify-center
+           text-3xl mb-4;
+  }
 
-  .slot-grid { @apply grid grid-cols-3 sm:grid-cols-4 gap-2; }
-  .slot-grid button { @apply barber-slot py-2 text-center font-body text-label-md; }
+  /* --- Public salon page sections --- */
+  .public-section { @apply py-12 px-4 max-w-[1280px] mx-auto w-full; }
+  .public-section-heading { @apply mb-6; }
+  .public-section-heading .eyebrow { @apply mb-2 block; }
+  .public-section-heading h2 { @apply font-display text-headline-sm text-on-surface; }
 
+  /* --- Dashboard manager sections --- */
+  .manager-section { @apply flex flex-col gap-4; }
+  .manager-heading { @apply mb-2; }
+  .manager-heading .eyebrow { @apply mb-1 block; }
+  .manager-heading h2 { @apply font-display text-headline-sm text-on-surface; }
+  .manager-heading p { @apply font-body text-body-md text-on-surface-variant mt-1; }
+
+  .manager-create-card, .manager-edit-form {
+    @apply glass-panel rounded-xl p-6 flex flex-col gap-4;
+  }
+  .manager-create-card h3, .manager-edit-form h3 {
+    @apply font-display text-title-lg text-on-surface;
+  }
+  .manager-form-grid, .promotion-form-grid, .hours-grid {
+    @apply grid grid-cols-1 md:grid-cols-2 gap-4;
+  }
+
+  .manager-list { @apply flex flex-col gap-3; }
+  .manager-item {
+    @apply flex flex-wrap justify-between items-center gap-3 py-3 px-4
+           bg-surface-container/50 rounded-lg border border-outline-variant/20;
+  }
+  .manager-item h3 { @apply font-body font-semibold text-on-surface text-base; }
+  .manager-item p { @apply font-body text-body-md text-on-surface-variant; }
+  .manager-item.inactive { @apply opacity-60; }
+  .manager-status { @apply font-body text-label-sm text-[#A89048]; }
+  .manager-status.inactive { @apply text-outline; }
+
+  /* --- Staff manager --- */
+  .staff-manager-list { @apply flex flex-col gap-4; }
+  .staff-manager-card {
+    @apply glass-panel rounded-xl p-6 flex flex-col gap-4;
+  }
+  .staff-manager-card.inactive { @apply opacity-70; }
+  .staff-card-header { @apply flex items-center gap-4 flex-wrap; }
+  .staff-card-header h3 { @apply font-display text-title-lg text-on-surface; }
+  .staff-avatar {
+    @apply w-12 h-12 rounded-full bg-surface-container-high border border-outline-variant/50
+           flex items-center justify-center overflow-hidden flex-shrink-0
+           font-display text-secondary;
+  }
+  .staff-avatar img { @apply w-full h-full object-cover; }
+  .staff-subform {
+    @apply flex flex-col gap-3 pt-4 border-t border-outline-variant/20;
+  }
+  .staff-subform h4 { @apply font-body font-semibold text-secondary text-base; }
+  .staff-existing { @apply grid grid-cols-1 md:grid-cols-2 gap-3; }
+  .staff-existing strong { @apply font-body text-label-sm text-outline block; }
+  .staff-existing p { @apply font-body text-body-md text-on-surface; }
+  .hours-row { @apply flex flex-wrap items-end gap-2; }
+  .choice-grid { @apply flex flex-wrap gap-2; }
+
+  /* --- Promotions manager --- */
+  .promotion-item { @apply glass-panel rounded-xl p-6 flex flex-col gap-3; }
+  .promotion-summary { @apply flex flex-wrap justify-between items-center gap-3; }
+  .promotion-summary h3 { @apply font-display text-title-lg text-secondary-fixed; }
+  .promotion-details { @apply grid grid-cols-2 md:grid-cols-4 gap-3; }
+  .promotion-details dt, .promotion-details strong {
+    @apply font-body text-label-sm text-outline block;
+  }
+  .promotion-details dd, .promotion-details span {
+    @apply font-body text-body-md text-on-surface;
+  }
+  .promotion-services { @apply font-body text-label-sm text-on-surface-variant; }
+
+  /* --- Media manager --- */
+  .media-gallery { @apply grid grid-cols-2 md:grid-cols-4 gap-4; }
+  .media-gallery img {
+    @apply w-full h-40 object-cover rounded-lg border border-outline-variant/30;
+  }
+  .media-placeholder {
+    @apply h-40 rounded-lg border border-dashed border-outline-variant/50
+           flex items-center justify-center font-body text-label-sm text-outline;
+  }
+  .upload-progress {
+    @apply h-1.5 rounded-full bg-surface-container-high overflow-hidden;
+  }
+  .upload-progress > * { @apply block h-full brass-gradient; }
+
+  /* --- Reviews --- */
+  .reviews-content { @apply flex flex-col gap-6; }
+  .review-summary { @apply glass-panel rounded-xl p-6 flex flex-wrap items-center gap-6; }
+  .review-average { @apply font-display text-display-lg-mobile text-secondary; }
+  .review-stars { @apply text-brass; }
+  .rating-distribution { @apply flex flex-col gap-1 flex-grow min-w-[200px]; }
+  .rating-distribution > div { @apply flex items-center gap-2; }
+  .rating-distribution span { @apply font-body text-label-sm text-on-surface-variant w-14; }
+  .rating-distribution progress {
+    @apply flex-grow h-2 rounded-full overflow-hidden appearance-none;
+  }
+  .rating-distribution progress::-webkit-progress-bar { @apply bg-surface-container-high rounded-full; }
+  .rating-distribution progress::-webkit-progress-value { @apply bg-brass rounded-full; }
+  .rating-distribution progress::-moz-progress-bar { @apply bg-brass rounded-full; }
+  .rating-distribution strong { @apply font-body text-label-sm text-on-surface w-8 text-right; }
+  .review-grid { @apply grid grid-cols-1 md:grid-cols-2 gap-4; }
+  .review-card {
+    @apply bg-surface-container/50 rounded-lg p-4 border border-outline-variant/20
+           flex flex-col gap-2;
+  }
+  .review-card p { @apply font-body text-body-md text-on-surface-variant italic; }
+  .review-card footer { @apply font-body text-label-sm text-outline; }
+  .review-empty { @apply col-span-full; }
+  .review-pagination { @apply flex justify-center items-center gap-4; }
+  .review-pagination span { @apply font-body text-body-md text-on-surface-variant; }
+
+  /* --- Bookings calendar --- */
+  .calendar-toolbar { @apply flex flex-wrap items-end gap-4; }
+  .calendar-navigation { @apply flex items-center gap-2; }
+  .view-switcher { @apply inline-flex rounded overflow-hidden border border-outline-variant/50; }
+  .view-switcher button {
+    @apply px-3 py-1.5 font-body text-label-sm text-on-surface-variant
+           bg-transparent border-0 transition-colors;
+    background-image: none;
+  }
+  .view-switcher button[aria-pressed="true"] { @apply brass-gradient; }
+  .calendar-range { @apply flex flex-col; }
+  .calendar-range strong { @apply font-display text-title-lg text-on-surface; }
+  .calendar-range span { @apply font-body text-label-sm text-outline; }
+
+  .calendar-grid-scroll { @apply overflow-x-auto; }
+  .calendar-time-grid {
+    display: grid;
+    grid-template-columns: 4rem 1fr;
+    grid-template-rows: auto 1fr;
+    min-width: 640px;
+  }
+  .calendar-grid-corner {
+    @apply font-body text-label-sm text-outline flex items-end justify-center pb-2
+           border-b border-r border-outline-variant/30;
+  }
+  .calendar-column-headings {
+    display: grid;
+    grid-template-columns: repeat(var(--calendar-days, 7), minmax(0, 1fr));
+    @apply border-b border-outline-variant/30;
+  }
+  .calendar-column-headings > div {
+    @apply flex flex-col items-center py-2 border-r border-outline-variant/20;
+  }
+  .calendar-column-headings strong { @apply font-body text-label-md text-secondary; }
+  .calendar-column-headings span { @apply font-body text-label-sm text-outline; }
+
+  .calendar-time-axis {
+    @apply relative border-r border-outline-variant/30;
+    height: var(--calendar-height, 600px);
+  }
+  .calendar-time-axis span {
+    @apply absolute right-2 font-body text-label-sm text-outline -translate-y-1/2;
+  }
+
+  .calendar-day-columns {
+    display: grid;
+    grid-template-columns: repeat(var(--calendar-days, 7), minmax(0, 1fr));
+    height: var(--calendar-height, 600px);
+  }
+  .calendar-day-column { @apply relative border-r border-outline-variant/20; }
+  .calendar-mobile-day-heading { @apply sr-only; }
+  .calendar-day-events { @apply absolute inset-0 list-none m-0 p-0; }
+  .calendar-day-events > li { @apply absolute left-0.5 right-0.5 overflow-hidden; }
+  .calendar-empty-day {
+    @apply absolute inset-0 flex items-start justify-center pt-4
+           font-body text-label-sm text-outline;
+  }
+  .calendar-agenda { @apply flex flex-col gap-2; }
+
+  .calendar-booking-card {
+    @apply h-full rounded bg-secondary-container/70 border border-secondary/40
+           px-2 py-1 flex flex-col gap-0.5 overflow-hidden;
+  }
+  .calendar-booking-card.cancelled { @apply bg-error-container/30 border-error/40 opacity-70; }
+  .calendar-booking-card strong { @apply font-body text-label-sm text-on-surface truncate; }
+  .calendar-booking-card span { @apply font-body text-label-sm text-on-surface-variant truncate; }
+  .calendar-card-actions { @apply flex flex-wrap gap-1 mt-auto; }
+  .calendar-card-actions button {
+    @apply px-1.5 py-0.5 rounded font-body text-[11px] bg-transparent
+           border border-outline-variant/50 text-on-surface-variant
+           hover:text-secondary hover:border-secondary transition-colors;
+    background-image: none;
+  }
+  .booking-card-badges { @apply flex flex-wrap gap-1; }
+  .booking-status, .booking-source {
+    @apply px-1.5 py-0.5 rounded-full font-body text-[11px]
+           bg-surface-container-high text-on-surface-variant;
+  }
+  .booking-status.confirmed { @apply bg-[rgba(168,144,72,0.2)] text-[#A89048]; }
+  .booking-status.completed { @apply bg-[rgba(168,144,72,0.2)] text-[#A89048]; }
+  .booking-status.cancelled { @apply bg-[rgba(155,59,59,0.2)] text-[#c98b8b]; }
+  .booking-status.no_show { @apply bg-[rgba(155,59,59,0.2)] text-[#c98b8b]; }
+
+  .walk-in-form { @apply glass-panel rounded-xl p-6 flex flex-col gap-4; }
+  .walk-in-fields { @apply grid grid-cols-1 md:grid-cols-2 gap-4; }
+
+  /* --- Tables --- */
   .table-scroll { @apply overflow-x-auto; }
-  .table-scroll table { @apply w-full text-left; }
+  .table-scroll table { @apply w-full text-left border-collapse; }
   .table-scroll thead { @apply border-b border-outline-variant/30; }
   .table-scroll th { @apply font-body text-label-md text-on-surface-variant py-2 px-3; }
   .table-scroll td { @apply font-body text-body-md text-on-surface py-2 px-3 border-b border-outline-variant/10; }
+
+  /* --- Backend status banner --- */
+  .backend-status-banner {
+    @apply flex flex-wrap items-center justify-center gap-3 px-4 py-2
+           bg-error-container/30 border-b border-error/30
+           font-body text-label-sm text-on-error-container;
+  }
+  .backend-status-banner strong { @apply mr-2; }
+  .backend-status-dot { @apply w-2 h-2 rounded-full bg-error flex-shrink-0; }
+
+  /* --- Slot grids (shared with booking flow) --- */
+  .slot-grid { @apply grid grid-cols-3 sm:grid-cols-4 gap-2; }
+  .slot-grid button { @apply barber-slot py-2 text-center font-body text-label-md; }
+}
+
+/* Stack the calendar vertically on narrow screens where a 7-column time grid
+   cannot fit. Events flow in document order instead of being positioned. */
+@media (max-width: 767px) {
+  .calendar-time-grid {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .calendar-grid-corner,
+  .calendar-column-headings,
+  .calendar-time-axis { display: none; }
+  .calendar-day-columns {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    gap: 1rem;
+  }
+  .calendar-day-column {
+    border-right: 0;
+    min-height: 0;
+  }
+  .calendar-mobile-day-heading {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0 0 0.5rem;
+    overflow: visible;
+    clip: auto;
+    clip-path: none;
+    white-space: normal;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.125rem;
+    color: #f3bb90;
+  }
+  .calendar-day-events {
+    position: static;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .calendar-day-events > li {
+    position: static;
+    height: auto !important;
+    top: auto !important;
+    left: auto;
+    right: auto;
+  }
+  .calendar-booking-card { height: auto; }
+  .calendar-empty-day { position: static; padding-top: 0; justify-content: flex-start; }
+}
+
+/* Static legal / informational document prose */
+@layer components {
+  .legal-prose h2 {
+    @apply font-display text-title-lg text-secondary-fixed mt-8 mb-3 first:mt-0;
+  }
+
+  .legal-prose h3 {
+    @apply font-body text-title-lg text-on-surface text-base mt-6 mb-2;
+  }
+
+  .legal-prose p {
+    @apply font-body text-body-md text-on-surface-variant mb-4 leading-relaxed;
+  }
+
+  .legal-prose ul {
+    @apply list-disc pl-6 mb-4 flex flex-col gap-2;
+  }
+
+  .legal-prose ol {
+    @apply list-decimal pl-6 mb-4 flex flex-col gap-2;
+  }
+
+  .legal-prose li {
+    @apply font-body text-body-md text-on-surface-variant leading-relaxed;
+  }
+
+  .legal-prose strong {
+    @apply text-on-surface font-semibold;
+  }
+
+  .legal-prose a {
+    @apply text-secondary hover:underline;
+  }
+
+  .legal-prose hr {
+    @apply border-outline-variant/30 my-8;
+  }
 }

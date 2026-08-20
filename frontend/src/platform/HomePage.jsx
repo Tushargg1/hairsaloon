@@ -1,5 +1,3 @@
-import { Link } from 'react-router-dom'
-import useAuth from '../shared/auth/useAuth.js'
 import Icon from '../shared/components/Icon.jsx'
 import BrassButton from '../shared/components/BrassButton.jsx'
 
@@ -12,8 +10,6 @@ const stats = [
 ]
 
 export default function HomePage() {
-  const { user } = useAuth()
-
   return (
     <main className="flex-grow">
       {/* Hero Section */}
@@ -41,11 +37,10 @@ export default function HomePage() {
             <BrassButton to="/salons" size="lg" icon={<Icon name="search" className="text-[20px]" />}>
               Explore Salons
             </BrassButton>
-            {!user && (
-              <BrassButton to="/signup" size="lg" variant="outline">
-                Join Groomit
-              </BrassButton>
-            )}
+            <BrassButton to="/salons?nearby=1" size="lg" variant="outline"
+              icon={<Icon name="my_location" className="text-[20px]" />}>
+              Salons Near Me
+            </BrassButton>
           </div>
 
           {/* Floating Stats */}
@@ -88,9 +83,13 @@ export default function HomePage() {
         <div className="glass-panel rounded-2xl p-12 md:p-16">
           <h2 className="font-display text-headline-md text-on-surface mb-4">Own a Salon?</h2>
           <p className="font-body text-body-lg text-on-surface-variant mb-8 max-w-xl mx-auto">
-            List your business on Groomit and reach thousands of customers looking for premium grooming services.
+            List your business on Groomit and reach customers looking for premium grooming
+            services. Free to start, and we never take commission.
           </p>
-          <BrassButton to="/signup" size="lg">Get Started Free</BrassButton>
+          <div className="flex flex-wrap gap-3 justify-center">
+            <BrassButton to="/for-business" size="lg">Get Started Free</BrassButton>
+            <BrassButton to="/pricing" variant="outline" size="lg">See Pricing</BrassButton>
+          </div>
         </div>
       </section>
     </main>

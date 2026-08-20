@@ -3,6 +3,11 @@ import useAuth from '../auth/useAuth.js'
 import BrassButton from './BrassButton.jsx'
 import Icon from './Icon.jsx'
 
+const navClass = ({ isActive }) =>
+  `font-body text-label-md transition-colors ${isActive
+    ? 'text-secondary border-b-2 border-secondary pb-1'
+    : 'text-on-surface-variant hover:text-secondary-fixed'}`
+
 export default function Navbar() {
   const { user, logout } = useAuth()
 
@@ -19,18 +24,14 @@ export default function Navbar() {
 
         {/* Desktop Nav */}
         <div className="hidden md:flex items-center gap-6">
-          <NavLink to="/salons" className={({ isActive }) => `font-body text-label-md transition-colors ${isActive ? 'text-secondary border-b-2 border-secondary pb-1' : 'text-on-surface-variant hover:text-secondary-fixed'}`}>
-            Find a Salon
-          </NavLink>
+          <NavLink to="/salons" className={navClass}>Find a Salon</NavLink>
+          <NavLink to="/pricing" className={navClass}>Pricing</NavLink>
+          <NavLink to="/about" className={navClass}>About</NavLink>
           {user?.role === 'SALON_OWNER' && (
-            <NavLink to="/salon-signup" className={({ isActive }) => `font-body text-label-md transition-colors ${isActive ? 'text-secondary border-b-2 border-secondary pb-1' : 'text-on-surface-variant hover:text-secondary-fixed'}`}>
-              My Salon
-            </NavLink>
+            <NavLink to="/salon-signup" className={navClass}>My Salon</NavLink>
           )}
           {user?.role === 'PLATFORM_ADMIN' && (
-            <NavLink to="/admin/approvals" className={({ isActive }) => `font-body text-label-md transition-colors ${isActive ? 'text-secondary border-b-2 border-secondary pb-1' : 'text-on-surface-variant hover:text-secondary-fixed'}`}>
-              Admin
-            </NavLink>
+            <NavLink to="/admin/approvals" className={navClass}>Admin</NavLink>
           )}
         </div>
 
@@ -46,7 +47,12 @@ export default function Navbar() {
               </button>
             </div>
           ) : (
-            <BrassButton to="/login" size="sm">Login / Signup</BrassButton>
+            <>
+              <NavLink to="/for-business" className="font-body text-label-md text-secondary hover:text-secondary-fixed transition-colors">
+                List your salon
+              </NavLink>
+              <BrassButton to="/login" size="sm">Login / Signup</BrassButton>
+            </>
           )}
         </div>
 

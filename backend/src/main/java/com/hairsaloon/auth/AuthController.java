@@ -37,6 +37,27 @@ class AuthController {
             .body(UserResponse.from(result.user()));
     }
 
+    @PostMapping("/business-signup")
+    ResponseEntity<UserResponse> businessSignup(
+            @Valid @RequestBody BusinessSignupRequest request,
+            HttpServletRequest httpRequest) {
+        String ip = httpRequest.getRemoteAddr();
+        String principal = AuthService.normalizePhone(request.phone());
+        enforceRateLimit("business-signup", ip, principal);
+        try {
+            AuthService.AuthResult result = authService.businessSignup(request.name(),
+                request.phone(), request.email(), request.password(),
+                request.verificationProof());
+            rateLimiter.recordSuccess("business-signup", ip, principal);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                .header(HttpHeaders.SET_COOKIE, cookies.authenticated(result.token()).toString())
+                .body(UserResponse.from(result.user()));
+        } catch (AuthException failure) {
+            rateLimiter.recordFailure("business-signup", ip, principal);
+            throw failure;
+        }
+    }
+
     @PostMapping("/login")
     ResponseEntity<UserResponse> login(@Valid @RequestBody LoginRequest request,
                                         HttpServletRequest httpRequest) {
@@ -83,6 +104,20 @@ class AuthController {
         SignupRequest {
             phone = phone == null ? null : phone.trim();
             email = email == null || email.isBlank() ? null : email.trim();
+            verificationProof = verificationProof == null ? null : verificationProof.trim();
+        }
+    }
+
+    record BusinessSignupRequest(
+        @NotBlank @Size(min = 2, max = 160) String name,
+        @NotBlank @Size(min = 10, max = 15) String phone,
+        @NotBlank @Email @Size(max = 320) String email,
+        @NotBlank @Size(min = 8, max = 72) String password,
+        @Size(max = 200) String verificationProof) {
+        BusinessSignupRequest {
+            name = name == null ? null : name.trim();
+            phone = phone == null ? null : phone.trim();
+            email = email == null ? null : email.trim();
             verificationProof = verificationProof == null ? null : verificationProof.trim();
         }
     }

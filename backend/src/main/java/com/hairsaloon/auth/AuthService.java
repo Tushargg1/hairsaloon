@@ -51,6 +51,36 @@ class AuthService {
         }
     }
 
+    /**
+     * Self-service registration for salon owners. Unlike customer signup, an email is
+     * mandatory because owners authenticate with email at the privileged-login endpoint.
+     * The account is created immediately; the salon they register still requires
+     * platform-admin approval before it becomes publicly visible.
+     */
+    @Transactional
+    AuthResult businessSignup(String name, String phone, String email, String password,
+                              String verificationProof) {
+        String normalizedPhone = normalizePhone(phone);
+        String normalizedEmail = normalize(email);
+        if (users.existsByPhone(normalizedPhone)) throw duplicatePhone();
+        if (users.existsByEmailIgnoreCase(normalizedEmail)) throw duplicateEmail();
+        Instant verifiedAt = null;
+        if (properties.getOtp().isRequireSignupVerification()) {
+            verifiedAt = otpService.consumeProof(verificationProof, normalizedPhone,
+                AuthChallengePurpose.SIGNUP);
+        }
+        try {
+            User owner = new User(normalizedPhone, normalizedEmail,
+                passwordEncoder.encode(password), UserRole.SALON_OWNER);
+            owner.setName(name.trim());
+            if (verifiedAt != null) owner.markPhoneVerified(verifiedAt);
+            return result(users.saveAndFlush(owner));
+        } catch (DataIntegrityViolationException duplicate) {
+            if (users.existsByEmailIgnoreCase(normalizedEmail)) throw duplicateEmail();
+            throw duplicatePhone();
+        }
+    }
+
     @Transactional(readOnly = true)
     AuthResult customerLogin(String phone, String password) {
         User user = users.findByPhone(normalizePhone(phone))

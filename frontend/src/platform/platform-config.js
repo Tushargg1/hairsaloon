@@ -1,4 +1,4 @@
-const configuredDomain = (import.meta.env.VITE_BASE_DOMAIN || 'yoursite.com')
+const configuredDomain = (import.meta.env.VITE_BASE_DOMAIN || 'groomit.in')
   .trim()
   .toLowerCase()
   .replace(/^https?:\/\//, '')
@@ -10,7 +10,7 @@ const configuredProtocol = (import.meta.env.VITE_BASE_PROTOCOL || 'https')
   .replace(/:$/, '')
 const configuredPort = (import.meta.env.VITE_BASE_PORT || '').trim()
 
-export const baseDomain = configuredDomain || 'yoursite.com'
+export const baseDomain = configuredDomain || 'groomit.in'
 export const baseProtocol = configuredProtocol === 'http' ? 'http' : 'https'
 export const basePort = /^\d{1,5}$/.test(configuredPort) ? configuredPort : ''
 
