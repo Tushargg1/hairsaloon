@@ -1,0 +1,87 @@
+# Render blueprint for the Groomit backend.
+#
+# Usage: Render Dashboard -> New -> Blueprint -> select this repository.
+# Render provisions the service from this file and prompts for the values
+# marked `sync: false` (secrets and account-specific settings).
+#
+# The frontend is deployed separately on Vercel from ./vercel.json.
+services:
+  - type: web
+    name: groomit-backend
+    runtime: docker
+    plan: free
+    # Closest Render region to the Aiven PostgreSQL instance in India.
+    region: singapore
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    # Only the readinessState indicator is in this group, so the service is not
+    # reported unhealthy just because optional Redis is absent.
+    healthCheckPath: /actuator/health/readiness
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: SERVER_PORT
+        value: "8080"
+
+      # --- Database (Aiven PostgreSQL) -----------------------------------
+      # Flyway applies V1-V14 on first boot. V1 runs
+      # `CREATE EXTENSION IF NOT EXISTS btree_gist`, which the booking overlap
+      # constraint depends on, so the database user needs permission to create
+      # extensions or startup will fail.
+      - key: DATABASE_URL
+        sync: false
+      - key: POSTGRES_USER
+        sync: false
+      - key: POSTGRES_PASSWORD
+        sync: false
+
+      # --- Authentication ------------------------------------------------
+      # JwtService requires at least 64 bytes of key material. Render's
+      # generateValue produces only 32 bytes, so this must be supplied:
+      #   raw:<64 or more characters>
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_ISSUER
+        value: groomit
+      - key: AUTH_COOKIE_SECURE
+        value: "true"
+      # Leave AUTH_COOKIE_DOMAIN unset while the frontend is on *.vercel.app;
+      # a .groomit.in cookie is not valid for a vercel.app origin. Set it to
+      # .groomit.in once the custom domain serves the frontend.
+
+      # --- Hosts and CORS ------------------------------------------------
+      - key: BASE_DOMAIN
+        value: groomit.in
+      - key: PLATFORM_HOSTS
+        value: groomit.in,www.groomit.in
+      # Exact origins for credentialed requests; wildcards are not permitted here.
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: CORS_ALLOWED_ORIGIN_PATTERNS
+        value: https://*.groomit.in,https://*.vercel.app
+
+      # --- Optional integrations (disabled until configured) -------------
+      # No Redis instance: the login rate limiter falls back to in-process
+      # counters, which is correct for a single web instance.
+      - key: AUTH_RATE_LIMIT_REDIS_ENABLED
+        value: "false"
+      - key: EMAIL_PROVIDER
+        value: logging
+      - key: MEDIA_STORAGE_PROVIDER
+        value: disabled
+      - key: PUSH_ENABLED
+        value: "false"
+      # No SMS provider is wired yet, so OTP codes are written to the service
+      # logs. Set this to false once a real SmsGateway is configured.
+      - key: OTP_ALLOW_CODE_LOGGING
+        value: "true"
+
+      # --- First-run administrator ---------------------------------------
+      # Enable once, sign in at /manage/login, then set this back to false and
+      # clear the password before redeploying.
+      - key: PLATFORM_ADMIN_BOOTSTRAP_ENABLED
+        value: "false"
+      - key: PLATFORM_ADMIN_BOOTSTRAP_EMAIL
+        sync: false
+      - key: PLATFORM_ADMIN_BOOTSTRAP_PASSWORD
+        sync: false
