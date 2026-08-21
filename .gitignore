@@ -13,3 +13,5 @@ frontend/dist/
 !frontend/public/icon-512.png
 !frontend/public/maskable-512.png
 .playwright-mcp/
+.vercel
+.env*.local
