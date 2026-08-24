@@ -8,7 +8,8 @@ final class BookingDtos {
     private BookingDtos() {}
 
     record AvailabilitySlot(Long staffId, String staffName,
-                            LocalDateTime startDatetime, LocalDateTime endDatetime) {}
+                            LocalDateTime startDatetime, LocalDateTime endDatetime,
+                            boolean available) {}
 
     record BookingResponse(Long id, Long customerId, String customerName,
         String customerPhone, BookingSource bookingSource, BookingSource source,

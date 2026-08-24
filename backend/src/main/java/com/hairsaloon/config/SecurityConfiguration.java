@@ -1,6 +1,6 @@
 package com.hairsaloon.config;
 
-import com.hairsaloon.auth.ApiErrorWriter;
+import com.hairsaloon.web.ApiErrorWriter;
 import com.hairsaloon.auth.AuthProperties;
 import com.hairsaloon.auth.JwtAuthenticationFilter;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;

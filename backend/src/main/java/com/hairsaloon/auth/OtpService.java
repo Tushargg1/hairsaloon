@@ -33,7 +33,7 @@ class OtpService {
 
     @Transactional
     ChallengeResult request(String phone, AuthChallengePurpose purpose) {
-        String normalizedPhone = normalizePhone(phone);
+        String normalizedPhone = AuthService.normalizePhone(phone);
         boolean eligible = purpose == AuthChallengePurpose.SIGNUP
             || users.findByPhone(normalizedPhone)
                 .filter(user -> user.getRole() == UserRole.CUSTOMER).isPresent();
@@ -102,7 +102,7 @@ class OtpService {
             .orElseThrow(OtpService::invalidProof);
         Instant now = Instant.now();
         boolean phoneMatches = hmac.matches(challenge.getPhoneHash(), "otp-phone",
-            normalizePhone(phone));
+            AuthService.normalizePhone(phone));
         if (!phoneMatches || challenge.getPurpose() != purpose
                 || challenge.getVerifiedAt() == null || challenge.getConsumedAt() != null
                 || challenge.getProofExpiresAt() == null
@@ -130,7 +130,6 @@ class OtpService {
     }
 
     private static String randomToken() { return UUID.randomUUID().toString(); }
-    static String normalizePhone(String phone) { return phone.trim(); }
     private static boolean invalid(Duration value) {
         return value == null || value.isZero() || value.isNegative();
     }

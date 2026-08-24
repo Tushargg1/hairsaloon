@@ -5,6 +5,7 @@ import com.hairsaloon.auth.AuthenticatedUser;
 import com.hairsaloon.auth.UserRole;
 import com.hairsaloon.notification.PushSubscriptionAudience;
 import com.hairsaloon.notification.PushSubscriptionService;
+import com.hairsaloon.platform.InputPolicy;
 import com.hairsaloon.platform.PlatformApiException;
 import com.hairsaloon.tenant.TenantContext;
 import jakarta.validation.Valid;
@@ -70,7 +71,7 @@ class PushSubscriptionController {
             subscriptions.subscribe(salonId, userId, audience, request.endpoint(),
                 request.keys().p256dh(), request.keys().auth());
         } catch (IllegalArgumentException invalid) {
-            throw TenantInputPolicy.validation("subscription", invalid.getMessage());
+            throw InputPolicy.validation("subscription", invalid.getMessage());
         }
     }
 
@@ -79,7 +80,7 @@ class PushSubscriptionController {
         try {
             subscriptions.unsubscribe(salonId, userId, audience, endpoint);
         } catch (IllegalArgumentException invalid) {
-            throw TenantInputPolicy.validation("endpoint", invalid.getMessage());
+            throw InputPolicy.validation("endpoint", invalid.getMessage());
         }
     }
 

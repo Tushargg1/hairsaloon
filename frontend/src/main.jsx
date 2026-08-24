@@ -24,10 +24,20 @@ const localHostnames = ['localhost', '127.0.0.1', '[::1]']
 const canRegisterServiceWorker = 'serviceWorker' in navigator
   && (window.isSecureContext || localHostnames.includes(window.location.hostname))
 
-if (canRegisterServiceWorker) {
+if (canRegisterServiceWorker && import.meta.env.PROD) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/service-worker.js').catch(() => {
       // The app remains fully usable when service workers are unavailable.
     })
   })
+} else if ('serviceWorker' in navigator) {
+  // In development the worker would serve Vite's /src modules cache-first, which
+  // hides every code change until the cache is cleared by hand. Tear down any
+  // worker left over from a production visit or an earlier build.
+  navigator.serviceWorker.getRegistrations()
+    .then((registrations) => Promise.all(registrations.map((r) => r.unregister())))
+    .catch(() => {})
+  if (window.caches) {
+    caches.keys().then((keys) => Promise.all(keys.map((k) => caches.delete(k)))).catch(() => {})
+  }
 }

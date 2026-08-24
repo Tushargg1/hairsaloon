@@ -9,6 +9,13 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import java.time.Instant;
 
+/**
+ * Schema-only mapping: push subscriptions are read and written exclusively through
+ * JdbcTemplate, so nothing references this class. It still must exist, because it
+ * is what Hibernate uses to generate the table when Flyway is disabled (tests) and
+ * to validate it against the migrations in production. Deleting it breaks
+ * PushOutboxIntegrationTest.
+ */
 @Entity
 @Table(name = "push_subscriptions", uniqueConstraints = @UniqueConstraint(
     name = "push_subscriptions_endpoint_unique",

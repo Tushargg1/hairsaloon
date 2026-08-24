@@ -1,4 +1,4 @@
-package com.hairsaloon.auth;
+package com.hairsaloon.web;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
@@ -7,6 +7,11 @@ import java.nio.charset.StandardCharsets;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 
+/**
+ * Writes {@link ApiError} bodies from the points that run outside the
+ * {@code @RestControllerAdvice}: Spring Security's entry point / access-denied hooks
+ * and the tenant-resolution filter.
+ */
 @Component
 public class ApiErrorWriter {
 
@@ -22,6 +27,11 @@ public class ApiErrorWriter {
 
     public void forbidden(HttpServletResponse response) throws IOException {
         write(response, 403, ApiError.of("FORBIDDEN", "Access is denied"));
+    }
+
+    public void notFound(HttpServletResponse response, String code, String message)
+            throws IOException {
+        write(response, 404, ApiError.of(code, message));
     }
 
     private void write(HttpServletResponse response, int status, ApiError error)

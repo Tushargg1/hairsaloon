@@ -1,21 +1,38 @@
 package com.hairsaloon.tenantdata;
 
+import com.hairsaloon.platform.InputPolicy;
 import com.hairsaloon.tenant.Salon;
+import com.hairsaloon.platform.InputPolicy;
 import com.hairsaloon.tenant.TenantContext;
+import com.hairsaloon.platform.InputPolicy;
 import java.math.BigDecimal;
+import com.hairsaloon.platform.InputPolicy;
 import java.math.RoundingMode;
+import com.hairsaloon.platform.InputPolicy;
 import java.time.Clock;
+import com.hairsaloon.platform.InputPolicy;
 import java.time.DayOfWeek;
+import com.hairsaloon.platform.InputPolicy;
 import java.time.LocalDate;
+import com.hairsaloon.platform.InputPolicy;
 import java.time.ZoneId;
+import com.hairsaloon.platform.InputPolicy;
 import java.time.temporal.ChronoUnit;
+import com.hairsaloon.platform.InputPolicy;
 import java.time.temporal.TemporalAdjusters;
+import com.hairsaloon.platform.InputPolicy;
 import java.util.ArrayList;
+import com.hairsaloon.platform.InputPolicy;
 import java.util.EnumMap;
+import com.hairsaloon.platform.InputPolicy;
 import java.util.LinkedHashMap;
+import com.hairsaloon.platform.InputPolicy;
 import java.util.List;
+import com.hairsaloon.platform.InputPolicy;
 import java.util.Map;
+import com.hairsaloon.platform.InputPolicy;
 import org.springframework.stereotype.Service;
+import com.hairsaloon.platform.InputPolicy;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -47,11 +64,11 @@ class DashboardAnalyticsService {
             end = start.plusDays(6);
         } else {
             if (requestedStart == null || requestedEnd == null)
-                throw TenantInputPolicy.validation("range", "startDate and endDate are both required");
+                throw InputPolicy.validation("range", "startDate and endDate are both required");
             if (requestedEnd.isBefore(requestedStart))
-                throw TenantInputPolicy.validation("endDate", "must be on or after startDate");
+                throw InputPolicy.validation("endDate", "must be on or after startDate");
             if (ChronoUnit.DAYS.between(requestedStart, requestedEnd) + 1 > 366)
-                throw TenantInputPolicy.validation("endDate",
+                throw InputPolicy.validation("endDate",
                     "analytics range must not exceed 366 inclusive days");
             start = requestedStart;
             end = requestedEnd;

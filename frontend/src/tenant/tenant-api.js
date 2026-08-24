@@ -4,20 +4,16 @@ export const tenantKeys = {
   profile: ['tenant', 'profile'],
   publicServices: ['tenant', 'public-services'],
   publicStaff: ['tenant', 'public-staff'],
-  publicReviewsRoot: ['tenant', 'public-reviews'],
   publicReviews: (page = 0, size = 20) => ['tenant', 'public-reviews', page, size],
   dashboardServices: ['tenant', 'dashboard-services'],
   dashboardStaff: ['tenant', 'dashboard-staff'],
-  dashboardReviewsRoot: ['tenant', 'dashboard-reviews'],
   dashboardReviews: (page = 0, size = 20) => ['tenant', 'dashboard-reviews', page, size],
   availability: (serviceId, date, staffId) => ['tenant', 'availability', serviceId, date, staffId ?? 'any'],
   myBookings: ['tenant', 'my-bookings'],
   dashboardBookings: (filters) => ['tenant', 'dashboard-bookings', filters],
   dashboardAnalytics: ['tenant', 'dashboard-analytics'],
-  dashboardAnalyticsFilters: (filters = {}) => ['tenant', 'dashboard-analytics', filters],
   dashboardMedia: ['tenant', 'dashboard-media'],
   dashboardPromotions: ['tenant', 'dashboard-promotions'],
-  pushSubscription: (roleOrDashboard) => ['tenant', 'push-subscription', isDashboardRole(roleOrDashboard) ? 'owner' : 'customer'],
   staffTimeOff: (staffId) => ['tenant', 'dashboard-staff', staffId, 'time-off'],
 }
 
@@ -141,10 +137,14 @@ export async function deleteTimeOff({ id, timeOffId }) {
   await apiClient.delete(`/api/salon/dashboard/staff/${id}/time-off/${timeOffId}`)
 }
 
-export async function getAvailability({ serviceId, date, staffId }) {
-  const params = { serviceId, date }
-  if (staffId) params.staffId = staffId
-  return getCollection(`/api/salon/availability?${new URLSearchParams(params)}`, ['slots'])
+export async function getAvailability({ serviceId, serviceIds, date, staffId, includeUnavailable }) {
+  const params = new URLSearchParams()
+  const chain = serviceIds?.length ? serviceIds : [serviceId]
+  chain.filter(Boolean).forEach((id) => params.append('serviceId', id))
+  params.set('date', date)
+  if (staffId) params.set('staffId', staffId)
+  if (includeUnavailable) params.set('includeUnavailable', 'true')
+  return getCollection(`/api/salon/availability?${params}`, ['slots'])
 }
 
 export async function createBooking({ payload, idempotencyKey }) {
@@ -254,8 +254,4 @@ export async function validatePromotion({ promoCode, serviceId }) {
   return data
 }
 
-export const requestMediaUpload = createMediaUpload
-export const directUploadMedia = uploadMediaFile
-export const subscribeToPush = subscribePushSubscription
-export const unsubscribeFromPush = unsubscribePushSubscription
 export const createWalkIn = createWalkInBooking

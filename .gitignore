@@ -7,6 +7,9 @@ frontend/.env.local
 backend/target/
 frontend/node_modules/
 frontend/dist/
+frontend/test-results/
+frontend/playwright-report/
+.kiro/settings/mcp.json
 *.log
 *.png
 !frontend/public/icon-192.png

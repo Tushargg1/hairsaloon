@@ -4,20 +4,28 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import useAuth from '../shared/auth/useAuth.js'
 import PushOptIn from '../shared/components/PushOptIn.jsx'
 import Icon from '../shared/components/Icon.jsx'
-import { getSalonProfile, tenantKeys } from './tenant-api.js'
+import { getPublicServices, getSalonProfile, tenantKeys } from './tenant-api.js'
 import { tenantNameFallback } from './tenant-host.js'
 
 function initials(name) {
   return String(name || 'Salon').split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase()
 }
 
+const money = (value) => (value == null
+  ? ''
+  : new Intl.NumberFormat(undefined, { style: 'currency', currency: 'INR' }).format(Number(value)))
+
 export default function TenantLayout() {
   const { user, loading, logout } = useAuth()
   const navigate = useNavigate()
   const [loggingOut, setLoggingOut] = useState(false)
   const [logoutError, setLogoutError] = useState('')
+  const [menuOpen, setMenuOpen] = useState(false)
+  const closeMenu = () => setMenuOpen(false)
   const profileQuery = useQuery({ queryKey: tenantKeys.profile, queryFn: getSalonProfile })
+  const servicesQuery = useQuery({ queryKey: tenantKeys.publicServices, queryFn: getPublicServices })
   const salonName = profileQuery.data?.name || profileQuery.data?.salonName || tenantNameFallback()
+  const addressLine = [profileQuery.data?.address, profileQuery.data?.city].filter(Boolean).join(', ')
   const pushEligible = user?.role === 'CUSTOMER' || user?.role === 'SALON_OWNER'
 
   async function handleLogout() {
@@ -34,9 +42,9 @@ export default function TenantLayout() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-[#161005]">
       {/* Tenant Nav */}
-      <nav className="sticky top-0 z-50 w-full bg-[#230F08]/85 backdrop-blur-xl border-b border-outline-variant/30 shadow-md">
+      <nav className="fixed top-0 z-50 w-full bg-[#230F08]/85 backdrop-blur-xl border-b border-outline-variant/30 shadow-md">
         <div className="flex justify-between items-center w-full px-4 lg:px-[80px] py-2 max-w-[1280px] mx-auto h-16">
           <NavLink to="/" className="flex items-center gap-3" aria-label={`${salonName} home`}>
             {profileQuery.data?.logoUrl ? (
@@ -75,30 +83,89 @@ export default function TenantLayout() {
             )}
           </div>
 
-          <button className="md:hidden text-secondary p-1">
-            <Icon name="menu" filled />
+          <button className="md:hidden text-secondary p-1" onClick={() => setMenuOpen((open) => !open)}
+            aria-expanded={menuOpen} aria-controls="tenant-mobile-menu"
+            aria-label={menuOpen ? 'Close menu' : 'Open menu'}>
+            <Icon name={menuOpen ? 'close' : 'menu'} filled />
           </button>
         </div>
+
+        {menuOpen && (
+          <div id="tenant-mobile-menu"
+            className="md:hidden border-t border-outline-variant/30 bg-[#230F08]/70 backdrop-blur-xl px-4 py-4 flex flex-col gap-4">
+            <a href="/#services" onClick={closeMenu} className="font-body text-label-md text-on-surface-variant">Services</a>
+            <NavLink to="/book" onClick={closeMenu} className="font-body text-label-md text-on-surface-variant">Book</NavLink>
+            <a href="/#reviews" onClick={closeMenu} className="font-body text-label-md text-on-surface-variant">Reviews</a>
+            {logoutError && <span className="font-body text-label-sm text-error" role="alert">{logoutError}</span>}
+            {loading ? <span className="font-body text-label-sm text-on-surface-variant">...</span> : user ? (
+              <>
+                {user.role === 'SALON_OWNER' && (
+                  <NavLink to="/dashboard" onClick={closeMenu} className="font-body text-label-md text-secondary">Dashboard</NavLink>
+                )}
+                {user.role === 'CUSTOMER' && (
+                  <NavLink to="/bookings" onClick={closeMenu} className="font-body text-label-md text-on-surface-variant">My bookings</NavLink>
+                )}
+                <button onClick={() => { closeMenu(); handleLogout() }} disabled={loggingOut}
+                  className="font-body text-label-sm text-on-surface-variant text-left">
+                  {loggingOut ? '...' : 'Logout'}
+                </button>
+              </>
+            ) : (
+              <NavLink to="/login" onClick={closeMenu} className="vintage-cta self-start">Login</NavLink>
+            )}
+          </div>
+        )}
       </nav>
 
       {pushEligible && <PushOptIn role={user.role} />}
 
-      <div className="flex-grow" id="main-content" tabIndex="-1">
+      <div className="flex-grow pt-16" id="main-content" tabIndex="-1">
         <Outlet context={{ profile: profileQuery.data, profileQuery, salonName }} />
       </div>
 
       {/* Footer */}
-      <footer className="bg-surface-container-highest border-t border-outline-variant/50 mt-auto">
-        <div className="flex flex-col md:flex-row justify-between items-center px-4 lg:px-[80px] py-8 max-w-[1280px] mx-auto gap-4">
-          <div className="flex flex-col items-center md:items-start gap-1">
-            <span className="font-display text-headline-sm text-secondary-fixed">{salonName}</span>
-            <p className="font-body text-body-md text-on-surface-variant">{profileQuery.data?.address || profileQuery.data?.city || 'Premium grooming services.'}</p>
+      <footer className="salon-footer">
+        <div className="salon-footer-grid">
+          <div>
+            <p className="salon-footer-name">{salonName}</p>
+            {profileQuery.data?.description && (
+              <p className="salon-footer-line">{profileQuery.data.description}</p>
+            )}
+            <NavLink to="/book" className="salon-footer-cta">Book a Slot</NavLink>
           </div>
-          <div className="flex gap-6">
-            <a href="/#services" className="font-body text-label-sm text-on-surface-variant hover:text-primary transition-colors">Services</a>
-            <a href="/#contact" className="font-body text-label-sm text-on-surface-variant hover:text-primary transition-colors">Contact</a>
+
+          <div>
+            <h2 className="salon-footer-title">Visit Us</h2>
+            {addressLine && (
+              <p className="salon-footer-line">
+                <Icon name="location_on" className="text-[15px]" />{addressLine}
+              </p>
+            )}
+            {profileQuery.data?.phone && (
+              <p className="salon-footer-line">
+                <Icon name="call" className="text-[15px]" />
+                <a href={`tel:${profileQuery.data.phone}`}>{profileQuery.data.phone}</a>
+              </p>
+            )}
+            {profileQuery.data?.email && (
+              <p className="salon-footer-line">
+                <Icon name="mail" className="text-[15px]" />
+                <a href={`mailto:${profileQuery.data.email}`}>{profileQuery.data.email}</a>
+              </p>
+            )}
+          </div>
+
+          <div>
+            <h2 className="salon-footer-title">Services</h2>
+            {servicesQuery.data?.length ? servicesQuery.data.map((service) => (
+              <p className="salon-footer-service" key={service.id}>
+                <span>{service.name}</span>
+                <span>{money(service.price)}</span>
+              </p>
+            )) : <p className="salon-footer-line">Services coming soon.</p>}
           </div>
         </div>
+        <p className="salon-footer-mark">{salonName}</p>
       </footer>
     </div>
   )

@@ -2,6 +2,7 @@ package com.hairsaloon.tenantdata;
 
 import com.hairsaloon.auth.AuthenticatedUser;
 import com.hairsaloon.auth.UserRole;
+import com.hairsaloon.platform.InputPolicy;
 import com.hairsaloon.platform.PlatformApiException;
 import com.hairsaloon.tenant.Salon;
 import com.hairsaloon.tenant.SalonRepository;
@@ -61,25 +62,34 @@ class BookingService {
         this.transactions = new TransactionTemplate(transactionManager);
     }
     @Transactional(readOnly = true)
-    List<BookingDtos.AvailabilitySlot> availability(long serviceId, Long staffId,
-                                                     LocalDate date) {
-        if (serviceId <= 0) throw TenantInputPolicy.validation("serviceId", "must be positive");
-        if (date == null) throw TenantInputPolicy.validation("date", "is required");
+    List<BookingDtos.AvailabilitySlot> availability(List<Long> serviceIds, Long staffId,
+                                                     LocalDate date, boolean includeUnavailable) {
+        if (serviceIds == null || serviceIds.isEmpty())
+            throw InputPolicy.validation("serviceId", "at least one service is required");
+        if (serviceIds.stream().anyMatch(id -> id == null || id <= 0))
+            throw InputPolicy.validation("serviceId", "must be positive");
+        if (date == null) throw InputPolicy.validation("date", "is required");
         long salonId = TenantContext.requireSalonId();
         Salon salon = currentSalon(salonId);
-        SalonServiceEntity requestedService = services.findByIdAndSalonId(serviceId, salonId)
-            .filter(SalonServiceEntity::isActive)
-            .orElseThrow(() -> TenantInputPolicy.notFound("service"));
+        // The chain occupies one continuous block, so the grid steps by the
+        // combined duration of every selected service.
+        int totalDuration = 0;
+        for (Long serviceId : serviceIds) {
+            totalDuration += services.findByIdAndSalonId(serviceId, salonId)
+                .filter(SalonServiceEntity::isActive)
+                .orElseThrow(() -> InputPolicy.notFound("service"))
+                .getDurationMinutes();
+        }
+        final int chainDuration = totalDuration;
         List<SalonStaff> candidates;
         if (staffId == null) {
             candidates = staff.findAllBySalonIdAndActiveTrueOrderByIdAsc(salonId).stream()
-                .filter(member -> assignments.existsBySalonIdAndStaffIdAndServiceId(
-                    salonId, member.getId(), serviceId)).toList();
+                .filter(member -> servesAll(salonId, member.getId(), serviceIds)).toList();
         } else {
             candidates = staff.findByIdAndSalonId(staffId, salonId)
                 .filter(SalonStaff::isActive)
-                .filter(member -> assignments.existsBySalonIdAndStaffIdAndServiceId(
-                    salonId, member.getId(), serviceId)).stream().toList();
+                .filter(member -> servesAll(salonId, member.getId(), serviceIds))
+                .stream().toList();
         }
         ZoneId zone = ZoneId.of(salon.getTimezone());
         ZonedDateTime now = ZonedDateTime.now(zone);
@@ -93,15 +103,17 @@ class BookingService {
                 LocalDateTime cursor = LocalDateTime.of(date,
                     ceilQuarterHour(working.getStartTime()));
                 LocalDateTime closing = LocalDateTime.of(date, working.getEndTime());
-                while (!cursor.plusMinutes(requestedService.getDurationMinutes())
-                        .isAfter(closing)) {
-                    LocalDateTime end = cursor.plusMinutes(requestedService.getDurationMinutes());
-                    if (isFutureValidLocalTime(cursor, zone, now)
-                            && timeOff.countOverlapping(salonId, member.getId(), cursor, end) == 0
+                while (!cursor.plusMinutes(chainDuration).isAfter(closing)) {
+                    LocalDateTime end = cursor.plusMinutes(chainDuration);
+                    if (isFutureValidLocalTime(cursor, zone, now)) {
+                        boolean free = timeOff.countOverlapping(
+                                salonId, member.getId(), cursor, end) == 0
                             && bookings.countConfirmedOverlapping(
-                                salonId, member.getId(), cursor, end) == 0) {
-                        result.add(new BookingDtos.AvailabilitySlot(member.getId(),
-                            member.getName(), cursor, end));
+                                salonId, member.getId(), cursor, end) == 0;
+                        if (free || includeUnavailable) {
+                            result.add(new BookingDtos.AvailabilitySlot(member.getId(),
+                                member.getName(), cursor, end, free));
+                        }
                     }
                     cursor = cursor.plusMinutes(15);
                 }
@@ -111,9 +123,18 @@ class BookingService {
             .thenComparing(BookingDtos.AvailabilitySlot::staffId));
         return result.stream().distinct().toList();
     }
-    Booking create(AuthenticatedUser user, long staffId, long serviceId,
-                   LocalDateTime start, String idempotencyKey, String promoCode) {
+    /**
+     * Books one or more services back-to-back with the same staff member in a
+     * single transaction, so a chain either lands completely or not at all.
+     * Any promotion applies to the first service only.
+     */
+    List<Booking> create(AuthenticatedUser user, long staffId, List<Long> serviceIds,
+                         LocalDateTime start, String idempotencyKey, String promoCode) {
         requireCustomer(user);
+        if (serviceIds == null || serviceIds.isEmpty())
+            throw InputPolicy.validation("serviceIds", "at least one service is required");
+        if (serviceIds.size() != serviceIds.stream().distinct().count())
+            throw InputPolicy.validation("serviceIds", "must not repeat a service");
         String key = normalizeKey(idempotencyKey);
         long salonId = TenantContext.requireSalonId();
         try {
@@ -121,24 +142,33 @@ class BookingService {
                 if (key != null) {
                     var prior = bookings.findBySalonIdAndCustomerIdAndIdempotencyKey(
                         salonId, user.id(), key);
-                    if (prior.isPresent()) return prior.get();
+                    if (prior.isPresent()) return List.of(prior.get());
                 }
-                ValidatedSlot slot = validateSlot(salonId, staffId, serviceId, start, null);
-                PromotionService.Quote quote = promotions.quoteForBooking(
-                    salonId, user.id(), promoCode, slot.service());
-                Booking booking = bookings.saveAndFlush(new Booking(salonId, user.id(), staffId,
-                    serviceId, start, slot.end(), quote.originalPrice(), quote.discountAmount(),
-                    quote.finalPrice(), quote.promoCode(), slot.service().getName(), key,
-                    BookingSource.ONLINE, null, null));
-                promotions.reserve(salonId, user.id(), booking.getId(), quote);
-                notifications.confirmed(salonId, booking);
-                return booking;
+                List<Booking> chain = new ArrayList<>();
+                LocalDateTime cursor = start;
+                for (Long serviceId : serviceIds) {
+                    boolean leading = chain.isEmpty();
+                    ValidatedSlot slot = validateSlot(salonId, staffId, serviceId, cursor, null);
+                    PromotionService.Quote quote = leading
+                        ? promotions.quoteForBooking(salonId, user.id(), promoCode, slot.service())
+                        : PromotionService.Quote.none(slot.service().getPrice());
+                    Booking booking = bookings.saveAndFlush(new Booking(salonId, user.id(),
+                        staffId, serviceId, cursor, slot.end(), quote.originalPrice(),
+                        quote.discountAmount(), quote.finalPrice(), quote.promoCode(),
+                        slot.service().getName(), leading ? key : null,
+                        BookingSource.ONLINE, null, null));
+                    if (leading) promotions.reserve(salonId, user.id(), booking.getId(), quote);
+                    notifications.confirmed(salonId, booking);
+                    chain.add(booking);
+                    cursor = slot.end();
+                }
+                return List.copyOf(chain);
             });
         } catch (DataIntegrityViolationException exception) {
             if (key != null) {
                 var prior = bookings.findBySalonIdAndCustomerIdAndIdempotencyKey(
                     salonId, user.id(), key);
-                if (prior.isPresent()) return prior.get();
+                if (prior.isPresent()) return List.of(prior.get());
             }
             if (isOverlap(exception)) throw slotUnavailable();
             throw exception;
@@ -148,9 +178,9 @@ class BookingService {
     Booking createWalkIn(long staffId, long serviceId, LocalDateTime start,
                          String guestName, String guestPhone) {
         long salonId = TenantContext.requireSalonId();
-        String name = TenantInputPolicy.text(guestName, 160, "guestName", true);
-        String phone = TenantInputPolicy.phone(guestPhone);
-        if (phone == null) throw TenantInputPolicy.validation("guestPhone", "is required");
+        String name = InputPolicy.text(guestName, 160, "guestName", true);
+        String phone = InputPolicy.phone(guestPhone);
+        if (phone == null) throw InputPolicy.validation("guestPhone", "is required");
         try {
             return transactions.execute(status -> {
                 ValidatedSlot slot = validateSlot(salonId, staffId, serviceId, start, null);
@@ -179,7 +209,7 @@ class BookingService {
         long salonId = TenantContext.requireSalonId();
         Booking booking = bookings.findByIdAndSalonIdAndCustomerId(
             bookingId, salonId, user.id()).orElseThrow(() ->
-                TenantInputPolicy.notFound("booking"));
+                InputPolicy.notFound("booking"));
         return cancel(salonId, booking, true);
     }
 
@@ -191,7 +221,7 @@ class BookingService {
             transactions.executeWithoutResult(status -> {
                 Booking booking = bookings.findByIdAndSalonIdAndCustomerId(
                     bookingId, salonId, user.id()).orElseThrow(() ->
-                        TenantInputPolicy.notFound("booking"));
+                        InputPolicy.notFound("booking"));
                 requireConfirmed(booking);
                 ValidatedSlot slot = validateSlot(salonId, booking.getStaffId(),
                     booking.getServiceId(), start, bookingId);
@@ -200,7 +230,7 @@ class BookingService {
                     throw statusConflict();
                 Booking rescheduled = bookings.findByIdAndSalonIdAndCustomerId(
                     bookingId, salonId, user.id()).orElseThrow(() ->
-                        TenantInputPolicy.notFound("booking"));
+                        InputPolicy.notFound("booking"));
                 notifications.rescheduled(salonId, rescheduled, previous);
             });
         } catch (DataIntegrityViolationException exception) {
@@ -208,7 +238,7 @@ class BookingService {
             throw exception;
         }
         return bookings.findByIdAndSalonIdAndCustomerId(bookingId, salonId, user.id())
-            .orElseThrow(() -> TenantInputPolicy.notFound("booking"));
+            .orElseThrow(() -> InputPolicy.notFound("booking"));
     }
 
     BookingDtos.BookingResponse response(Booking booking) {
@@ -233,25 +263,25 @@ class BookingService {
         LocalDate rangeEnd;
         if (date != null) {
             if (startDate != null || endDate != null)
-                throw TenantInputPolicy.validation("date",
+                throw InputPolicy.validation("date",
                     "use either date or startDate/endDate, not both");
             rangeStart = date;
             rangeEnd = date;
         } else {
             if (startDate == null || endDate == null)
-                throw TenantInputPolicy.validation("date",
+                throw InputPolicy.validation("date",
                     "date or both startDate and endDate are required");
             if (endDate.isBefore(startDate))
-                throw TenantInputPolicy.validation("endDate",
+                throw InputPolicy.validation("endDate",
                     "must be on or after startDate");
             rangeStart = startDate;
             rangeEnd = endDate;
         }
         if (java.time.temporal.ChronoUnit.DAYS.between(rangeStart, rangeEnd) + 1 > 31)
-            throw TenantInputPolicy.validation("endDate",
+            throw InputPolicy.validation("endDate",
                 "calendar range must not exceed 31 inclusive days");
         if (staffId != null && staffId <= 0)
-            throw TenantInputPolicy.validation("staffId", "must be positive");
+            throw InputPolicy.validation("staffId", "must be positive");
         long salonId = TenantContext.requireSalonId();
         return bookings.findDashboardBookings(salonId, rangeStart.atStartOfDay(),
             rangeEnd.plusDays(1).atStartOfDay(), staffId);
@@ -261,31 +291,31 @@ class BookingService {
     Booking cancelOwner(long bookingId) {
         long salonId = TenantContext.requireSalonId();
         Booking booking = bookings.findByIdAndSalonId(bookingId, salonId)
-            .orElseThrow(() -> TenantInputPolicy.notFound("booking"));
+            .orElseThrow(() -> InputPolicy.notFound("booking"));
         return cancel(salonId, booking, false);
     }
 
     @Transactional
     Booking transition(long bookingId, BookingStatus target) {
         if (target != BookingStatus.COMPLETED && target != BookingStatus.NO_SHOW)
-            throw TenantInputPolicy.validation("status", "must be COMPLETED or NO_SHOW");
+            throw InputPolicy.validation("status", "must be COMPLETED or NO_SHOW");
         long salonId = TenantContext.requireSalonId();
         Booking booking = bookings.findByIdAndSalonId(bookingId, salonId)
-            .orElseThrow(() -> TenantInputPolicy.notFound("booking"));
+            .orElseThrow(() -> InputPolicy.notFound("booking"));
         requireConfirmed(booking);
         ZoneId zone = ZoneId.of(currentSalon(salonId).getTimezone());
         LocalDateTime localNow = LocalDateTime.now(zone);
         LocalDateTime threshold = target == BookingStatus.COMPLETED
             ? booking.getEndDateTime() : booking.getStartDateTime();
         if (threshold.isAfter(localNow))
-            throw TenantInputPolicy.conflict("BOOKING_TRANSITION_INVALID",
+            throw InputPolicy.conflict("BOOKING_TRANSITION_INVALID",
                 target == BookingStatus.COMPLETED
                     ? "A booking cannot be completed before it ends"
                     : "A future booking cannot be marked no-show");
         if (bookings.transitionConfirmed(bookingId, salonId, target) != 1)
             throw statusConflict();
         return bookings.findByIdAndSalonId(bookingId, salonId)
-            .orElseThrow(() -> TenantInputPolicy.notFound("booking"));
+            .orElseThrow(() -> InputPolicy.notFound("booking"));
     }
 
     private Booking cancel(long salonId, Booking booking, boolean enforceWindow) {
@@ -296,37 +326,42 @@ class BookingService {
         LocalDateTime localNow = LocalDateTime.ofInstant(now, ZoneId.of(salon.getTimezone()));
         if (enforceWindow && localNow.plusMinutes(salon.getCancellationWindowMinutes())
                 .isAfter(booking.getStartDateTime()))
-            throw TenantInputPolicy.conflict("CANCELLATION_WINDOW_CLOSED",
+            throw InputPolicy.conflict("CANCELLATION_WINDOW_CLOSED",
                 "The cancellation window for this booking has closed");
         if (bookings.cancelConfirmed(booking.getId(), salonId, now) != 1)
             throw statusConflict();
         Booking cancelled = bookings.findByIdAndSalonId(booking.getId(), salonId)
-            .orElseThrow(() -> TenantInputPolicy.notFound("booking"));
+            .orElseThrow(() -> InputPolicy.notFound("booking"));
         promotions.release(salonId, cancelled.getId(), now);
         if (cancelled.getCustomerId() != null)
             notifications.cancelled(salonId, cancelled, enforceWindow);
         return cancelled;
     }
+    private boolean servesAll(long salonId, long staffId, List<Long> serviceIds) {
+        return serviceIds.stream().allMatch(serviceId ->
+            assignments.existsBySalonIdAndStaffIdAndServiceId(salonId, staffId, serviceId));
+    }
+
     private ValidatedSlot validateSlot(long salonId, long staffId, long serviceId,
                                        LocalDateTime start, Long excludedBookingId) {
-        if (staffId <= 0) throw TenantInputPolicy.validation("staffId", "must be positive");
-        if (serviceId <= 0) throw TenantInputPolicy.validation("serviceId", "must be positive");
-        if (start == null) throw TenantInputPolicy.validation("startDatetime", "is required");
+        if (staffId <= 0) throw InputPolicy.validation("staffId", "must be positive");
+        if (serviceId <= 0) throw InputPolicy.validation("serviceId", "must be positive");
+        if (start == null) throw InputPolicy.validation("startDatetime", "is required");
         if (start.getSecond() != 0 || start.getNano() != 0 || start.getMinute() % 15 != 0)
-            throw TenantInputPolicy.validation("startDatetime",
+            throw InputPolicy.validation("startDatetime",
                 "must be on a 15-minute boundary");
         Salon salon = currentSalon(salonId);
         ZoneId zone = ZoneId.of(salon.getTimezone());
         if (!isFutureValidLocalTime(start, zone, ZonedDateTime.now(zone)))
-            throw TenantInputPolicy.validation("startDatetime",
+            throw InputPolicy.validation("startDatetime",
                 "must be a valid future time in the salon timezone");
         SalonServiceEntity requestedService = services.findByIdAndSalonId(serviceId, salonId)
             .filter(SalonServiceEntity::isActive)
-            .orElseThrow(() -> TenantInputPolicy.notFound("service"));
+            .orElseThrow(() -> InputPolicy.notFound("service"));
         staff.findByIdAndSalonId(staffId, salonId).filter(SalonStaff::isActive)
-            .orElseThrow(() -> TenantInputPolicy.notFound("staff"));
+            .orElseThrow(() -> InputPolicy.notFound("staff"));
         if (!assignments.existsBySalonIdAndStaffIdAndServiceId(salonId, staffId, serviceId))
-            throw TenantInputPolicy.validation("staffId",
+            throw InputPolicy.validation("staffId",
                 "staff is not assigned to the selected service");
         LocalDateTime end = start.plusMinutes(requestedService.getDurationMinutes());
         int day = dayNumber(start.getDayOfWeek());
@@ -337,10 +372,10 @@ class BookingService {
                 && start.toLocalDate().equals(end.toLocalDate())
                 && !end.toLocalTime().isAfter(hour.getEndTime()));
         if (!withinHours)
-            throw TenantInputPolicy.validation("startDatetime",
+            throw InputPolicy.validation("startDatetime",
                 "the full service duration must be within staff working hours");
         if (timeOff.countOverlapping(salonId, staffId, start, end) > 0)
-            throw TenantInputPolicy.conflict("STAFF_UNAVAILABLE",
+            throw InputPolicy.conflict("STAFF_UNAVAILABLE",
                 "The selected staff member is unavailable at this time");
         if (bookings.countConfirmedOverlappingExcluding(
                 salonId, staffId, start, end, excludedBookingId) > 0)
@@ -349,7 +384,7 @@ class BookingService {
     }
 
     private Salon currentSalon(long salonId) {
-        return salons.findById(salonId).orElseThrow(() -> TenantInputPolicy.notFound("salon"));
+        return salons.findById(salonId).orElseThrow(() -> InputPolicy.notFound("salon"));
     }
 
     private static void requireCustomer(AuthenticatedUser user) {
@@ -362,19 +397,19 @@ class BookingService {
     }
 
     private static PlatformApiException statusConflict() {
-        return TenantInputPolicy.conflict("BOOKING_STATUS_INVALID",
+        return InputPolicy.conflict("BOOKING_STATUS_INVALID",
             "Only a confirmed booking can be changed");
     }
 
     private static PlatformApiException slotUnavailable() {
-        return TenantInputPolicy.conflict("SLOT_UNAVAILABLE", SLOT_MESSAGE);
+        return InputPolicy.conflict("SLOT_UNAVAILABLE", SLOT_MESSAGE);
     }
 
     private static String normalizeKey(String key) {
         if (key == null) return null;
         String normalized = key.trim();
         if (normalized.isEmpty() || normalized.length() > 128)
-            throw TenantInputPolicy.validation("Idempotency-Key",
+            throw InputPolicy.validation("Idempotency-Key",
                 "must contain between 1 and 128 characters");
         return normalized;
     }

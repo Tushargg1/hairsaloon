@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hairsaloon.web.ApiErrorWriter;
 import jakarta.servlet.ServletException;
 import java.util.List;
 import java.util.Optional;
@@ -29,7 +31,8 @@ class TenantResolutionFilterTest {
         TenantProperties properties = new TenantProperties();
         properties.setBaseDomain("yoursite.com");
         properties.setPlatformHosts(List.of("yoursite.com", "www.yoursite.com", "api.yoursite.com"));
-        filter = new TenantResolutionFilter(resolver, properties);
+        filter = new TenantResolutionFilter(resolver,
+            new ApiErrorWriter(new ObjectMapper()), properties);
     }
 
     @AfterEach

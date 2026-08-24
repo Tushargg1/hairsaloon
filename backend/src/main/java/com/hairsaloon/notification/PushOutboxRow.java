@@ -9,6 +9,13 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import java.time.Instant;
 
+/**
+ * Schema-only mapping: the push outbox is read and written exclusively through
+ * JdbcTemplate, so nothing references this class. It still must exist, because it
+ * is what Hibernate uses to generate the table when Flyway is disabled (tests)
+ * and to validate it against the migrations in production. Deleting it breaks
+ * PushOutboxIntegrationTest.
+ */
 @Entity
 @Table(name = "push_outbox", uniqueConstraints = @UniqueConstraint(
     name = "push_outbox_event_unique", columnNames = {"salon_id", "event_key"}))

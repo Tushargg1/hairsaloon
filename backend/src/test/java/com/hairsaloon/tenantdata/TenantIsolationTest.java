@@ -10,21 +10,23 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
-import org.springframework.context.annotation.Import;
 
 @DataJpaTest(properties = {
     "spring.flyway.enabled=false",
     "spring.jpa.hibernate.ddl-auto=create-drop"
 })
-@Import(SalonPhotoService.class)
 class TenantIsolationTest {
 
     @Autowired TestEntityManager entityManager;
-    @Autowired SalonPhotoService service;
+    @Autowired SalonPhotoRepository photos;
 
     @AfterEach
     void clearTenant() {
         TenantContext.clear();
+    }
+
+    private List<SalonPhoto> photosForCurrentTenant() {
+        return photos.findAllBySalonIdOrderBySortOrderAsc(TenantContext.requireSalonId());
     }
 
     @Test
@@ -35,14 +37,13 @@ class TenantIsolationTest {
         entityManager.clear();
 
         TenantContext.setSalonId(2002L);
-        List<SalonPhoto> visible = service.findAllForCurrentTenant();
 
-        assertThat(visible).extracting(SalonPhoto::getPhotoUrl)
+        assertThat(photosForCurrentTenant()).extracting(SalonPhoto::getPhotoUrl)
             .containsExactly("https://cdn/b.jpg")
             .doesNotContain("https://cdn/a.jpg");
 
         TenantContext.clear();
-        assertThatThrownBy(service::findAllForCurrentTenant)
+        assertThatThrownBy(this::photosForCurrentTenant)
             .isInstanceOf(IllegalStateException.class);
     }
 }

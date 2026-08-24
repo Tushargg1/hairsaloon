@@ -9,6 +9,13 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import java.time.Instant;
 
+/**
+ * Schema-only mapping: the notification outbox is read and written exclusively
+ * through JdbcTemplate, so nothing references this class. It still must exist,
+ * because it is what Hibernate uses to generate the table when Flyway is disabled
+ * (tests) and to validate it against the migrations in production. Deleting it
+ * breaks NotificationOutboxIntegrationTest.
+ */
 @Entity
 @Table(name = "notification_outbox", uniqueConstraints = {
     @UniqueConstraint(name = "notification_outbox_event_unique",

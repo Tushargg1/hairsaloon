@@ -136,8 +136,49 @@ class AuthService {
         users.save(user);
     }
 
+    @Transactional(readOnly = true)
+    ProfileView profile(long userId) {
+        return view(users.findById(userId).orElseThrow(AuthService::userNotFound));
+    }
+
+    /**
+     * The uniqueness checks and the update must share one transaction; otherwise two
+     * concurrent requests can both pass the check before either writes.
+     */
+    @Transactional
+    ProfileView updateProfile(long userId, String name, String phone, String email) {
+        User user = users.findById(userId).orElseThrow(AuthService::userNotFound);
+        String normalizedPhone = normalizePhone(phone);
+        String normalizedEmail = normalizeNullableEmail(email);
+        if (users.existsByPhoneAndIdNot(normalizedPhone, user.getId())) throw duplicatePhone();
+        if (normalizedEmail != null
+                && users.existsByEmailAndIdNot(normalizedEmail, user.getId())) {
+            throw duplicateEmail();
+        }
+        String trimmedName = name == null || name.isBlank() ? null : name.trim();
+        user.setName(trimmedName);
+        user.setEmail(normalizedEmail);
+        user.setPhone(normalizedPhone);
+        return view(users.saveAndFlush(user));
+    }
+
+    @Transactional
+    void changePassword(long userId, String currentPassword, String newPassword) {
+        User user = users.findById(userId).orElseThrow(AuthService::userNotFound);
+        if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
+            throw new AuthException(HttpStatus.BAD_REQUEST, "INVALID_PASSWORD",
+                "Current password is incorrect");
+        }
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        users.save(user);
+    }
+
     private AuthResult result(User user) {
         return new AuthResult(principal(user), jwtService.issue(user));
+    }
+
+    private static ProfileView view(User user) {
+        return new ProfileView(user.getId(), user.getName(), user.getPhone(), user.getEmail());
     }
 
     private static AuthenticatedUser principal(User user) {
@@ -172,6 +213,11 @@ class AuthService {
         return new AuthException(HttpStatus.BAD_REQUEST, "VERIFICATION_PROOF_INVALID",
             "The verification proof is invalid or expired");
     }
+    private static AuthException userNotFound() {
+        return new AuthException(HttpStatus.NOT_FOUND, "USER_NOT_FOUND", "Account not found");
+    }
 
     record AuthResult(AuthenticatedUser user, String token) {}
+
+    record ProfileView(Long id, String name, String phone, String email) {}
 }

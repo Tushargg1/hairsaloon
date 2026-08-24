@@ -1,5 +1,6 @@
 package com.hairsaloon.tenant;
 
+import com.hairsaloon.web.ApiErrorWriter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,11 +24,14 @@ public class TenantResolutionFilter extends OncePerRequestFilter {
         Pattern.compile("[a-z0-9][a-z0-9-]{1,28}[a-z0-9]");
 
     private final TenantResolver tenantResolver;
+    private final ApiErrorWriter errors;
     private final String baseDomain;
     private final Set<String> platformHosts;
 
-    public TenantResolutionFilter(TenantResolver tenantResolver, TenantProperties properties) {
+    public TenantResolutionFilter(TenantResolver tenantResolver, ApiErrorWriter errors,
+                                  TenantProperties properties) {
         this.tenantResolver = tenantResolver;
+        this.errors = errors;
         this.baseDomain = parseHost(properties.getBaseDomain());
         this.platformHosts = new HashSet<>();
         properties.getPlatformHosts().forEach(host -> platformHosts.add(parseHost(host)));
@@ -137,9 +141,7 @@ public class TenantResolutionFilter extends OncePerRequestFilter {
         }
     }
 
-    private static void salonNotFound(HttpServletResponse response) throws IOException {
-        response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-        response.setContentType("application/problem+json");
-        response.getWriter().write("{\"title\":\"Salon not found\",\"status\":404}");
+    private void salonNotFound(HttpServletResponse response) throws IOException {
+        errors.notFound(response, "SALON_NOT_FOUND", "Salon not found");
     }
 }

@@ -29,7 +29,7 @@ class OtpController {
     @PostMapping("/request")
     ResponseEntity<OtpService.ChallengeResult> request(@Valid @RequestBody OtpRequest request,
                                                        HttpServletRequest httpRequest) {
-        String principal = OtpService.normalizePhone(request.phone());
+        String principal = AuthService.normalizePhone(request.phone());
         String scope = "otp-request-" + request.purpose().name().toLowerCase();
         enforce(scope, httpRequest.getRemoteAddr(), principal);
         try {
@@ -61,7 +61,7 @@ class OtpController {
     ResponseEntity<Void> resetPassword(@Valid @RequestBody PasswordResetRequest request,
                                        HttpServletRequest httpRequest) {
         String ip = httpRequest.getRemoteAddr();
-        String principal = OtpService.normalizePhone(request.phone());
+        String principal = AuthService.normalizePhone(request.phone());
         enforce("password-reset", ip, principal);
         try {
             authService.resetPassword(request.phone(), request.newPassword(),

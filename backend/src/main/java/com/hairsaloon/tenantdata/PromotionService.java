@@ -2,6 +2,7 @@ package com.hairsaloon.tenantdata;
 
 import com.hairsaloon.auth.AuthenticatedUser;
 import com.hairsaloon.auth.UserRole;
+import com.hairsaloon.platform.InputPolicy;
 import com.hairsaloon.platform.PlatformApiException;
 import com.hairsaloon.tenant.TenantContext;
 import java.math.BigDecimal;
@@ -51,7 +52,7 @@ class PromotionService {
             replaceServices(salonId, saved.getId(), input.serviceIds());
             return view(salonId, saved);
         } catch (DataIntegrityViolationException duplicate) {
-            throw TenantInputPolicy.conflict("PROMOTION_CODE_EXISTS",
+            throw InputPolicy.conflict("PROMOTION_CODE_EXISTS",
                 "A promotion with this code already exists");
         }
     }
@@ -59,7 +60,7 @@ class PromotionService {
     PromotionView update(long id, PromotionCommand command) {
         long salonId = TenantContext.requireSalonId();
         Promotion promotion = promotions.findByIdAndSalonId(id, salonId)
-            .orElseThrow(() -> TenantInputPolicy.notFound("promotion"));
+            .orElseThrow(() -> InputPolicy.notFound("promotion"));
         Validated input = validateCommand(salonId, command, id);
         promotion.update(input.code(), input.normalized(), input.type(), input.value(),
             input.startsAt(), input.endsAt(), input.totalLimit(), input.customerLimit(),
@@ -69,7 +70,7 @@ class PromotionService {
             replaceServices(salonId, id, input.serviceIds());
             return view(salonId, promotion);
         } catch (DataIntegrityViolationException duplicate) {
-            throw TenantInputPolicy.conflict("PROMOTION_CODE_EXISTS",
+            throw InputPolicy.conflict("PROMOTION_CODE_EXISTS",
                 "A promotion with this code already exists");
         }
     }
@@ -78,7 +79,7 @@ class PromotionService {
     void deactivate(long id) {
         long salonId = TenantContext.requireSalonId();
         Promotion promotion = promotions.findByIdAndSalonId(id, salonId)
-            .orElseThrow(() -> TenantInputPolicy.notFound("promotion"));
+            .orElseThrow(() -> InputPolicy.notFound("promotion"));
         promotion.deactivate();
         promotions.save(promotion);
     }
@@ -116,24 +117,24 @@ class PromotionService {
         if (!promotion.isActive() || now.isBefore(promotion.getStartsAt())
                 || now.isAfter(promotion.getEndsAt())) throw invalidPromotion();
         if (service.getPrice().compareTo(promotion.getMinimumSpend()) < 0)
-            throw TenantInputPolicy.conflict("PROMOTION_MINIMUM_SPEND",
+            throw InputPolicy.conflict("PROMOTION_MINIMUM_SPEND",
                 "The booking does not meet the promotion minimum spend");
         long eligibleCount = eligibility.countBySalonIdAndPromotionId(
             salonId, promotion.getId());
         if (eligibleCount > 0 && !eligibility.existsBySalonIdAndPromotionIdAndServiceId(
                 salonId, promotion.getId(), service.getId()))
-            throw TenantInputPolicy.conflict("PROMOTION_SERVICE_INELIGIBLE",
+            throw InputPolicy.conflict("PROMOTION_SERVICE_INELIGIBLE",
                 "The promotion does not apply to this service");
         long total = redemptions.countBySalonIdAndPromotionIdAndStatus(
             salonId, promotion.getId(), PromotionRedemptionStatus.RESERVED);
         if (promotion.getTotalLimit() != null && total >= promotion.getTotalLimit())
-            throw TenantInputPolicy.conflict("PROMOTION_LIMIT_REACHED",
+            throw InputPolicy.conflict("PROMOTION_LIMIT_REACHED",
                 "The promotion redemption limit has been reached");
         long customerTotal = redemptions.countBySalonIdAndPromotionIdAndCustomerIdAndStatus(
             salonId, promotion.getId(), customerId, PromotionRedemptionStatus.RESERVED);
         if (promotion.getPerCustomerLimit() != null
                 && customerTotal >= promotion.getPerCustomerLimit())
-            throw TenantInputPolicy.conflict("PROMOTION_CUSTOMER_LIMIT_REACHED",
+            throw InputPolicy.conflict("PROMOTION_CUSTOMER_LIMIT_REACHED",
                 "The customer redemption limit has been reached");
         BigDecimal original = money(service.getPrice());
         BigDecimal discount = promotion.getDiscountType() == PromotionDiscountType.PERCENT
@@ -146,34 +147,34 @@ class PromotionService {
     }
 
     private Validated validateCommand(long salonId, PromotionCommand command, Long existingId) {
-        if (command == null) throw TenantInputPolicy.validation("promotion", "is required");
+        if (command == null) throw InputPolicy.validation("promotion", "is required");
         String normalized = normalizeCode(command.code());
         String code = normalized;
         if (existingId != null && promotions.existsBySalonIdAndCodeNormalizedAndIdNot(
                 salonId, normalized, existingId))
-            throw TenantInputPolicy.conflict("PROMOTION_CODE_EXISTS",
+            throw InputPolicy.conflict("PROMOTION_CODE_EXISTS",
                 "A promotion with this code already exists");
         if (command.type() == null)
-            throw TenantInputPolicy.validation("discountType", "is required");
+            throw InputPolicy.validation("discountType", "is required");
         BigDecimal value = moneyRequired(command.value(), "discountValue");
         if (value.signum() <= 0 || (command.type() == PromotionDiscountType.PERCENT
                 && value.compareTo(BigDecimal.valueOf(100)) > 0))
-            throw TenantInputPolicy.validation("discountValue",
+            throw InputPolicy.validation("discountValue",
                 "must be positive and percent discounts must not exceed 100");
         if (command.startsAt() == null || command.endsAt() == null
                 || !command.startsAt().isBefore(command.endsAt()))
-            throw TenantInputPolicy.validation("endsAt", "must be after startsAt");
+            throw InputPolicy.validation("endsAt", "must be after startsAt");
         positiveLimit(command.totalLimit(), "totalLimit");
         positiveLimit(command.customerLimit(), "perCustomerLimit");
         BigDecimal minimum = command.minimumSpend() == null ? BigDecimal.ZERO
             : money(command.minimumSpend());
         if (minimum.signum() < 0)
-            throw TenantInputPolicy.validation("minimumSpend", "must not be negative");
+            throw InputPolicy.validation("minimumSpend", "must not be negative");
         List<Long> ids = command.serviceIds() == null ? List.of()
             : new ArrayList<>(new LinkedHashSet<>(command.serviceIds()));
         if (ids.stream().anyMatch(id -> id == null || id <= 0)
                 || services.findAllByIdInAndSalonIdAndActiveTrue(ids, salonId).size() != ids.size())
-            throw TenantInputPolicy.validation("serviceIds",
+            throw InputPolicy.validation("serviceIds",
                 "must contain only active services in this salon");
         return new Validated(code, normalized, command.type(), value, command.startsAt(),
             command.endsAt(), command.totalLimit(), command.customerLimit(), minimum,
@@ -197,39 +198,39 @@ class PromotionService {
     }
 
     private SalonServiceEntity service(long salonId, long serviceId) {
-        if (serviceId <= 0) throw TenantInputPolicy.validation("serviceId", "must be positive");
+        if (serviceId <= 0) throw InputPolicy.validation("serviceId", "must be positive");
         return services.findByIdAndSalonId(serviceId, salonId)
             .filter(SalonServiceEntity::isActive)
-            .orElseThrow(() -> TenantInputPolicy.notFound("service"));
+            .orElseThrow(() -> InputPolicy.notFound("service"));
     }
     private static String normalizeCode(String input) {
-        String value = TenantInputPolicy.text(input, 40, "promoCode", true)
+        String value = InputPolicy.text(input, 40, "promoCode", true)
             .toUpperCase(Locale.ROOT);
         if (!value.matches("[A-Z0-9][A-Z0-9_-]{1,39}"))
-            throw TenantInputPolicy.validation("promoCode",
+            throw InputPolicy.validation("promoCode",
                 "must contain 2 to 40 letters, numbers, underscores, or hyphens");
         return value;
     }
 
     private static BigDecimal moneyRequired(BigDecimal value, String field) {
-        if (value == null) throw TenantInputPolicy.validation(field, "is required");
+        if (value == null) throw InputPolicy.validation(field, "is required");
         return money(value);
     }
 
     private static BigDecimal money(BigDecimal value) {
         try { return value.setScale(2, RoundingMode.UNNECESSARY); }
         catch (ArithmeticException invalid) {
-            throw TenantInputPolicy.validation("amount", "must have at most 2 decimal places");
+            throw InputPolicy.validation("amount", "must have at most 2 decimal places");
         }
     }
 
     private static void positiveLimit(Integer value, String field) {
         if (value != null && value <= 0)
-            throw TenantInputPolicy.validation(field, "must be positive");
+            throw InputPolicy.validation(field, "must be positive");
     }
 
     private static PlatformApiException invalidPromotion() {
-        return TenantInputPolicy.conflict("PROMOTION_INVALID",
+        return InputPolicy.conflict("PROMOTION_INVALID",
             "The promotion is invalid or outside its active window");
     }
 

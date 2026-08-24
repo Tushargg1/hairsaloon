@@ -1,10 +1,8 @@
-import { useReducedMotion } from 'motion/react'
 import Icon from '../shared/components/Icon.jsx'
 import BrassButton from '../shared/components/BrassButton.jsx'
+import VideoHero from '../shared/components/VideoHero.jsx'
 
 const HERO_BG = 'https://lh3.googleusercontent.com/aida-public/AB6AXuDJPIJ2JIxb3RVCeuZEKylrHaYkC9iBqr1ESDbu9hSDBMoaFnzyU30DbmY1hKpWulO2us3e3P1JsUXsjJk6hl7eRxx2By1ce08JGuW6fpEBpz6r6xrHAXom9gvHa6d4KIQ5TDgSAiw4r2DXNctX9_txwNfl026hs7P8mhismD8NaTSlW76CLZmE8PeWYe-YCVdv9UZpLROZgR_dHY3OdUK_u6oL9eaDNvA9VPY7pyeh-vMJI9gKrKEUBMz3aWqfHch-dA'
-const HERO_VIDEO = '/hero-barbershop.mp4'
-
 const stats = [
   { icon: 'storefront', value: '500+', label: 'Premium Salons' },
   { icon: 'event_available', value: '50k+', label: 'Bookings Made' },
@@ -12,38 +10,11 @@ const stats = [
 ]
 
 export default function HomePage() {
-  // Visitors who ask for reduced motion get the still frame instead of the
-  // looping video, and the file is never downloaded for them.
-  const reduceMotion = useReducedMotion()
-
   return (
     <main className="flex-grow">
       {/* Hero Section */}
       <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
-        {/* Background */}
-        <div className="absolute inset-0 z-0">
-          {reduceMotion ? (
-            <div
-              className="w-full h-full bg-cover bg-center bg-no-repeat"
-              style={{ backgroundImage: `url('${HERO_BG}')` }}
-            />
-          ) : (
-            <video
-              className="w-full h-full object-cover"
-              src={HERO_VIDEO}
-              poster={HERO_BG}
-              autoPlay
-              loop
-              muted
-              playsInline
-              preload="auto"
-              aria-hidden="true"
-              tabIndex={-1}
-            />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px]" />
-        </div>
+        <VideoHero poster={HERO_BG} />
 
         {/* Content */}
         <div className="relative z-10 container mx-auto px-4 md:px-6 max-w-[1280px] flex flex-col items-center text-center mt-20">

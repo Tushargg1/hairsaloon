@@ -32,7 +32,8 @@ class CustomerBookingController {
             @RequestHeader(name = "Idempotency-Key", required = false) String idempotencyKey,
             @Valid @RequestBody CreateBookingRequest request) {
         return bookings.response(bookings.create(user, request.staffId(),
-            request.serviceId(), request.startDatetime(), idempotencyKey, request.promoCode()));
+            request.services(), request.startDatetime(), idempotencyKey,
+            request.promoCode()).get(0));
     }
 
     @GetMapping("/me")
@@ -56,9 +57,16 @@ class CustomerBookingController {
 
     @JsonIgnoreProperties(ignoreUnknown = false)
     record CreateBookingRequest(@NotNull @Positive Long staffId,
-                                @NotNull @Positive Long serviceId,
+                                @Positive Long serviceId,
+                                List<@Positive Long> serviceIds,
                                 @NotNull LocalDateTime startDatetime,
-                                String promoCode) {}
+                                String promoCode) {
+        /** Accepts either a single serviceId or an ordered serviceIds chain. */
+        List<Long> services() {
+            if (serviceIds != null && !serviceIds.isEmpty()) return serviceIds;
+            return serviceId == null ? List.of() : List.of(serviceId);
+        }
+    }
 
     @JsonIgnoreProperties(ignoreUnknown = false)
     record RescheduleRequest(@NotNull LocalDateTime startDatetime) {}

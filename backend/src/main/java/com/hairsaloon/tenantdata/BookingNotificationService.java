@@ -1,15 +1,26 @@
 package com.hairsaloon.tenantdata;
 
+import com.hairsaloon.platform.InputPolicy;
 import com.hairsaloon.auth.User;
+import com.hairsaloon.platform.InputPolicy;
 import com.hairsaloon.auth.UserRepository;
+import com.hairsaloon.platform.InputPolicy;
 import com.hairsaloon.notification.NotificationOutboxWriter;
+import com.hairsaloon.platform.InputPolicy;
 import com.hairsaloon.notification.NotificationType;
+import com.hairsaloon.platform.InputPolicy;
 import com.hairsaloon.notification.PushOutboxWriter;
+import com.hairsaloon.platform.InputPolicy;
 import com.hairsaloon.notification.PushSubscriptionAudience;
+import com.hairsaloon.platform.InputPolicy;
 import com.hairsaloon.notification.SafeEmailTemplate;
+import com.hairsaloon.platform.InputPolicy;
 import com.hairsaloon.tenant.Salon;
+import com.hairsaloon.platform.InputPolicy;
 import com.hairsaloon.tenant.SalonRepository;
+import com.hairsaloon.platform.InputPolicy;
 import java.time.LocalDateTime;
+import com.hairsaloon.platform.InputPolicy;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -62,7 +73,7 @@ class BookingNotificationService {
         // Walk-ins deliberately have no customer identity and never receive notifications.
         if (booking.getCustomerId() == null) return;
         User customer = users.findById(booking.getCustomerId())
-            .orElseThrow(() -> TenantInputPolicy.notFound("customer"));
+            .orElseThrow(() -> InputPolicy.notFound("customer"));
         String subject = SafeEmailTemplate.subject(subjectAction, salon.getName());
         outbox.enqueue(salon.getId(), booking.getId(), type, customer.getEmail(), subject,
             body, occurrence);
@@ -85,6 +96,6 @@ class BookingNotificationService {
 
     private Salon salon(long salonId) {
         return salons.findById(salonId)
-            .orElseThrow(() -> TenantInputPolicy.notFound("salon"));
+            .orElseThrow(() -> InputPolicy.notFound("salon"));
     }
 }

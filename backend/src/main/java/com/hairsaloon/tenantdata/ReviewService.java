@@ -2,6 +2,7 @@ package com.hairsaloon.tenantdata;
 
 import com.hairsaloon.auth.AuthenticatedUser;
 import com.hairsaloon.auth.UserRole;
+import com.hairsaloon.platform.InputPolicy;
 import com.hairsaloon.platform.PlatformApiException;
 import com.hairsaloon.tenant.TenantContext;
 import java.util.LinkedHashMap;
@@ -33,18 +34,18 @@ class ReviewService {
                                      int rating, String comment) {
         requireCustomer(user);
         if (bookingId <= 0)
-            throw TenantInputPolicy.validation("bookingId", "must be positive");
+            throw InputPolicy.validation("bookingId", "must be positive");
         if (rating < 1 || rating > 5)
-            throw TenantInputPolicy.validation("rating", "must be between 1 and 5");
-        String safeComment = TenantInputPolicy.text(comment, 1000, "comment", false);
+            throw InputPolicy.validation("rating", "must be between 1 and 5");
+        String safeComment = InputPolicy.text(comment, 1000, "comment", false);
         long salonId = TenantContext.requireSalonId();
         try {
             Review review = transactions.execute(status -> {
                 Booking booking = bookings.findByIdAndSalonIdAndCustomerId(
                     bookingId, salonId, user.id()).orElseThrow(() ->
-                        TenantInputPolicy.notFound("booking"));
+                        InputPolicy.notFound("booking"));
                 if (booking.getStatus() != BookingStatus.COMPLETED)
-                    throw TenantInputPolicy.conflict("BOOKING_NOT_COMPLETED",
+                    throw InputPolicy.conflict("BOOKING_NOT_COMPLETED",
                         "Only a completed booking can be reviewed");
                 if (reviews.existsBySalonIdAndBookingIdAndCustomerId(
                         salonId, bookingId, user.id()))
@@ -60,9 +61,9 @@ class ReviewService {
 
     @Transactional(readOnly = true)
     ReviewDtos.ReviewPage page(int page, int size) {
-        if (page < 0) throw TenantInputPolicy.validation("page", "must not be negative");
+        if (page < 0) throw InputPolicy.validation("page", "must not be negative");
         if (size < 1 || size > 100)
-            throw TenantInputPolicy.validation("size", "must be between 1 and 100");
+            throw InputPolicy.validation("size", "must be between 1 and 100");
         long salonId = TenantContext.requireSalonId();
         var result = reviews.findPublicPage(salonId, PageRequest.of(page, size));
         Object[] totals = reviews.summarize(salonId).get(0);
@@ -84,7 +85,7 @@ class ReviewService {
     }
 
     private static PlatformApiException reviewExists() {
-        return TenantInputPolicy.conflict("REVIEW_EXISTS", EXISTS_MESSAGE);
+        return InputPolicy.conflict("REVIEW_EXISTS", EXISTS_MESSAGE);
     }
 
     private static void requireCustomer(AuthenticatedUser user) {

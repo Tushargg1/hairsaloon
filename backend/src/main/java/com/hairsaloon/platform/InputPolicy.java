@@ -1,16 +1,20 @@
-package com.hairsaloon.tenantdata;
+package com.hairsaloon.platform;
 
-import com.hairsaloon.platform.PlatformApiException;
 import java.net.URI;
 import java.time.ZoneId;
 import java.util.Locale;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
 
-final class TenantInputPolicy {
-    private TenantInputPolicy() {}
+/**
+ * Shared request sanitization and the standard failure shapes built on top of it.
+ * Used by both the platform and tenant-data layers, so it lives here rather than in
+ * either one; a second copy previously drifted inside PlatformSalonService.
+ */
+public final class InputPolicy {
+    private InputPolicy() {}
 
-    static String text(String input, int max, String field, boolean required) {
+    public static String text(String input, int max, String field, boolean required) {
         String value = input == null ? "" : input.replaceAll("(?s)<[^>]*>", "")
             .chars().filter(c -> !Character.isISOControl(c) || c == '\n' || c == '\t')
             .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
@@ -20,7 +24,7 @@ final class TenantInputPolicy {
         return value.isBlank() ? null : value;
     }
 
-    static String url(String input, String field) {
+    public static String url(String input, String field) {
         String value = text(input, 2048, field, false);
         if (value == null) return null;
         try {
@@ -33,7 +37,7 @@ final class TenantInputPolicy {
         }
     }
 
-    static String email(String input) {
+    public static String email(String input) {
         String value = text(input, 320, "email", false);
         if (value == null) return null;
         value = value.toLowerCase(Locale.ROOT);
@@ -42,31 +46,31 @@ final class TenantInputPolicy {
         return value;
     }
 
-    static String phone(String input) {
+    public static String phone(String input) {
         String value = text(input, 32, "phone", false);
         if (value != null && !value.matches("[+0-9() .-]{7,32}"))
             throw validation("phone", "must be a valid phone number");
         return value;
     }
 
-    static String timezone(String input) {
+    public static String timezone(String input) {
         String value = text(input, 64, "timezone", true);
         if (!ZoneId.getAvailableZoneIds().contains(value))
             throw validation("timezone", "must be a recognized IANA timezone");
         return value;
     }
 
-    static PlatformApiException validation(String field, String message) {
+    public static PlatformApiException validation(String field, String message) {
         return new PlatformApiException(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR",
             "Request validation failed", Map.of(field, message));
     }
 
-    static PlatformApiException notFound(String resource) {
+    public static PlatformApiException notFound(String resource) {
         return new PlatformApiException(HttpStatus.NOT_FOUND,
             resource.toUpperCase(Locale.ROOT) + "_NOT_FOUND", resource + " was not found");
     }
 
-    static PlatformApiException conflict(String code, String message) {
+    public static PlatformApiException conflict(String code, String message) {
         return new PlatformApiException(HttpStatus.CONFLICT, code, message);
     }
 }

@@ -19,9 +19,10 @@ class AvailabilityController {
 
     @GetMapping("/availability")
     List<BookingDtos.AvailabilitySlot> availability(
-            @RequestParam long serviceId,
+            @RequestParam List<Long> serviceId,
             @RequestParam(required = false) Long staffId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        return bookings.availability(serviceId, staffId, date);
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(defaultValue = "false") boolean includeUnavailable) {
+        return bookings.availability(serviceId, staffId, date, includeUnavailable);
     }
 }

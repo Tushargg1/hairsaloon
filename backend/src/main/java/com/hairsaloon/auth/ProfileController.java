@@ -4,64 +4,41 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/platform/profile")
 class ProfileController {
 
-    private final UserRepository users;
-    private final PasswordEncoder passwordEncoder;
+    private final AuthService authService;
 
-    ProfileController(UserRepository users, PasswordEncoder passwordEncoder) {
-        this.users = users;
-        this.passwordEncoder = passwordEncoder;
+    ProfileController(AuthService authService) {
+        this.authService = authService;
     }
 
     @GetMapping
-    ProfileResponse getProfile(@AuthenticationPrincipal AuthenticatedUser principal) {
-        User user = users.findById(principal.id()).orElseThrow();
-        return new ProfileResponse(user.getId(), user.getName(), user.getPhone(), user.getEmail());
+    AuthService.ProfileView getProfile(@AuthenticationPrincipal AuthenticatedUser principal) {
+        return authService.profile(principal.id());
     }
 
     @PutMapping
-    ResponseEntity<ProfileResponse> updateProfile(@AuthenticationPrincipal AuthenticatedUser principal,
-                                                   @Valid @RequestBody UpdateProfileRequest request) {
-        User user = users.findById(principal.id()).orElseThrow();
-        String phone = request.phone().trim();
-        String email = request.email() == null || request.email().isBlank()
-            ? null : request.email().trim().toLowerCase(java.util.Locale.ROOT);
-        if (users.existsByPhoneAndIdNot(phone, user.getId())) {
-            throw new AuthException(HttpStatus.CONFLICT, "PHONE_EXISTS",
-                "An account with this phone number already exists");
-        }
-        if (email != null && users.existsByEmailAndIdNot(email, user.getId())) {
-            throw new AuthException(HttpStatus.CONFLICT, "EMAIL_EXISTS",
-                "An account with this email already exists");
-        }
-        String name = request.name() == null ? null : request.name().trim();
-        user.setName(name == null || name.isBlank() ? null : name);
-        user.setEmail(email);
-        user.setPhone(phone);
-        users.saveAndFlush(user);
-        return ResponseEntity.ok(new ProfileResponse(
-            user.getId(), user.getName(), user.getPhone(), user.getEmail()));
+    AuthService.ProfileView updateProfile(@AuthenticationPrincipal AuthenticatedUser principal,
+                                         @Valid @RequestBody UpdateProfileRequest request) {
+        return authService.updateProfile(principal.id(), request.name(), request.phone(),
+            request.email());
     }
 
     @PutMapping("/password")
     ResponseEntity<Void> changePassword(@AuthenticationPrincipal AuthenticatedUser principal,
-                                         @Valid @RequestBody ChangePasswordRequest request) {
-        User user = users.findById(principal.id()).orElseThrow();
-        if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
-            throw new AuthException(HttpStatus.BAD_REQUEST, "INVALID_PASSWORD",
-                "Current password is incorrect");
-        }
-        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
-        users.save(user);
+                                        @Valid @RequestBody ChangePasswordRequest request) {
+        authService.changePassword(principal.id(), request.currentPassword(),
+            request.newPassword());
         return ResponseEntity.noContent().build();
     }
 
@@ -79,6 +56,4 @@ class ProfileController {
     record ChangePasswordRequest(
         @NotBlank String currentPassword,
         @NotBlank @Size(min = 8, max = 72) String newPassword) {}
-
-    record ProfileResponse(Long id, String name, String phone, String email) {}
 }

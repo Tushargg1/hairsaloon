@@ -11,11 +11,8 @@ import com.hairsaloon.tenant.Salon;
 import com.hairsaloon.tenant.SalonRepository;
 import com.hairsaloon.tenant.SalonStatus;
 import java.math.BigDecimal;
-import java.net.URI;
-import java.time.ZoneId;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -63,7 +60,7 @@ class PlatformSalonService {
             return GeoFilter.NONE;
         }
         if (hasLat != hasLng) {
-            throw validation(hasLat ? "longitude" : "latitude",
+            throw InputPolicy.validation(hasLat ? "longitude" : "latitude",
                 "is required when searching by location");
         }
         BigDecimal lat = coordinate(latitude, "latitude", 90);
@@ -73,10 +70,10 @@ class PlatformSalonService {
             try {
                 radius = Double.parseDouble(radiusKm.trim());
             } catch (NumberFormatException invalid) {
-                throw validation("radiusKm", "must be a number");
+                throw InputPolicy.validation("radiusKm", "must be a number");
             }
             if (!(radius > 0) || radius > MAX_RADIUS_KM) {
-                throw validation("radiusKm",
+                throw InputPolicy.validation("radiusKm",
                     "must be greater than 0 and at most " + (int) MAX_RADIUS_KM);
             }
         }
@@ -87,11 +84,11 @@ class PlatformSalonService {
         try {
             BigDecimal value = new BigDecimal(input.trim());
             if (value.abs().compareTo(BigDecimal.valueOf(bound)) > 0) {
-                throw validation(field, "must be between -" + bound + " and " + bound);
+                throw InputPolicy.validation(field, "must be between -" + bound + " and " + bound);
             }
             return value;
         } catch (NumberFormatException invalid) {
-            throw validation(field, "must be a decimal number");
+            throw InputPolicy.validation(field, "must be a decimal number");
         }
     }
 
@@ -102,7 +99,7 @@ class PlatformSalonService {
             if (result.reserved()) {
                 return new SubdomainResponse(result.normalized(), false, false, "RESERVED");
             }
-            throw validation("name", result.error());
+            throw InputPolicy.validation("name", result.error());
         }
         if (result.reserved()) {
             return new SubdomainResponse(result.normalized(), false, false, "RESERVED");
@@ -119,34 +116,37 @@ class PlatformSalonService {
                          BigDecimal latitude, BigDecimal longitude) {
         SubdomainPolicy.Result candidate = SubdomainPolicy.inspect(subdomain);
         if (!candidate.valid() || candidate.reserved()) {
-            throw validation("subdomain", candidate.reserved()
+            throw InputPolicy.validation("subdomain", candidate.reserved()
                 ? "is reserved" : candidate.error());
         }
         if (salons.existsByOwnerId(owner.id())) {
-            throw conflict("OWNER_SALON_EXISTS", "This owner already has a salon");
+            throw InputPolicy.conflict("OWNER_SALON_EXISTS", "This owner already has a salon");
         }
         if (salons.existsBySubdomain(candidate.normalized())) {
-            throw conflict("SUBDOMAIN_TAKEN", "This subdomain is already taken");
+            throw InputPolicy.conflict("SUBDOMAIN_TAKEN", "This subdomain is already taken");
         }
         if ((latitude == null) != (longitude == null)) {
-            throw validation(latitude == null ? "latitude" : "longitude",
+            throw InputPolicy.validation(latitude == null ? "latitude" : "longitude",
                 "must be supplied together with the other coordinate");
         }
         if (latitude != null && latitude.abs().compareTo(BigDecimal.valueOf(90)) > 0) {
-            throw validation("latitude", "must be between -90 and 90");
+            throw InputPolicy.validation("latitude", "must be between -90 and 90");
         }
         if (longitude != null && longitude.abs().compareTo(BigDecimal.valueOf(180)) > 0) {
-            throw validation("longitude", "must be between -180 and 180");
+            throw InputPolicy.validation("longitude", "must be between -180 and 180");
         }
         Salon salon = new Salon(owner.id(), candidate.normalized(),
-            text(name, 160, "name", true), text(description, 5000, "description", false),
-            text(address, 500, "address", true), text(city, 120, "city", true),
-            phone(phone), email(email), logoUrl(logoUrl), timezone(timezone),
+            InputPolicy.text(name, 160, "name", true),
+            InputPolicy.text(description, 5000, "description", false),
+            InputPolicy.text(address, 500, "address", true),
+            InputPolicy.text(city, 120, "city", true),
+            InputPolicy.phone(phone), InputPolicy.email(email),
+            InputPolicy.url(logoUrl, "logoUrl"), InputPolicy.timezone(timezone),
             latitude, longitude);
         try {
             return response(salons.saveAndFlush(salon));
         } catch (DataIntegrityViolationException uniqueRace) {
-            throw conflict("SALON_CONFLICT",
+            throw InputPolicy.conflict("SALON_CONFLICT",
                 "A salon already exists for this owner or subdomain");
         }
     }
@@ -161,7 +161,7 @@ class PlatformSalonService {
             new PlatformApiException(HttpStatus.NOT_FOUND, "SALON_NOT_FOUND",
                 "Salon was not found"));
         if (salon.getStatus() != SalonStatus.PENDING) {
-            throw conflict("INVALID_SALON_STATUS", "Only pending salons can be approved");
+            throw InputPolicy.conflict("INVALID_SALON_STATUS", "Only pending salons can be approved");
         }
         salon.approve();
         return response(salons.saveAndFlush(salon));
@@ -182,11 +182,11 @@ class PlatformSalonService {
         try {
             int value = Integer.parseInt(input.trim());
             if (value < min || value > max) {
-                throw validation(field, "must be between " + min + " and " + max);
+                throw InputPolicy.validation(field, "must be between " + min + " and " + max);
             }
             return value;
         } catch (NumberFormatException invalid) {
-            throw validation(field, "must be a whole number");
+            throw InputPolicy.validation(field, "must be a whole number");
         }
     }
 
@@ -198,11 +198,11 @@ class PlatformSalonService {
             BigDecimal value = new BigDecimal(input.trim());
             if (value.compareTo(BigDecimal.ONE) < 0
                     || value.compareTo(BigDecimal.valueOf(5)) > 0) {
-                throw validation("rating", "must be between 1 and 5");
+                throw InputPolicy.validation("rating", "must be between 1 and 5");
             }
             return value;
         } catch (NumberFormatException invalid) {
-            throw validation("rating", "must be a number between 1 and 5");
+            throw InputPolicy.validation("rating", "must be a number between 1 and 5");
         }
     }
 
@@ -212,81 +212,12 @@ class PlatformSalonService {
         }
         String normalized = value.trim().toLowerCase(Locale.ROOT);
         if (normalized.length() > max) {
-            throw validation(field, "must not exceed " + max + " characters");
+            throw InputPolicy.validation(field, "must not exceed " + max + " characters");
         }
         return normalized;
     }
 
     private static String likeFilter(String value, int max, String field) {
         return normalizedFilter(value, max, field);
-    }
-    private static String text(String value, int max, String field, boolean required) {
-        String cleaned = value == null ? "" : value.replaceAll("(?s)<[^>]*>", "")
-            .chars().filter(character -> !Character.isISOControl(character)
-                || character == '\n' || character == '\t')
-            .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
-            .toString().trim();
-        if (required && cleaned.isBlank()) {
-            throw validation(field, "must not be blank");
-        }
-        if (cleaned.length() > max) {
-            throw validation(field, "must not exceed " + max + " characters");
-        }
-        return cleaned.isBlank() ? null : cleaned;
-    }
-
-    private static String phone(String input) {
-        String value = text(input, 32, "phone", false);
-        if (value != null && !value.matches("[+0-9() .-]{7,32}")) {
-            throw validation("phone", "must be a valid phone number");
-        }
-        return value;
-    }
-
-    private static String email(String input) {
-        String value = text(input, 320, "email", false);
-        if (value == null) {
-            return null;
-        }
-        value = value.toLowerCase(Locale.ROOT);
-        if (!value.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
-            throw validation("email", "must be a valid email address");
-        }
-        return value;
-    }
-
-    private static String logoUrl(String input) {
-        String value = text(input, 2048, "logoUrl", false);
-        if (value == null) {
-            return null;
-        }
-        try {
-            URI uri = URI.create(value);
-            if (!("http".equalsIgnoreCase(uri.getScheme())
-                    || "https".equalsIgnoreCase(uri.getScheme()))
-                    || uri.getHost() == null || uri.getUserInfo() != null) {
-                throw new IllegalArgumentException();
-            }
-            return uri.toASCIIString();
-        } catch (IllegalArgumentException invalid) {
-            throw validation("logoUrl", "must be an absolute HTTP or HTTPS URL");
-        }
-    }
-
-    private static String timezone(String input) {
-        String value = text(input, 64, "timezone", true);
-        if (!ZoneId.getAvailableZoneIds().contains(value)) {
-            throw validation("timezone", "must be a recognized IANA timezone");
-        }
-        return value;
-    }
-
-    private static PlatformApiException validation(String field, String message) {
-        return new PlatformApiException(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR",
-            "Request validation failed", Map.of(field, message));
-    }
-
-    private static PlatformApiException conflict(String code, String message) {
-        return new PlatformApiException(HttpStatus.CONFLICT, code, message);
     }
 }

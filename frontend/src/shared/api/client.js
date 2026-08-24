@@ -52,10 +52,6 @@ export function apiErrorMessage(error, fallback = 'Something went wrong. Please 
   return data?.message || fallback
 }
 
-export function extractFieldErrors(error) {
-  return error?.response?.data?.fieldErrors || null
-}
-
 const apiClient = axios.create({
   baseURL: apiBaseUrl(),
   withCredentials: true,
