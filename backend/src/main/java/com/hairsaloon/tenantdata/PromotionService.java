@@ -41,6 +41,21 @@ class PromotionService {
             .map(value -> view(salonId, value)).toList();
     }
 
+    /** Live offers for the public salon page: active and inside their date window. */
+    @Transactional(readOnly = true)
+    List<PublicPromotionView> publicList(Instant now) {
+        long salonId = TenantContext.requireSalonId();
+        return promotions.findAllBySalonIdOrderByIdDesc(salonId).stream()
+            .filter(Promotion::isActive)
+            .filter(value -> value.getStartsAt() == null || !value.getStartsAt().isAfter(now))
+            .filter(value -> value.getEndsAt() == null || value.getEndsAt().isAfter(now))
+            .map(value -> new PublicPromotionView(value.getCode(), value.getDiscountType(),
+                value.getDiscountValue(), value.getEndsAt(), value.getMinimumSpend(),
+                eligibility.findAllBySalonIdAndPromotionIdOrderByServiceId(salonId, value.getId())
+                    .stream().map(PromotionServiceEligibility::getServiceId).toList()))
+            .toList();
+    }
+
     @Transactional
     PromotionView create(PromotionCommand command) {
         long salonId = TenantContext.requireSalonId();
@@ -116,6 +131,11 @@ class PromotionService {
         Instant now = Instant.now();
         if (!promotion.isActive() || now.isBefore(promotion.getStartsAt())
                 || now.isAfter(promotion.getEndsAt())) throw invalidPromotion();
+        // Combos are a bundle price across several services, so there is no
+        // single-service discount to quote.
+        if (promotion.getDiscountType() == PromotionDiscountType.COMBO)
+            throw InputPolicy.conflict("PROMOTION_COMBO_NOT_REDEEMABLE",
+                "This combo is booked by selecting its services, not with a code");
         if (service.getPrice().compareTo(promotion.getMinimumSpend()) < 0)
             throw InputPolicy.conflict("PROMOTION_MINIMUM_SPEND",
                 "The booking does not meet the promotion minimum spend");
@@ -176,6 +196,9 @@ class PromotionService {
                 || services.findAllByIdInAndSalonIdAndActiveTrue(ids, salonId).size() != ids.size())
             throw InputPolicy.validation("serviceIds",
                 "must contain only active services in this salon");
+        if (command.type() == PromotionDiscountType.COMBO && ids.size() < 2)
+            throw InputPolicy.validation("serviceIds",
+                "a combo must include at least two services");
         return new Validated(code, normalized, command.type(), value, command.startsAt(),
             command.endsAt(), command.totalLimit(), command.customerLimit(), minimum,
             command.active(), ids);
@@ -243,6 +266,9 @@ class PromotionService {
     record PromotionCommand(String code, PromotionDiscountType type, BigDecimal value,
         Instant startsAt, Instant endsAt, Integer totalLimit, Integer customerLimit,
         BigDecimal minimumSpend, boolean active, List<Long> serviceIds) {}
+    record PublicPromotionView(String code, PromotionDiscountType discountType,
+        BigDecimal discountValue, Instant endsAt, BigDecimal minimumSpend,
+        List<Long> serviceIds) {}
     record PromotionView(Long id, String code, PromotionDiscountType discountType,
         BigDecimal discountValue, Instant startsAt, Instant endsAt, Integer totalLimit,
         Integer perCustomerLimit, BigDecimal minimumSpend, boolean active,

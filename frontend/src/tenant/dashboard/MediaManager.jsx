@@ -1,12 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRef, useState } from 'react'
 import {
-  confirmMediaUpload,
-  createMediaUpload,
   errorMessage,
   getDashboardMedia,
   tenantKeys,
-  uploadMediaFile,
+  uploadSalonImage,
 } from '../tenant-api.js'
 
 const acceptedTypes = ['image/jpeg', 'image/png', 'image/webp']
@@ -39,31 +37,19 @@ function validateFile(file, type) {
 export default function MediaManager() {
   const queryClient = useQueryClient()
   const fileInput = useRef(null)
-  const [type, setType] = useState('GALLERY')
+  // This section is the salon gallery only; the logo is uploaded from the
+  // salon details form above.
+  const type = 'GALLERY'
   const [file, setFile] = useState(null)
   const [progress, setProgress] = useState({ value: 0, label: '' })
   const [feedback, setFeedback] = useState({ type: '', message: '' })
   const media = useQuery({ queryKey: tenantKeys.dashboardMedia, queryFn: getDashboardMedia, retry: false })
   const upload = useMutation({
-    mutationFn: async ({ uploadType, image }) => {
-      setProgress({ value: 1, label: 'Requesting a secure upload…' })
-      const ticket = await createMediaUpload({
-        type: uploadType,
-        contentType: image.type,
-        sizeBytes: image.size,
-      })
-      if (!ticket.uploadUrl || !ticket.uploadId) {
-        throw new Error('Media uploads are not configured for this salon.')
-      }
-      setProgress({ value: 2, label: 'Uploading image directly to storage…' })
-      await uploadMediaFile({
-        uploadUrl: ticket.uploadUrl,
-        requiredHeaders: ticket.requiredHeaders || {},
-        file: image,
-      })
-      setProgress({ value: 3, label: 'Confirming the uploaded image…' })
-      return confirmMediaUpload({ type: uploadType, uploadId: ticket.uploadId })
-    },
+    mutationFn: ({ uploadType, image }) => uploadSalonImage({
+      type: uploadType,
+      file: image,
+      onStep: (value, label) => setProgress({ value, label }),
+    }),
     onSuccess: () => {
       setProgress({ value: 3, label: 'Upload complete.' })
       setFeedback({ type: 'success', message: 'Image uploaded and confirmed.' })
@@ -103,27 +89,20 @@ export default function MediaManager() {
     <section className="manager-section" aria-labelledby="media-heading">
       <header className="manager-heading">
         <p className="eyebrow">Salon imagery</p>
-        <h2 id="media-heading">Media</h2>
-        <p>Upload optimized salon images for your brand and gallery.</p>
+        <h2 id="media-heading">Salon photos</h2>
+        <p>Photos of the salon, shown in the gallery on your public page.</p>
       </header>
       {feedback.message && <p className={`form-status ${feedback.type}`} role={feedback.type === 'error' ? 'alert' : 'status'}>{feedback.message}</p>}
       <form className="manager-create-card" onSubmit={submit}>
-        <h3>Upload an image</h3>
+        <h3>Add a salon photo</h3>
         <div className="manager-form-grid">
-          <label>Image use
-            <select value={type} onChange={(event) => setType(event.target.value)}>
-              <option value="GALLERY">Gallery</option>
-              <option value="LOGO">Logo</option>
-              <option value="STAFF">Staff photo</option>
-            </select>
-          </label>
-          <label>Image file
+          <label className="span-2">Image file
             <input ref={fileInput} type="file" accept={acceptedTypes.join(',')} onChange={(event) => { setFile(event.target.files?.[0] || null); setProgress({ value: 0, label: '' }); setFeedback({ type: '', message: '' }) }} />
           </label>
         </div>
         <p className="muted">JPEG, PNG, or WebP. Maximum size 10 MB.</p>
         {(upload.isPending || progress.label) && <div className="upload-progress" role="status" aria-live="polite"><progress max="3" value={progress.value} aria-label="Media upload progress" /><span>{progress.label}</span></div>}
-        <button className="button" type="submit" disabled={upload.isPending}>{upload.isPending ? 'Uploading…' : 'Upload image'}</button>
+        <button className="button" type="submit" disabled={upload.isPending}>{upload.isPending ? 'Uploading…' : 'Upload photo'}</button>
       </form>
 
       {media.isLoading ? <div className="manager-loading" aria-live="polite">Loading media…</div> : listUnavailable ? (
@@ -138,7 +117,7 @@ export default function MediaManager() {
           <button className="button button-secondary button-small" type="button" onClick={() => media.refetch()}>Try again</button>
         </div>
       ) : media.data.length === 0 ? (
-        <div className="state-card dashboard-state"><h3>No media yet</h3><p>Upload the first salon image using the form above.</p></div>
+        <div className="state-card dashboard-state"><h3>No photos yet</h3><p>Upload the first salon photo using the form above.</p></div>
       ) : (
         <ul className="media-gallery" aria-label="Uploaded salon media">
           {media.data.map((item, index) => {

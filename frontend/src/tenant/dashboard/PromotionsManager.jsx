@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
+import MultiSelect from '../../shared/components/MultiSelect.jsx'
 import {
   createPromotion,
   deletePromotion,
@@ -60,33 +61,40 @@ function PromotionFields({ form, onChange, prefix, services }) {
     const { name, type, checked, value } = event.target
     onChange((current) => ({ ...current, [name]: type === 'checkbox' ? checked : value }))
   }
-  function toggleService(event) {
-    const id = event.target.value
+  function toggleServiceId(id) {
     onChange((current) => ({
       ...current,
-      serviceIds: event.target.checked
-        ? [...current.serviceIds, id]
-        : current.serviceIds.filter((value) => value !== id),
+      serviceIds: current.serviceIds.includes(id)
+        ? current.serviceIds.filter((value) => value !== id)
+        : [...current.serviceIds, id],
     }))
   }
 
+  const combo = form.discountType === 'COMBO'
   return <div className="manager-form-grid promotion-form-grid">
     <label htmlFor={`${prefix}-code`}>Promotion code<input id={`${prefix}-code`} name="code" required maxLength="40" autoComplete="off" value={form.code} onChange={update} /></label>
-    <label htmlFor={`${prefix}-discount-type`}>Discount type<select id={`${prefix}-discount-type`} name="discountType" value={form.discountType} onChange={update}><option value="PERCENT">Percentage</option><option value="FIXED">Fixed amount</option></select></label>
-    <label htmlFor={`${prefix}-discount-value`}>Discount value<input id={`${prefix}-discount-value`} name="discountValue" type="number" min="0.01" max={form.discountType === 'PERCENT' ? '100' : undefined} step="0.01" required value={form.discountValue} onChange={update} /></label>
-    <label htmlFor={`${prefix}-minimum-spend`}>Minimum spend <span className="optional">Optional</span><input id={`${prefix}-minimum-spend`} name="minimumSpend" type="number" min="0" step="0.01" value={form.minimumSpend} onChange={update} /></label>
+    <label htmlFor={`${prefix}-discount-type`}>Discount type<select id={`${prefix}-discount-type`} name="discountType" value={form.discountType} onChange={update}><option value="PERCENT">Percentage</option><option value="FIXED">Fixed amount</option><option value="COMBO">Combo</option></select></label>
+    <label htmlFor={`${prefix}-discount-value`}>{combo ? 'Combo price' : 'Discount value'}<input id={`${prefix}-discount-value`} name="discountValue" type="number" min="0.01" max={form.discountType === 'PERCENT' ? '100' : undefined} step="0.01" required value={form.discountValue} onChange={update} /></label>
+    <label htmlFor={`${prefix}-minimum-spend`}>Minimum spend<input id={`${prefix}-minimum-spend`} name="minimumSpend" type="number" min="0" step="0.01" placeholder="Optional" value={form.minimumSpend} onChange={update} /></label>
     <label htmlFor={`${prefix}-starts-at`}>Starts at<input id={`${prefix}-starts-at`} name="startsAt" type="datetime-local" required value={form.startsAt} onChange={update} /></label>
     <label htmlFor={`${prefix}-ends-at`}>Ends at<input id={`${prefix}-ends-at`} name="endsAt" type="datetime-local" min={form.startsAt} required value={form.endsAt} onChange={update} /></label>
-    <label htmlFor={`${prefix}-total-limit`}>Total redemption limit <span className="optional">Optional</span><input id={`${prefix}-total-limit`} name="totalLimit" type="number" min="1" step="1" value={form.totalLimit} onChange={update} /></label>
-    <label htmlFor={`${prefix}-customer-limit`}>Per-customer limit <span className="optional">Optional</span><input id={`${prefix}-customer-limit`} name="perCustomerLimit" type="number" min="1" step="1" value={form.perCustomerLimit} onChange={update} /></label>
-    <fieldset className="promotion-services span-2"><legend>Eligible services <span className="optional">Leave clear for all services</span></legend><div className="choice-grid">{services.map((service) => <label className="checkbox-field" key={service.id}><input type="checkbox" value={String(service.id)} checked={form.serviceIds.includes(String(service.id))} onChange={toggleService} /> {service.name}</label>)}</div></fieldset>
+    <label htmlFor={`${prefix}-total-limit`}>Total redemption limit<input id={`${prefix}-total-limit`} name="totalLimit" type="number" min="1" step="1" placeholder="Optional" value={form.totalLimit} onChange={update} /></label>
+    <label htmlFor={`${prefix}-customer-limit`}>Per-customer limit<input id={`${prefix}-customer-limit`} name="perCustomerLimit" type="number" min="1" step="1" placeholder="Optional" value={form.perCustomerLimit} onChange={update} /></label>
+    <label>{combo ? 'Combo services' : 'Eligible services'}<MultiSelect label={combo ? 'Combo services' : 'Eligible services'} options={services} selected={form.serviceIds} onToggle={toggleServiceId} emptyLabel={combo ? 'Pick at least two' : 'All services'} /></label>
     <label className="checkbox-field span-2" htmlFor={`${prefix}-active`}><input id={`${prefix}-active`} name="active" type="checkbox" checked={form.active} onChange={update} /> Active and available to customers</label>
   </div>
 }
 
-function displayDateTime(value) {
-  if (!value) return 'Not set'
-  return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
+function displayDate(value) {
+  if (!value) return 'no end date'
+  return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(new Date(value))
+}
+
+function discountSummary(promotion) {
+  const value = promotion.discountValue ?? '—'
+  if (promotion.discountType === 'PERCENT') return `${value}% off`
+  if (promotion.discountType === 'COMBO') return `Combo ${value}`
+  return `${value} off`
 }
 
 function PromotionEditor({ promotion, mutation, onDelete, services }) {
@@ -112,23 +120,19 @@ function PromotionEditor({ promotion, mutation, onDelete, services }) {
     <div className="button-row"><button className="button button-small" type="submit" disabled={pending}>{pending ? 'Saving…' : 'Save changes'}</button><button className="button button-ghost button-small" type="button" onClick={() => { setForm(promotionForm(promotion)); setEditing(false) }}>Cancel</button></div>
   </form>
 
-  return <article className={`manager-item promotion-item ${promotion.active === false ? 'inactive' : ''}`}>
-    <div className="promotion-details">
-      <p className="card-kicker">Promotion code</p>
+  return <article className={`manager-item service-row ${promotion.active === false ? 'inactive' : ''}`}>
+    <div className="min-w-0">
       <h3>{promotion.code}</h3>
-      <dl className="promotion-summary">
-        <div><dt>Discount</dt><dd><strong>{promotion.discountType}</strong> · {promotion.discountValue ?? '—'}{promotion.discountType === 'PERCENT' ? '%' : ''}</dd></div>
-        <div><dt>Runs</dt><dd>{displayDateTime(promotion.startsAt)} – {displayDateTime(promotion.endsAt)}</dd></div>
-        <div><dt>Eligible services</dt><dd>{eligibleServices.length ? eligibleServices.map((service) => service.name).join(', ') : 'All services'}</dd></div>
-        {promotion.totalLimit != null && <div><dt>Total limit</dt><dd>{promotion.totalLimit}</dd></div>}
-        {promotion.perCustomerLimit != null && <div><dt>Per-customer limit</dt><dd>{promotion.perCustomerLimit}</dd></div>}
-        {promotion.minimumSpend != null && <div><dt>Minimum spend</dt><dd>{promotion.minimumSpend}</dd></div>}
-      </dl>
+      <p>{discountSummary(promotion)} · {eligibleServices.length
+        ? eligibleServices.map((service) => service.name).join(', ')
+        : 'All services'}</p>
+      <p className="card-kicker">Until {displayDate(promotion.endsAt)}{promotion.minimumSpend
+        ? ` · min spend ${promotion.minimumSpend}` : ''}</p>
     </div>
     <span className={`manager-status ${promotion.active === false ? 'inactive' : ''}`}>{promotion.active === false ? 'Inactive' : 'Active'}</span>
-    <div className="button-row">
+    <div className="service-actions">
       <button className="button button-secondary button-small" type="button" onClick={() => { setForm(promotionForm(promotion)); setEditing(true) }}>Edit</button>
-      <button className="button button-ghost button-small" type="button" disabled={pending} onClick={() => onDelete(id)}>{pending && mutation.variables?.action === 'delete' ? 'Deleting…' : 'Delete'}</button>
+      <button className="button button-secondary button-small" type="button" disabled={pending} onClick={() => onDelete(id)}>{pending && mutation.variables?.action === 'delete' ? 'Deleting…' : 'Delete'}</button>
     </div>
   </article>
 }

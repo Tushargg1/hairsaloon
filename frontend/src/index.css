@@ -3,6 +3,46 @@
 @tailwind utilities;
 
 @layer base {
+  #offers, #services, #book-slot, #reviews {
+    scroll-margin-top: 5rem;
+  }
+  /* Palette channels so a subtree can be re-themed by overriding variables.
+     These defaults are the original dark values, so the public site is
+     unchanged; only .theme-light swaps them. */
+  :root {
+    --c-surface-container: 38 31 17;
+    --c-surface-container-high: 49 41 27;
+    --c-on-surface: 239 225 203;
+    --c-on-surface-variant: 216 194 189;
+    --c-outline: 160 140 136;
+    --c-outline-variant: 83 67 64;
+    --c-secondary: 243 187 144;
+    --c-secondary-container: 100 62 28;
+    --c-secondary-fixed: 255 220 194;
+    --c-error: 255 180 171;
+    --c-panel: 35 15 8 / 0.85;
+    --c-panel-border: 139 105 66 / 0.3;
+    --c-input: 25 18 6 / 0.7;
+    --c-page: #161005;
+  }
+
+  .theme-light {
+    --c-surface-container: 243 237 227;
+    --c-surface-container-high: 232 223 208;
+    --c-on-surface: 43 36 25;
+    --c-on-surface-variant: 91 81 69;
+    --c-outline: 110 101 88;
+    --c-outline-variant: 202 191 176;
+    --c-secondary: 138 90 34;
+    --c-secondary-container: 240 217 191;
+    --c-secondary-fixed: 92 58 18;
+    --c-error: 179 38 30;
+    --c-panel: 255 253 248 / 0.9;
+    --c-panel-border: 138 105 66 / 0.25;
+    --c-input: 255 255 255 / 0.85;
+    --c-page: #f7f2e9;
+  }
+
   html {
     font-family: 'Inter', sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -21,25 +61,58 @@
     width: 0;
   }
 
+  /* Show scrollbar on dashboard */
+  body.has-scrollbar {
+    scrollbar-width: thin;
+    -ms-overflow-style: auto;
+  }
+  body.has-scrollbar::-webkit-scrollbar {
+    display: block;
+    width: 6px;
+  }
+  body.has-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(200, 176, 132, 0.4);
+    border-radius: 3px;
+  }
+  body.has-scrollbar::-webkit-scrollbar-track {
+    background-color: transparent;
+  }
+
   body {
     @apply bg-background text-on-background min-h-screen;
     background-image: radial-gradient(circle at top right, #31291b, #191206);
+  }
+
+  /* Anchor targets clear the fixed nav instead of hiding under it. */
+  section[id] {
+    scroll-margin-top: 5rem;
   }
 }
 
 @layer components {
   .glass-panel {
-    background-color: rgba(35, 15, 8, 0.85);
+    background-color: rgb(var(--c-panel));
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(139, 105, 66, 0.3);
+    border: 1px solid rgb(var(--c-panel-border));
     box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.7);
   }
 
   .glass-surface {
-    background-color: rgba(35, 15, 8, 0.85);
+    background-color: rgb(var(--c-panel));
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
+  }
+
+  /* The heavy dark drop shadow reads as grime on a light background. */
+  .theme-light .glass-panel {
+    box-shadow: 0 10px 25px -12px rgba(60, 45, 20, 0.25);
+  }
+
+  /* The muted brass used for "active"/success text is too pale on cream. */
+  .theme-light .form-status.success,
+  .theme-light .manager-status {
+    color: #6B5716;
   }
 
   .brass-gradient {
@@ -64,7 +137,8 @@
   }
 
   .input-glass {
-    @apply bg-[rgba(25,18,6,0.7)] text-on-surface rounded transition-all;
+    @apply text-on-surface rounded transition-all;
+    background-color: rgb(var(--c-input));
     border: 1px solid rgba(139, 105, 66, 0.4);
   }
 
@@ -210,10 +284,15 @@
   .auth-page input, .auth-page select, .auth-page textarea {
     @apply input-glass w-full rounded py-2 px-3 text-body-md;
   }
+  /* Checkboxes must keep the forms-plugin 1rem box; the generic input rule
+     above would stretch them to the full field width. */
   .form-card input[type="checkbox"],
   .manager-section input[type="checkbox"],
   .staff-subform input[type="checkbox"] {
-    @apply w-auto accent-secondary;
+    @apply accent-secondary rounded-sm;
+    width: 1rem;
+    height: 1rem;
+    color: #B8860B;
   }
   .span-2 { @apply md:col-span-2; }
 
@@ -292,11 +371,91 @@
     @apply flex flex-col gap-3 pt-4 border-t border-outline-variant/20;
   }
   .staff-subform h4 { @apply font-body font-semibold text-secondary text-base; }
-  .staff-existing { @apply grid grid-cols-1 md:grid-cols-2 gap-3; }
-  .staff-existing strong { @apply font-body text-label-sm text-outline block; }
-  .staff-existing p { @apply font-body text-body-md text-on-surface; }
-  .hours-row { @apply flex flex-wrap items-end gap-2; }
+  .staff-existing { @apply grid grid-cols-1 md:grid-cols-[5rem_minmax(0,1fr)] gap-x-3 gap-y-1; }
+  .staff-existing > div { @apply contents; }
+  .staff-existing dt { @apply font-body text-label-sm text-outline; }
+  .staff-existing dd { @apply font-body text-label-md font-normal text-on-surface; }
+  /* Service assignments beside the schedule, one row of two columns. */
+  .staff-panels { @apply grid grid-cols-1 md:grid-cols-2 gap-4 items-start; }
+  .staff-panels > .staff-subform { @apply border-t-0 pt-0; }
+
+  /* Compact schedule: one day per line with small type, so it fits a half
+     width column. */
+  .staff-subform .hours-grid { @apply grid-cols-1 gap-1; }
+  .hours-row { @apply flex items-center gap-2 text-label-sm; }
+  .hours-row > strong {
+    @apply font-body text-label-sm w-9 flex-shrink-0;
+    color: rgb(var(--c-on-surface-variant));
+  }
+  .hours-row .checkbox-field {
+    @apply flex-row items-center gap-1 text-label-sm w-20 flex-shrink-0;
+  }
+  .hours-row label { @apply gap-0; }
+  .hours-row input[type="time"] {
+    @apply py-1 px-2 text-label-sm;
+    width: auto;
+    min-width: 0;
+  }
   .choice-grid { @apply flex flex-wrap gap-2; }
+
+  /* --- Multi-select dropdown --- */
+  .multi-select { @apply relative; }
+  .multi-select > summary {
+    @apply input-glass w-full rounded py-2 px-3 text-body-md flex items-center justify-between
+           cursor-pointer list-none;
+  }
+  .multi-select > summary::-webkit-details-marker { display: none; }
+  .multi-select > summary::after {
+    content: '';
+    @apply w-2 h-2 ml-2 flex-shrink-0 border-b border-r rotate-45 -translate-y-0.5;
+    border-color: currentColor;
+  }
+  .multi-select[open] > summary::after {
+    @apply translate-y-0.5;
+    transform: rotate(-135deg) translateY(0.125rem);
+  }
+  .multi-select-panel {
+    @apply absolute z-50 left-0 right-0 mt-1 max-h-56 overflow-y-auto rounded p-3
+           flex flex-col gap-2;
+    background-color: rgb(var(--c-surface-container));
+    border: 1px solid rgb(var(--c-outline-variant));
+    box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.6);
+  }
+  /* The label rule below sets flex-col on every label in these cards, which
+     would stack each checkbox above its text. */
+  .multi-select-panel label.checkbox-field {
+    @apply flex-row items-center gap-2;
+    color: rgb(var(--c-on-surface));
+  }
+  /* forms-plugin checkboxes are appearance:none and rely on a fixed 1rem box.
+     The shared `input[type=checkbox] { w-auto }` rule collapsed that, which
+     stretched the box and hid the tick. */
+  .multi-select-panel label.checkbox-field input[type="checkbox"] {
+    @apply flex-shrink-0 rounded-sm;
+    width: 1rem;
+    height: 1rem;
+    color: #B8860B;
+  }
+  /* Drawn here rather than relying on the forms plugin's :checked rule, which
+     other input rules in this file can outrank. */
+  .multi-select-panel label.checkbox-field input[type="checkbox"]:checked {
+    background-color: #B8860B;
+    border-color: #B8860B;
+    background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='%23fff' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
+    background-size: 100% 100%;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  /* The cards are backdrop-filtered, so each is its own stacking context and a
+     later card would paint over an open panel. Lift the card that owns it. */
+  .multi-select[open] { z-index: 50; }
+  .manager-create-card:has(.multi-select[open]),
+  .manager-edit-form:has(.multi-select[open]),
+  .staff-manager-card:has(.multi-select[open]),
+  .staff-subform:has(.multi-select[open]) {
+    @apply relative z-50;
+  }
 
   /* --- Promotions manager --- */
   .promotion-item { @apply glass-panel rounded-xl p-6 flex flex-col gap-3; }
@@ -316,6 +475,62 @@
   .media-gallery img {
     @apply w-full h-40 object-cover rounded-lg border border-outline-variant/30;
   }
+  .category-order { @apply flex flex-col gap-2; }
+  .category-order li {
+    @apply flex items-center gap-3 py-2 px-3 rounded-lg font-body text-body-md;
+    background-color: rgb(var(--c-surface-container) / 0.5);
+    border: 1px solid rgb(var(--c-outline-variant) / 0.3);
+    color: rgb(var(--c-on-surface));
+  }
+  /* Beats the `.manager-create-card input { w-full }` rule, which would stretch
+     the box and squeeze the category name to nothing. */
+  .category-order li input.category-rank-input {
+    @apply input-glass flex-shrink-0 rounded py-1.5 px-2 text-center font-semibold;
+    width: 4rem;
+    font-size: 15px;
+  }
+  .category-name {
+    @apply flex-grow min-w-0 truncate font-body;
+    color: rgb(var(--c-on-surface));
+  }
+
+  /* Fixed columns so the status and action buttons line up down the list
+     instead of shifting with the length of each service name. */
+  .manager-item.service-row {
+    @apply grid gap-3;
+    grid-template-columns: minmax(0, 1fr) 5rem 13rem;
+  }
+  .manager-item.service-row .manager-status { @apply text-center; }
+  .service-actions { @apply flex items-center justify-end gap-2; }
+  .service-actions .button { @apply min-w-[6rem] text-center; }
+  @media (max-width: 640px) {
+    .manager-item.service-row { grid-template-columns: minmax(0, 1fr); }
+    .manager-item.service-row .manager-status { @apply text-left; }
+    .service-actions { @apply justify-start; }
+  }
+
+  .category-group { @apply flex flex-col gap-2; }
+  .category-group-heading {
+    @apply font-display text-title-lg mt-2;
+    color: rgb(var(--c-secondary));
+  }
+
+  .contact-row { @apply grid grid-cols-1 md:grid-cols-3 gap-4; }
+  .logo-field { @apply flex items-center gap-3; }
+  .logo-preview {
+    @apply w-10 h-10 rounded object-cover flex-shrink-0;
+    border: 1px solid rgb(var(--c-outline-variant));
+  }
+  .logo-field input[type="file"] { @apply min-w-0; }
+
+  .logo-picker { @apply flex flex-wrap gap-3 mt-2; }
+  .logo-choice {
+    @apply w-16 h-16 rounded-lg overflow-hidden transition-all;
+    border: 1px solid rgb(var(--c-outline-variant));
+  }
+  .logo-choice img { @apply w-full h-full object-cover; }
+  .logo-choice.is-selected { border-color: #B8860B; box-shadow: 0 0 0 2px rgba(184, 134, 11, 0.4); }
+
   .media-placeholder {
     @apply h-40 rounded-lg border border-dashed border-outline-variant/50
            flex items-center justify-center font-body text-label-sm text-outline;
@@ -552,7 +767,7 @@
    frame. Built from gradients so it scales without bitmap assets. */
 @layer components {
   .price-board {
-    @apply relative w-full max-w-[400px] mx-auto rounded-lg overflow-hidden p-6;
+    @apply relative w-full max-w-[400px] mx-auto rounded-lg overflow-hidden p-3;
     background-color: #12110f;
     background-image:
       linear-gradient(to bottom, rgba(18, 17, 15, 0.9), rgba(18, 17, 15, 0.95)),
@@ -571,7 +786,7 @@
     background-color: #5a4a35;
   }
 
-  .price-header { @apply relative z-10 text-center pt-4 mb-8; }
+  .price-header { @apply relative z-10 text-center pt-2 mb-4; }
 
   .price-scissors {
     @apply w-10 h-10 mx-auto mb-2;
@@ -600,12 +815,22 @@
     border: 1px solid #9B7D46;
   }
 
-  .price-groups { @apply relative z-10 flex flex-col gap-6 mb-8; }
+  .price-groups { @apply relative z-10 flex flex-col gap-3 mb-4; }
 
-  .price-category { @apply flex items-center justify-center mb-4; }
-  .price-category-line { @apply h-px w-16; background-color: #3a3022; }
+  .price-search { @apply relative z-10 mb-4; }
+  .price-search-input {
+    @apply w-full font-body text-sm rounded px-3 py-2 outline-none;
+    background-color: #1a1814;
+    border: 1px solid #3a3022;
+    color: #d8b87a;
+  }
+  .price-search-input::placeholder { color: #6b5f50; }
+  .price-search-input:focus { border-color: #9B7D46; }
+
+  .price-category { @apply flex items-center justify-center mb-2; }
+  .price-category-line { @apply h-px w-16 flex-shrink-0; background-color: #3a3022; }
   .price-category > h3 {
-    @apply font-engraved text-lg px-4 uppercase;
+    @apply font-engraved text-lg px-4 uppercase truncate min-w-0;
     color: #b89860;
     letter-spacing: 0.1em;
   }
@@ -614,26 +839,28 @@
     @apply flex items-start justify-between w-full text-left gap-3 py-1 transition-colors
            focus:outline-none focus-visible:ring-1;
   }
-  .price-row + .price-row { @apply mt-4; }
+  .price-row + .price-row { @apply mt-2; }
   .price-row:hover .price-service-name { color: #E8D0A4; }
+  .price-row[aria-pressed="true"] .price-service-name { color: #E8D0A4; }
 
   .price-picked {
-    @apply flex items-center gap-1 font-body text-[10px] uppercase mt-1;
+    @apply flex items-center gap-1 font-body text-[9px] uppercase mt-0.5;
     color: #34d399;
     letter-spacing: 0.12em;
   }
-  .price-picked > span { @apply text-[14px]; }
+  .price-picked > span { @apply text-[12px]; }
 
-  .price-details { @apply flex-grow min-w-0; }
+  .price-details { @apply flex flex-col flex-grow min-w-0; }
+  /* Must be a block for truncate to apply: text-overflow is ignored on inline spans. */
   .price-service-name {
-    @apply font-display text-xl truncate mb-1;
+    @apply block font-display text-sm truncate mb-0.5;
     color: #d8b87a;
   }
-  .price-service-desc { @apply font-body text-xs; color: #8A8276; }
+  .price-service-desc { @apply block font-body text-xs truncate; color: #8A8276; }
 
   .price-meta { @apply flex flex-col items-end self-center ml-2 flex-shrink-0; }
   .price-amount {
-    @apply font-engraved text-xl w-24 text-right;
+    @apply font-engraved text-sm min-w-[5rem] text-right whitespace-nowrap;
     color: #d8b87a;
   }
   .price-duration {
@@ -861,6 +1088,24 @@
   .review-plate-item-stars { @apply text-xs; color: #C8B084; letter-spacing: 0.15em; }
   .review-plate-item-date { @apply font-body text-[10px] uppercase; color: #8A857D; letter-spacing: 0.1em; }
   .review-plate-item-body { @apply font-body text-xs leading-relaxed; color: #B8A074; }
+  .review-plate-item-body a:hover { color: #C8B084; }
+
+  .offer-row {
+    @apply flex flex-col items-center gap-1 py-4;
+    border-top: 1px solid #2A251D;
+  }
+  .offer-row:first-child { border-top: 0; }
+  .offer-amount { @apply font-display text-2xl; }
+  .offer-combo {
+    @apply font-display text-sm text-center;
+    color: #B8A074;
+  }
+  .offer-code {
+    @apply font-display text-[11px] uppercase px-3 py-1;
+    border: 1px dashed rgba(200, 176, 132, 0.5);
+    color: #C8B084;
+    letter-spacing: 0.25em;
+  }
 
   .salon-footer {
     @apply w-full mt-auto;
@@ -883,12 +1128,16 @@
     @apply font-body text-xs leading-relaxed flex items-start gap-2 mb-2;
     color: #8A857D;
   }
+  .salon-footer-line a { @apply transition-colors; }
   .salon-footer-line a:hover { color: #C8B084; }
-  .salon-footer-service {
-    @apply font-body text-xs flex items-center justify-between gap-4 py-1;
+  .salon-footer-social { @apply grid grid-cols-2 gap-2 mt-4; }
+  .salon-footer-social a {
+    @apply inline-flex items-center justify-center gap-2 px-3 py-2 rounded transition-colors font-body text-xs;
+    border: 1px solid rgba(200, 176, 132, 0.4);
     color: #8A857D;
+    min-height: 2.5rem;
   }
-  .salon-footer-service > span:last-child { color: #B8A074; }
+  .salon-footer-social a:hover { color: #C8B084; background-color: rgba(200, 176, 132, 0.1); }
   .salon-footer-cta {
     @apply inline-block font-display text-[11px] uppercase px-6 py-3 mt-2 transition-colors;
     border: 1px solid rgba(200, 176, 132, 0.5);
@@ -904,6 +1153,36 @@
   }
 }
 
+/* Quick navigation pill below navbar */
+@layer components {
+  .quick-nav-pill {
+    @apply fixed top-[4.5rem] left-1/2 -translate-x-1/2 z-40;
+    animation: pill-enter 0.4s ease-out forwards, pill-bob 2s ease-in-out 0.4s infinite;
+  }
+  .quick-nav-pill a {
+    @apply inline-flex items-center gap-1 font-body text-[10px] uppercase px-3 py-1.5 rounded-full transition-all;
+    background-color: rgba(13, 12, 10, 0.85);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(200, 176, 132, 0.4);
+    color: #C8B084;
+    letter-spacing: 0.1em;
+  }
+  .quick-nav-pill a:hover {
+    background-color: rgba(200, 176, 132, 0.15);
+    color: #E8D0A4;
+  }
+}
+
+@keyframes pill-enter {
+  from { opacity: 0; transform: translateX(-50%) translateY(-1rem); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@keyframes pill-bob {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-3px); }
+}
+
 @layer components {
   /* Outlined gold call-to-action shared by the hero and the salon footer. */
   .vintage-cta {
@@ -914,4 +1193,14 @@
     letter-spacing: 0.2em;
   }
   .vintage-cta:hover { background-color: rgba(200, 176, 132, 0.1); }
+}
+
+@layer components {
+  /* Small gilded plate for grid cards, matching the booking/price plates. */
+  .vintage-panel {
+    @apply relative flex flex-col overflow-hidden;
+    background-color: #0D0C0A;
+    border: 1px solid #2A251D;
+    box-shadow: 0 0 0 3px #000, 0 10px 30px rgba(0, 0, 0, 0.6);
+  }
 }

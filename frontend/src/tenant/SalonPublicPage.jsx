@@ -1,14 +1,14 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import SlotBookingWidget from './SlotBookingWidget.jsx'
 import VintageReviews from './VintageReviews.jsx'
 import Icon from '../shared/components/Icon.jsx'
 import VideoHero from '../shared/components/VideoHero.jsx'
 import {
-  errorMessage, getPublicServices, getSalonProfile,
+  errorMessage, getPublicPromotions, getPublicServices, getSalonProfile,
   tenantKeys, unwrapCollection,
 } from './tenant-api.js'
+import { groupServicesByCategory } from './service-groups.js'
 import { tenantNameFallback } from './tenant-host.js'
 
 function imageUrl(item) { return typeof item === 'string' ? item : item?.url || item?.photoUrl || item?.imageUrl }
@@ -16,7 +16,33 @@ function formatPrice(value) {
   if (value == null) return 'Price on request'
   return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'INR' }).format(Number(value))
 }
-const CATEGORY_ORDER = ['hair', 'beard', 'shave', 'colour', 'color', 'wellness']
+function discountLabel(promotion) {
+  if (promotion.discountType === 'COMBO') return formatPrice(promotion.discountValue)
+  return promotion.discountType === 'PERCENT'
+    ? `${Number(promotion.discountValue)}% off`
+    : `${formatPrice(promotion.discountValue)} off`
+}
+
+// Combos advertise the bundle itself, so list the services instead of the terms.
+function comboServices(promotion, services) {
+  return promotion.serviceIds
+    .map((id) => services.find((service) => String(service.id) === String(id))?.name)
+    .filter(Boolean)
+    .join(' + ')
+}
+
+function offerTerms(promotion) {
+  const parts = []
+  if (promotion.minimumSpend != null) parts.push(`Min spend ${formatPrice(promotion.minimumSpend)}`)
+  if (promotion.serviceIds?.length) parts.push('Selected services')
+  if (promotion.endsAt) {
+    const ends = new Date(promotion.endsAt)
+    if (!Number.isNaN(ends.getTime())) {
+      parts.push(`Until ${new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(ends)}`)
+    }
+  }
+  return parts.join(' \u00b7 ') || 'All services'
+}
 
 function ScissorsMark() {
   return (
@@ -38,34 +64,11 @@ function ClockMark() {
   )
 }
 
-// Groups services under their category, listing the known grooming categories
-// in a fixed order first so the board reads the same for every salon, then any
-// custom categories the salon added, then anything uncategorised.
-function groupByCategory(services) {
-  const groups = new Map()
-  for (const service of services) {
-    const key = String(service.category || '').trim() || 'Other'
-    if (!groups.has(key)) groups.set(key, [])
-    groups.get(key).push(service)
-  }
-  const known = []
-  for (const name of CATEGORY_ORDER) {
-    for (const key of [...groups.keys()]) {
-      if (key.toLowerCase() === name) {
-        known.push([key, groups.get(key)])
-        groups.delete(key)
-      }
-    }
-  }
-  const other = groups.has('Other') ? [['Other', groups.get('Other')]] : []
-  groups.delete('Other')
-  return [...known, ...groups, ...other]
-}
-
 export default function SalonPublicPage() {
   // Service selection is shared: the price list and the booking widget both
   // toggle the same chain, in the order the customer picked them.
   const [selectedIds, setSelectedIds] = useState([])
+  const [serviceSearch, setServiceSearch] = useState('')
   const toggleService = (id) => setSelectedIds((current) => (
     current.includes(String(id))
       ? current.filter((value) => value !== String(id))
@@ -74,6 +77,7 @@ export default function SalonPublicPage() {
 
   const profileQuery = useQuery({ queryKey: tenantKeys.profile, queryFn: getSalonProfile })
   const servicesQuery = useQuery({ queryKey: tenantKeys.publicServices, queryFn: getPublicServices })
+  const promotionsQuery = useQuery({ queryKey: tenantKeys.publicPromotions, queryFn: getPublicPromotions })
   const profile = profileQuery.data || {}
   const photos = unwrapCollection(profile.photos, ['photos'])
   const salonName = profile.name || profile.salonName || tenantNameFallback()
@@ -82,20 +86,57 @@ export default function SalonPublicPage() {
   return (
     <main className="flex flex-col">
       {/* Hero */}
-      <section className="relative w-full -mt-16 min-h-[85vh] md:min-h-[60vh] flex items-end overflow-hidden">
+      <section className="relative w-full -mt-16 min-h-[85vh] md:min-h-[92vh] flex items-end overflow-hidden">
         <VideoHero poster={heroPhoto} alt={salonName} />
-        <div className="relative z-10 w-full max-w-[1280px] mx-auto px-4 lg:px-6 pb-12">
+        <div className="relative z-10 w-full max-w-[1280px] mx-auto px-4 lg:px-6 pb-[5vh]">
           {profileQuery.isLoading ? <p className="text-on-surface-variant">Loading...</p> : (
             <>
               <h1 className="font-display text-display-lg-mobile md:text-display-lg text-on-surface mb-6">{salonName}</h1>
-              <Link to="/book" className="vintage-cta">
+              <a href="#book-slot" className="vintage-cta">
                 <Icon name="event_available" className="text-[18px]" />
                 Book an Appointment
-              </Link>
+              </a>
             </>
           )}
         </div>
       </section>
+
+      {/* Offers */}
+      {promotionsQuery.data?.length > 0 && (
+        <section className="pt-12 px-4 lg:px-6 w-full" id="offers">
+          <div className="booking-frame">
+            <div className="booking-plate !min-h-0">
+              <div className="booking-texture" />
+
+              <div className="vintage-heading-row relative z-10">
+                <span className="vintage-heading-rule" />
+                <h2 className="vintage-heading gold-gradient-text">Offers</h2>
+                <span className="vintage-heading-rule" />
+              </div>
+
+              <div className="relative z-10">
+                {promotionsQuery.data.map((promotion) => {
+                  const combo = promotion.discountType === 'COMBO'
+                  return (
+                    <article className="offer-row" key={promotion.code}>
+                      {combo && (
+                        <span className="offer-combo">
+                          {comboServices(promotion, servicesQuery.data || [])}
+                        </span>
+                      )}
+                      <span className="offer-amount gold-gradient-text">{discountLabel(promotion)}</span>
+                      <span className="offer-code">{combo ? 'Combo' : promotion.code}</span>
+                      {!combo && <span className="review-plate-item-date">{offerTerms(promotion)}</span>}
+                    </article>
+                  )
+                })}
+              </div>
+
+              <p className="price-mark mt-auto pt-6">&mdash; {salonName} &mdash;</p>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Price list */}
       <section className="py-12 px-4 lg:px-6 w-full" id="services">
@@ -116,6 +157,16 @@ export default function SalonPublicPage() {
             </div>
           </header>
 
+          <div className="price-search">
+            <input
+              type="text"
+              placeholder="Search services..."
+              value={serviceSearch}
+              onChange={(e) => setServiceSearch(e.target.value)}
+              className="price-search-input"
+            />
+          </div>
+
           {servicesQuery.isLoading ? (
             <p className="price-state">Loading services...</p>
           ) : servicesQuery.isError ? (
@@ -124,7 +175,12 @@ export default function SalonPublicPage() {
             <p className="price-state">Services coming soon.</p>
           ) : (
             <div className="price-groups">
-              {groupByCategory(servicesQuery.data).map(([category, items]) => (
+              {groupServicesByCategory(
+                servicesQuery.data.filter((s) =>
+                  !serviceSearch || s.name.toLowerCase().includes(serviceSearch.toLowerCase())
+                ),
+                profile.categoryOrder,
+              ).map(([category, items]) => (
                 <section key={category}>
                   <div className="price-category">
                     <span className="price-category-line" />

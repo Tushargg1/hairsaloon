@@ -11,6 +11,8 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.List;
 import org.hibernate.annotations.CreationTimestamp;
 
 @Entity
@@ -48,6 +50,24 @@ public class Salon {
     private String email;
     @Column(name = "logo_url", columnDefinition = "TEXT")
     private String logoUrl;
+
+    @Column(name = "instagram_url", columnDefinition = "TEXT")
+    private String instagramUrl;
+
+    @Column(name = "facebook_url", columnDefinition = "TEXT")
+    private String facebookUrl;
+
+    @Column(name = "whatsapp_url", columnDefinition = "TEXT")
+    private String whatsappUrl;
+
+    @Column(name = "youtube_url", columnDefinition = "TEXT")
+    private String youtubeUrl;
+
+    @Column(name = "maps_url", columnDefinition = "TEXT")
+    private String mapsUrl;
+
+    @Column(name = "category_order", columnDefinition = "TEXT")
+    private String categoryOrder;
 
     @Column(nullable = false, length = 64)
     private String timezone;
@@ -116,6 +136,27 @@ public class Salon {
         this.cancellationWindowMinutes = cancellationWindowMinutes;
     }
 
+    public void updateSocialLinks(String instagramUrl, String facebookUrl, String whatsappUrl,
+                                  String youtubeUrl, String mapsUrl) {
+        this.instagramUrl = instagramUrl;
+        this.facebookUrl = facebookUrl;
+        this.whatsappUrl = whatsappUrl;
+        this.youtubeUrl = youtubeUrl;
+        this.mapsUrl = mapsUrl;
+    }
+
+    /** Display order for price-list categories, one name per line. */
+    public void updateCategoryOrder(List<String> categories) {
+        categoryOrder = categories == null || categories.isEmpty()
+            ? null : String.join("\n", categories);
+    }
+
+    public List<String> getCategoryOrder() {
+        if (categoryOrder == null || categoryOrder.isBlank()) return List.of();
+        return Arrays.stream(categoryOrder.split("\n")).map(String::trim)
+            .filter(value -> !value.isEmpty()).toList();
+    }
+
     public Long getId() { return id; }
     public Long getOwnerId() { return ownerId; }
     public String getSubdomain() { return subdomain; }
@@ -126,6 +167,11 @@ public class Salon {
     public String getPhone() { return phone; }
     public String getEmail() { return email; }
     public String getLogoUrl() { return logoUrl; }
+    public String getInstagramUrl() { return instagramUrl; }
+    public String getFacebookUrl() { return facebookUrl; }
+    public String getWhatsappUrl() { return whatsappUrl; }
+    public String getYoutubeUrl() { return youtubeUrl; }
+    public String getMapsUrl() { return mapsUrl; }
     public String getTimezone() { return timezone; }
     public SalonStatus getStatus() { return status; }
     public int getCancellationWindowMinutes() { return cancellationWindowMinutes; }

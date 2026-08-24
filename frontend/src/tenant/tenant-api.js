@@ -4,7 +4,9 @@ export const tenantKeys = {
   profile: ['tenant', 'profile'],
   publicServices: ['tenant', 'public-services'],
   publicStaff: ['tenant', 'public-staff'],
+  publicPromotions: ['tenant', 'public-promotions'],
   publicReviews: (page = 0, size = 20) => ['tenant', 'public-reviews', page, size],
+  dashboardProfile: ['tenant', 'dashboard-profile'],
   dashboardServices: ['tenant', 'dashboard-services'],
   dashboardStaff: ['tenant', 'dashboard-staff'],
   dashboardReviews: (page = 0, size = 20) => ['tenant', 'dashboard-reviews', page, size],
@@ -18,6 +20,18 @@ export const tenantKeys = {
 }
 
 export const errorMessage = apiErrorMessage
+
+// Opens the device's map app. The salon's own Google link wins; otherwise fall
+// back to coordinates, then to a text search on the address.
+export function mapsUrl(profile = {}) {
+  if (profile.mapsUrl) return profile.mapsUrl
+  const query = profile.latitude != null && profile.longitude != null
+    ? `${profile.latitude},${profile.longitude}`
+    : [profile.address, profile.city].filter(Boolean).join(', ')
+  return query
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`
+    : ''
+}
 
 export function unwrapObject(value, keys = []) {
   let current = value
@@ -72,7 +86,9 @@ function pushSubscriptionsUrl(roleOrDashboard) {
 export const getSalonProfile = () => getObject('/api/salon/profile', ['profile', 'salon'])
 export const getPublicServices = () => getCollection('/api/salon/services', ['services'])
 export const getPublicStaff = () => getCollection('/api/salon/staff', ['staff', 'employees'])
+export const getPublicPromotions = () => getCollection('/api/salon/promotions', ['promotions'])
 export const getPublicReviews = (pagination) => getReviews('/api/salon/reviews', pagination)
+export const getDashboardProfile = () => getObject('/api/salon/dashboard/profile', ['profile', 'salon'])
 export const getDashboardServices = () => getCollection('/api/salon/dashboard/services', ['services'])
 export const getDashboardStaff = () => getCollection('/api/salon/dashboard/staff', ['staff', 'employees'])
 export const getDashboardReviews = (pagination) => getReviews('/api/salon/dashboard/reviews', pagination)
@@ -81,6 +97,16 @@ export const getDashboardPromotions = () => getCollection('/api/salon/dashboard/
 
 export async function createReview(payload) {
   const { data } = await apiClient.post('/api/salon/reviews', payload)
+  return data
+}
+
+export async function updateDashboardProfile(payload) {
+  const { data } = await apiClient.put('/api/salon/dashboard/profile', payload)
+  return data
+}
+
+export async function updateServiceCategories(categories) {
+  const { data } = await apiClient.put('/api/salon/dashboard/service-categories', { categories })
   return data
 }
 
@@ -213,6 +239,24 @@ export async function uploadMediaFile({ uploadUrl, requiredHeaders = {}, file })
     credentials: 'omit',
   })
   if (!response.ok) throw new Error(`Direct media upload failed with status ${response.status}.`)
+}
+
+// The full direct-to-storage upload: ticket, PUT, confirm. `onStep` reports
+// progress so callers can show it without repeating the sequence.
+export async function uploadSalonImage({ type, file, onStep = () => {} }) {
+  onStep(1, 'Requesting a secure upload…')
+  const ticket = await createMediaUpload({ type, contentType: file.type, sizeBytes: file.size })
+  if (!ticket.uploadUrl || !ticket.uploadId) {
+    throw new Error('Media uploads are not configured for this salon.')
+  }
+  onStep(2, 'Uploading image directly to storage…')
+  await uploadMediaFile({
+    uploadUrl: ticket.uploadUrl,
+    requiredHeaders: ticket.requiredHeaders || {},
+    file,
+  })
+  onStep(3, 'Confirming the uploaded image…')
+  return confirmMediaUpload({ type, uploadId: ticket.uploadId })
 }
 
 export async function confirmMediaUpload({ type, uploadId }) {

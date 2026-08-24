@@ -20,6 +20,7 @@ import com.hairsaloon.platform.InputPolicy;
 import java.util.HashSet;
 import com.hairsaloon.platform.InputPolicy;
 import java.util.List;
+import java.util.Objects;
 import com.hairsaloon.platform.InputPolicy;
 import org.springframework.stereotype.Service;
 import com.hairsaloon.platform.InputPolicy;
@@ -27,6 +28,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 class SalonManagementService {
+    /** Kept short so the price board renders each entry on one line. */
+    static final int SERVICE_NAME_MAX = 36;
+    static final int CATEGORY_MAX = 20;
+
     private final SalonRepository salons;
     private final SalonServiceRepository services;
     private final SalonStaffRepository staff;
@@ -54,7 +59,7 @@ class SalonManagementService {
     @Transactional
     Salon updateProfile(String name, String description, String address, String city,
                         String phone, String email, String logoUrl, String timezone,
-                        int cancellationWindowMinutes) {
+                        int cancellationWindowMinutes, SocialLinks socials) {
         if (cancellationWindowMinutes < 0 || cancellationWindowMinutes > 525600)
             throw InputPolicy.validation("cancellationWindowMinutes",
                 "must be between 0 and 525600");
@@ -66,6 +71,27 @@ class SalonManagementService {
             InputPolicy.phone(phone), InputPolicy.email(email),
             InputPolicy.url(logoUrl, "logoUrl"), InputPolicy.timezone(timezone),
             cancellationWindowMinutes);
+        SocialLinks links = socials == null
+            ? new SocialLinks(null, null, null, null, null) : socials;
+        salon.updateSocialLinks(InputPolicy.url(links.instagramUrl(), "instagramUrl"),
+            InputPolicy.url(links.facebookUrl(), "facebookUrl"),
+            InputPolicy.url(links.whatsappUrl(), "whatsappUrl"),
+            InputPolicy.url(links.youtubeUrl(), "youtubeUrl"),
+            InputPolicy.url(links.mapsUrl(), "mapsUrl"));
+        return salons.save(salon);
+    }
+
+    @Transactional
+    Salon updateCategoryOrder(List<String> categories) {
+        List<String> cleaned = (categories == null ? List.<String>of() : categories).stream()
+            .map(value -> InputPolicy.text(value, CATEGORY_MAX, "categories", false))
+            .filter(Objects::nonNull)
+            .distinct()
+            .toList();
+        if (cleaned.size() > 100)
+            throw InputPolicy.validation("categories", "must not exceed 100 entries");
+        Salon salon = currentSalon();
+        salon.updateCategoryOrder(cleaned);
         return salons.save(salon);
     }
 
@@ -79,8 +105,8 @@ class SalonManagementService {
                                      String category) {
         validateService(durationMinutes, price);
         return services.save(new SalonServiceEntity(TenantContext.requireSalonId(),
-            InputPolicy.text(name, 160, "name", true), durationMinutes, price,
-            InputPolicy.text(category, 120, "category", false)));
+            InputPolicy.text(name, SERVICE_NAME_MAX, "name", true), durationMinutes, price,
+            InputPolicy.text(category, CATEGORY_MAX, "category", false)));
     }
 
     @Transactional
@@ -88,8 +114,8 @@ class SalonManagementService {
                                      BigDecimal price, String category, boolean active) {
         validateService(durationMinutes, price);
         long salonId = TenantContext.requireSalonId();
-        String safeName = InputPolicy.text(name, 160, "name", true);
-        String safeCategory = InputPolicy.text(category, 120, "category", false);
+        String safeName = InputPolicy.text(name, SERVICE_NAME_MAX, "name", true);
+        String safeCategory = InputPolicy.text(category, CATEGORY_MAX, "category", false);
         if (services.updateByIdAndSalonId(id, salonId, safeName, durationMinutes,
                 price, safeCategory, active) == 0)
             throw InputPolicy.notFound("service");
@@ -260,6 +286,8 @@ class SalonManagementService {
         }
     }
 
+    record SocialLinks(String instagramUrl, String facebookUrl, String whatsappUrl,
+                       String youtubeUrl, String mapsUrl) {}
     record HourInput(int dayOfWeek, LocalTime startTime, LocalTime endTime) {}
     record StaffDetails(SalonStaff staff, List<Long> serviceIds,
                         List<StaffWorkingHour> workingHours) {}

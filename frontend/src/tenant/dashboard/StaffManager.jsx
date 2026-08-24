@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import MultiSelect from '../../shared/components/MultiSelect.jsx'
 import {
   addTimeOff,
   createStaff,
@@ -25,7 +26,7 @@ const days = [
   { value: 5, label: 'FRIDAY' },
   { value: 6, label: 'SATURDAY' },
 ]
-const dayLabel = (value) => days.find((day) => day.value === Number(value) || day.label === String(value).toUpperCase())?.label || value
+const AUTOSAVE_DELAY = 3000
 const emptyStaff = { name: '', photoUrl: '', serviceIds: [] }
 const emptyTimeOff = { startDateTime: '', endDateTime: '', reason: '' }
 
@@ -42,14 +43,27 @@ function suppliedHours(staff) {
   return unwrapCollection(staff.workingHours || staff.hours || staff.schedule, ['workingHours', 'hours'])
 }
 
+// A daily break is stored as two working-hour ranges for the same day, which
+// availability already treats as a gap. Two ranges are folded back into
+// open/close plus break times here.
 function initialHours(staff) {
   const existing = suppliedHours(staff)
   return days.map((day) => {
-    const match = existing.find((item) => {
+    const ranges = existing.filter((item) => {
       const suppliedDay = item.dayOfWeek ?? item.day
       return Number(suppliedDay) === day.value || String(suppliedDay).toUpperCase() === day.label
-    })
-    return { dayOfWeek: day.value, label: day.label, closed: !match || match.closed === true, startTime: match?.startTime || '09:00', endTime: match?.endTime || '17:00' }
+    }).sort((left, right) => String(left.startTime).localeCompare(String(right.startTime)))
+    const first = ranges[0]
+    const last = ranges[ranges.length - 1]
+    return {
+      dayOfWeek: day.value,
+      label: day.label,
+      closed: ranges.length === 0,
+      startTime: shortTime(first?.startTime) || '10:00',
+      endTime: shortTime(last?.endTime) || '20:00',
+      breakStart: ranges.length > 1 ? shortTime(first.endTime) : '',
+      breakEnd: ranges.length > 1 ? shortTime(last.startTime) : '',
+    }
   })
 }
 
@@ -59,13 +73,41 @@ function displayDateTime(value) {
   return Number.isNaN(date.getTime()) ? value : date.toLocaleString()
 }
 
+const shortTime = (value) => String(value || '').slice(0, 5)
+
+// Collapses the seven-line schedule into runs of consecutive days that share
+// the same times, e.g. "Sun-Fri 10:00-20:00 · Sat 11:00-18:00".
+function hoursSummary(hours) {
+  const byDay = days.map((day) => {
+    const match = hours.find((item) => {
+      const supplied = item.dayOfWeek ?? item.day
+      return Number(supplied) === day.value || String(supplied).toUpperCase() === day.label
+    })
+    return match ? `${shortTime(match.startTime)}-${shortTime(match.endTime)}` : null
+  })
+
+  const runs = []
+  byDay.forEach((slot, index) => {
+    const previous = runs[runs.length - 1]
+    if (previous && previous.slot === slot) previous.end = index
+    else runs.push({ slot, start: index, end: index })
+  })
+
+  return runs.filter((run) => run.slot).map((run) => {
+    const label = run.start === run.end
+      ? days[run.start].label.slice(0, 3)
+      : `${days[run.start].label.slice(0, 3)}-${days[run.end].label.slice(0, 3)}`
+    return `${label} ${run.slot}`
+  })
+}
+
 function ServiceChoices({ services, selected, onChange }) {
-  function toggle(id) {
-    const value = String(id)
+  function toggle(value) {
     onChange((current) => current.includes(value) ? current.filter((item) => item !== value) : [...current, value])
   }
   if (!services.length) return <p className="muted">No active services are available for assignment.</p>
-  return <div className="choice-grid">{services.map((service) => <label className="checkbox-field" key={service.id}><input type="checkbox" checked={selected.includes(String(service.id))} onChange={() => toggle(service.id)} /> {service.name}</label>)}</div>
+  return <MultiSelect label="Services" options={services} selected={selected}
+    onToggle={toggle} emptyLabel="No services selected" />
 }
 
 function StaffProfileEditor({ staff, pending, onSave, onStatusChange }) {
@@ -90,7 +132,7 @@ function StaffProfileEditor({ staff, pending, onSave, onStatusChange }) {
     return (
       <form className="staff-subform" onSubmit={submit}>
         <h4>Edit staff member</h4>
-        <div className="manager-form-grid"><label>Name<input name="name" required value={form.name} onChange={update} /></label><label>Photo URL <span className="optional">optional</span><input name="photoUrl" type="url" value={form.photoUrl} onChange={update} /></label></div>
+        <div className="manager-form-grid"><label>Name<input name="name" required value={form.name} onChange={update} /></label><label>Photo URL<input name="photoUrl" type="url" placeholder="Optional" value={form.photoUrl} onChange={update} /></label></div>
         <div className="button-row"><button className="button button-small" disabled={pending} type="submit">{pending ? 'Saving…' : 'Save staff member'}</button><button className="button button-ghost button-small" disabled={pending} type="button" onClick={() => setEditing(false)}>Cancel</button></div>
       </form>
     )
@@ -164,7 +206,7 @@ function TimeOffForm({ staff, pending, onSave }) {
     <form className="staff-subform" onSubmit={submit}>
       <h4>Add time off</h4>
       {validation && <p className="form-status error" role="alert">{validation}</p>}
-      <div className="manager-form-grid"><label>Starts<input name="startDateTime" type="datetime-local" required value={form.startDateTime} onChange={update} /></label><label>Ends<input name="endDateTime" type="datetime-local" required value={form.endDateTime} onChange={update} /></label><label className="span-2">Reason <span className="optional">optional</span><input name="reason" maxLength="255" value={form.reason} onChange={update} /></label></div>
+      <div className="manager-form-grid"><label>Starts<input name="startDateTime" type="datetime-local" required value={form.startDateTime} onChange={update} /></label><label>Ends<input name="endDateTime" type="datetime-local" required value={form.endDateTime} onChange={update} /></label><label className="span-2">Reason<input name="reason" maxLength="255" placeholder="Optional" value={form.reason} onChange={update} /></label></div>
       <button className="button button-small" disabled={pending} type="submit">{pending ? 'Adding…' : 'Add time off'}</button>
     </form>
   )
@@ -186,41 +228,66 @@ function TimeOffList({ staff, mutation, activeAction }) {
 }
 
 function ExistingDetails({ staff, services }) {
-  const assignments = relatedServices(staff).map((id) => services.find((service) => String(service.id) === id)?.name || id)
-  const hours = suppliedHours(staff)
+  const assignments = relatedServices(staff)
+    .map((id) => services.find((service) => String(service.id) === id)?.name)
+    .filter(Boolean)
+  const summary = hoursSummary(suppliedHours(staff))
   return (
-    <div className="staff-existing">
-      <div><strong>Status</strong><p>{staff.active === false ? 'Inactive' : 'Active'}</p></div>
-      <div><strong>Assigned services</strong><p>{assignments.length ? assignments.join(', ') : 'None assigned'}</p></div>
-      <div><strong>Current hours</strong>{hours.length ? <ul>{hours.map((item, index) => <li key={`${item.dayOfWeek ?? item.day}-${index}`}>{dayLabel(item.dayOfWeek ?? item.day)}: {item.startTime}–{item.endTime}</li>)}</ul> : <p>No working hours set.</p>}</div>
-    </div>
+    <dl className="staff-existing">
+      <div>
+        <dt>Services</dt>
+        <dd>{assignments.length ? assignments.join(', ') : 'None assigned'}</dd>
+      </div>
+      <div>
+        <dt>Hours</dt>
+        <dd>{summary.length ? summary.join(' · ') : 'Not set'}</dd>
+      </div>
+    </dl>
   )
 }
 
-function StaffCard({ staff, services, mutation }) {
+function StaffCard({ staff, services, allServices, mutation }) {
   const [serviceIds, setServiceIds] = useState(() => relatedServices(staff))
+  const touched = useRef(false)
   const activeAction = mutation.isPending && mutation.variables?.id === staff.id ? mutation.variables.action : ''
 
-  function saveAssignments(event) {
-    event.preventDefault()
-    mutation.mutate({ action: 'services', id: staff.id, serviceIds: serviceIds.map(Number) })
+  // Held in a ref so the debounce below depends only on the selection; the
+  // mutation object is a new identity every render and would reset the timer.
+  const save = useRef(null)
+  save.current = () => mutation.mutate({
+    action: 'services', id: staff.id, serviceIds: serviceIds.map(Number),
+  })
+
+  // Assignments save themselves: one request 3s after the last checkbox click,
+  // so a burst of changes costs a single call.
+  useEffect(() => {
+    if (!touched.current) return undefined
+    const timer = setTimeout(() => save.current(), AUTOSAVE_DELAY)
+    return () => clearTimeout(timer)
+  }, [serviceIds])
+
+  function changeServices(next) {
+    touched.current = true
+    setServiceIds(next)
   }
 
   return (
     <article className={`staff-manager-card ${staff.active === false ? 'inactive' : ''}`}>
       <header className="staff-card-header">
         <div className="staff-avatar">{staff.photoUrl ? <img src={staff.photoUrl} alt={`${staff.name} portrait`} /> : <span>{staff.name?.charAt(0) || 'S'}</span>}</div>
-        <div><p className="card-kicker">Staff member</p><h3>{staff.name || 'Unnamed staff member'}</h3></div>
+        <div className="min-w-0 flex-grow"><h3>{staff.name || 'Unnamed staff member'}</h3></div>
         <span className={`manager-status ${staff.active === false ? 'inactive' : ''}`}>{staff.active === false ? 'Inactive' : 'Active'}</span>
       </header>
       <StaffProfileEditor staff={staff} pending={activeAction === 'edit' || activeAction === 'deactivate' || activeAction === 'reactivate'} onSave={mutation.mutateAsync} onStatusChange={mutation.mutate} />
-      <ExistingDetails staff={staff} services={services} />
-      <form className="staff-subform" onSubmit={saveAssignments}>
-        <h4>Service assignments</h4>
-        <ServiceChoices services={services} selected={serviceIds} onChange={setServiceIds} />
-        <button className="button button-small" disabled={Boolean(activeAction)} type="submit">{activeAction === 'services' ? 'Saving…' : 'Save assignments'}</button>
-      </form>
-      <WorkingHoursForm staff={staff} pending={activeAction === 'hours'} onSave={mutation.mutate} />
+      <ExistingDetails staff={staff} services={allServices} />
+      <div className="staff-panels">
+        <div className="staff-subform">
+          <h4>Service assignments</h4>
+          <ServiceChoices services={services} selected={serviceIds} onChange={changeServices} />
+          <p className="muted" aria-live="polite">{activeAction === 'services' ? 'Saving…' : 'Changes save automatically.'}</p>
+        </div>
+        <WorkingHoursForm staff={staff} pending={activeAction === 'hours'} onSave={mutation.mutate} />
+      </div>
       <TimeOffList staff={staff} mutation={mutation} activeAction={activeAction} />
       <TimeOffForm staff={staff} pending={activeAction === 'addTimeOff'} onSave={mutation.mutateAsync} />
     </article>
@@ -282,8 +349,7 @@ export default function StaffManager() {
       {feedback.message && <p className={`form-status ${feedback.type}`} role={feedback.type === 'error' ? 'alert' : 'status'}>{feedback.message}</p>}
       <form className="manager-create-card" onSubmit={submitStaff}>
         <h3>Add a staff member</h3>
-        <div className="manager-form-grid"><label>Name<input name="name" required value={form.name} onChange={update} /></label><label>Photo URL <span className="optional">optional</span><input name="photoUrl" type="url" value={form.photoUrl} onChange={update} /></label></div>
-        <fieldset><legend>Initial service assignments</legend>{servicesQuery.isLoading ? <p className="muted">Loading services…</p> : servicesQuery.isError ? <div className="form-status error" role="alert"><p>Services could not be loaded.</p><button className="button button-secondary button-small" type="button" onClick={() => servicesQuery.refetch()}>Try again</button></div> : <ServiceChoices services={services} selected={form.serviceIds} onChange={(updateIds) => setForm((current) => ({ ...current, serviceIds: updateIds(current.serviceIds) }))} />}</fieldset>
+        <div className="manager-form-grid"><label>Name<input name="name" required value={form.name} onChange={update} /></label><label>Photo URL<input name="photoUrl" type="url" placeholder="Optional" value={form.photoUrl} onChange={update} /></label><label>Initial service assignments{servicesQuery.isLoading ? <p className="muted">Loading services…</p> : servicesQuery.isError ? <div className="form-status error" role="alert"><p>Services could not be loaded.</p><button className="button button-secondary button-small" type="button" onClick={() => servicesQuery.refetch()}>Try again</button></div> : <ServiceChoices services={services} selected={form.serviceIds} onChange={(updateIds) => setForm((current) => ({ ...current, serviceIds: updateIds(current.serviceIds) }))} />}</label></div>
         <button className="button" disabled={creating} type="submit">{creating ? 'Adding…' : 'Add staff member'}</button>
       </form>
 
@@ -292,7 +358,7 @@ export default function StaffManager() {
       ) : staffQuery.data.length === 0 ? (
         <div className="state-card dashboard-state"><h2>No staff yet</h2><p>Add the first team member using the form above.</p></div>
       ) : (
-        <div className="staff-manager-list">{staffQuery.data.map((staff) => <StaffCard key={`${staff.id}-${staff.name}-${staff.photoUrl}-${staff.active}-${JSON.stringify(staff.serviceIds)}-${JSON.stringify(staff.workingHours)}`} staff={staff} services={services} mutation={mutation} />)}</div>
+        <div className="staff-manager-list">{staffQuery.data.map((staff) => <StaffCard key={`${staff.id}-${staff.name}-${staff.photoUrl}-${staff.active}-${JSON.stringify(staff.serviceIds)}-${JSON.stringify(staff.workingHours)}`} staff={staff} services={services} allServices={servicesQuery.data || []} mutation={mutation} />)}</div>
       )}
     </section>
   )

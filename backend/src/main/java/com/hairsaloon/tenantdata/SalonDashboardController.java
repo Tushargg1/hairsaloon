@@ -51,13 +51,24 @@ class SalonDashboardController {
         ownership.verifyOwner(user);
         return profileResponse(service.updateProfile(request.name(), request.description(),
             request.address(), request.city(), request.phone(), request.email(),
-            request.logoUrl(), request.timezone(), request.cancellationWindowMinutes()));
+            request.logoUrl(), request.timezone(), request.cancellationWindowMinutes(),
+            new SalonManagementService.SocialLinks(request.instagramUrl(),
+                request.facebookUrl(), request.whatsappUrl(), request.youtubeUrl(),
+                request.mapsUrl())));
     }
 
     @GetMapping("/services")
     List<ServiceResponse> services(@AuthenticationPrincipal AuthenticatedUser user) {
         ownership.verifyOwner(user);
         return service.services().stream().map(SalonDashboardController::serviceResponse).toList();
+    }
+
+    @PutMapping("/service-categories")
+    CategoryOrderResponse updateCategoryOrder(@AuthenticationPrincipal AuthenticatedUser user,
+                                              @Valid @RequestBody CategoryOrderRequest request) {
+        ownership.verifyOwner(user);
+        return new CategoryOrderResponse(
+            service.updateCategoryOrder(request.categories()).getCategoryOrder());
     }
 
     @PostMapping("/services")
@@ -163,7 +174,9 @@ class SalonDashboardController {
         return new ProfileResponse(salon.getId(), salon.getSubdomain(), salon.getName(),
             salon.getDescription(), salon.getAddress(), salon.getCity(), salon.getPhone(),
             salon.getEmail(), salon.getLogoUrl(), salon.getTimezone(), salon.getStatus(),
-            salon.getCancellationWindowMinutes());
+            salon.getCancellationWindowMinutes(), salon.getInstagramUrl(),
+            salon.getFacebookUrl(), salon.getWhatsappUrl(), salon.getYoutubeUrl(),
+            salon.getMapsUrl(), salon.getCategoryOrder());
     }
 
     private static ServiceResponse serviceResponse(SalonServiceEntity value) {
@@ -194,19 +207,26 @@ class SalonDashboardController {
         @NotBlank @Size(max = 120) String city, @Size(max = 32) String phone,
         @Size(max = 320) String email, @Size(max = 2048) String logoUrl,
         @NotBlank @Size(max = 64) String timezone,
-        @NotNull @Min(0) @Max(525600) Integer cancellationWindowMinutes) {}
+        @NotNull @Min(0) @Max(525600) Integer cancellationWindowMinutes,
+        @Size(max = 2048) String instagramUrl, @Size(max = 2048) String facebookUrl,
+        @Size(max = 2048) String whatsappUrl, @Size(max = 2048) String youtubeUrl,
+        @Size(max = 2048) String mapsUrl) {}
 
     @JsonIgnoreProperties(ignoreUnknown = false)
-    record CreateServiceRequest(@NotBlank @Size(max = 160) String name,
-        @Min(15) @Max(180) int durationMinutes,
-        @NotNull @DecimalMin("0.00") BigDecimal price,
-        @Size(max = 120) String category) {}
+    record CategoryOrderRequest(@NotNull List<@Size(max = 20) String> categories) {}
+    record CategoryOrderResponse(List<String> categories) {}
 
     @JsonIgnoreProperties(ignoreUnknown = false)
-    record UpdateServiceRequest(@NotBlank @Size(max = 160) String name,
+    record CreateServiceRequest(@NotBlank @Size(max = 36) String name,
         @Min(15) @Max(180) int durationMinutes,
         @NotNull @DecimalMin("0.00") BigDecimal price,
-        @Size(max = 120) String category, @NotNull Boolean active) {}
+        @Size(max = 20) String category) {}
+
+    @JsonIgnoreProperties(ignoreUnknown = false)
+    record UpdateServiceRequest(@NotBlank @Size(max = 36) String name,
+        @Min(15) @Max(180) int durationMinutes,
+        @NotNull @DecimalMin("0.00") BigDecimal price,
+        @Size(max = 20) String category, @NotNull Boolean active) {}
 
     @JsonIgnoreProperties(ignoreUnknown = false)
     record CreateStaffRequest(@NotBlank @Size(max = 160) String name,
@@ -231,7 +251,9 @@ class SalonDashboardController {
 
     record ProfileResponse(Long id, String subdomain, String name, String description,
         String address, String city, String phone, String email, String logoUrl,
-        String timezone, SalonStatus status, int cancellationWindowMinutes) {}
+        String timezone, SalonStatus status, int cancellationWindowMinutes,
+        String instagramUrl, String facebookUrl, String whatsappUrl, String youtubeUrl,
+        String mapsUrl, List<String> categoryOrder) {}
     record ServiceResponse(Long id, String name, int durationMinutes, BigDecimal price,
                            String category, boolean active) {}
     record StaffResponse(Long id, String name, String photoUrl, boolean active,

@@ -53,6 +53,7 @@ export default function SlotBookingWidget({ selectedIds, onToggleService, salonN
   const location = useLocation()
   const queryClient = useQueryClient()
   const requestKey = useRef('')
+  const defaulted = useRef(false)
 
   const [day, setDay] = useState(today)
   const [startAt, setStartAt] = useState('')
@@ -64,6 +65,15 @@ export default function SlotBookingWidget({ selectedIds, onToggleService, salonN
   const staff = useQuery({ queryKey: tenantKeys.publicStaff, queryFn: getPublicStaff })
 
   const chainKey = selectedIds.join(',')
+  const firstServiceId = services.data?.[0]?.id
+
+  // Start on the first service so the time grid is filled the moment the page
+  // loads. Only once, so clearing the chain later is still respected.
+  useEffect(() => {
+    if (defaulted.current || firstServiceId == null) return
+    defaulted.current = true
+    if (!selectedIds.length) onToggleService(firstServiceId)
+  }, [firstServiceId, selectedIds.length, onToggleService])
 
   // Clear a chosen time whenever the service chain changes, since the combined
   // duration moves the whole grid.
@@ -96,6 +106,13 @@ export default function SlotBookingWidget({ selectedIds, onToggleService, salonN
         free: options.filter((option) => option.available),
       }))
   }, [availability.data])
+
+  // Land on the first open time so the barber list is visible straight away.
+  useEffect(() => {
+    if (startAt) return
+    const firstFree = timeSlots.find((entry) => entry.free.length)
+    if (firstFree) setStartAt(firstFree.start)
+  }, [startAt, timeSlots])
 
   const freeBarbers = timeSlots.find((entry) => entry.start === startAt)?.free || []
   const chosen = staffId === 'any'

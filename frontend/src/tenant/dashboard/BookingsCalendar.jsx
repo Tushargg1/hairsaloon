@@ -39,9 +39,14 @@ function mondayOf(value) {
   return addDays(value, -((date.getUTCDay() + 6) % 7))
 }
 
-const displayDate = (value, dateStyle = 'full') => new Intl.DateTimeFormat(undefined, {
-  dateStyle, timeZone: 'UTC',
-}).format(new Date(`${value}T00:00:00Z`))
+// 'weekday' is not a valid dateStyle, so the column headings ask for the
+// weekday component directly instead.
+const displayDate = (value, dateStyle = 'full') => new Intl.DateTimeFormat(
+  undefined,
+  dateStyle === 'weekday'
+    ? { weekday: 'short', timeZone: 'UTC' }
+    : { dateStyle, timeZone: 'UTC' },
+).format(new Date(`${value}T00:00:00Z`))
 function localMinutes(value) {
   const time = value?.split('T')[1]?.slice(0, 5)
   if (!time) return null
