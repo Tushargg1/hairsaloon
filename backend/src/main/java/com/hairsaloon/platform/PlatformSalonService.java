@@ -109,6 +109,13 @@ class PlatformSalonService {
             available ? "AVAILABLE" : "TAKEN");
     }
 
+    @Transactional(readOnly = true)
+    SalonResponse mine(AuthenticatedUser owner) {
+        if (owner == null) throw InputPolicy.notFound("salon");
+        return salons.findByOwnerId(owner.id()).map(PlatformSalonService::response)
+            .orElseThrow(() -> InputPolicy.notFound("salon"));
+    }
+
     @Transactional
     SalonResponse create(AuthenticatedUser owner, String subdomain, String name,
                          String description, String address, String city, String phone,

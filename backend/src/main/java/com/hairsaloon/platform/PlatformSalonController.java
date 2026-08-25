@@ -50,6 +50,11 @@ class PlatformSalonController {
         return service.checkSubdomain(name);
     }
 
+    @GetMapping("/mine")
+    SalonResponse mine(@AuthenticationPrincipal AuthenticatedUser owner) {
+        return service.mine(owner);
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     SalonResponse create(@AuthenticationPrincipal AuthenticatedUser owner,

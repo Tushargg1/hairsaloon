@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
-import { checkSubdomain, createSalon, errorMessage, salonKeys } from './salon-api.js'
+import { useEffect, useState } from 'react'
+import useAuth from '../shared/auth/useAuth.js'
+import { checkSubdomain, createSalon, errorMessage, getMySalon, salonKeys } from './salon-api.js'
 import { baseDomain, salonUrl } from './platform-config.js'
 import GlassPanel from '../shared/components/GlassPanel.jsx'
 import BrassButton from '../shared/components/BrassButton.jsx'
@@ -15,11 +16,34 @@ const initialForm = {
 const STEPS = ['Identity', 'Details', 'Review']
 
 export default function SalonSignup() {
+  const { user } = useAuth()
   const [step, setStep] = useState(1)
   const [form, setForm] = useState(initialForm)
+
+  // Contact details come from the owner account created at signup.
+  useEffect(() => {
+    if (!user) return
+    setForm((c) => ({ ...c, phone: c.phone || user.phone || '', email: c.email || user.email || '' }))
+  }, [user])
+
   const [createdSalon, setCreatedSalon] = useState(null)
   const [fieldErrors, setFieldErrors] = useState({})
   const [geoStatus, setGeoStatus] = useState({ pending: false, error: '' })
+  const [placeName, setPlaceName] = useState('')
+  const [mapsLink, setMapsLink] = useState('')
+
+  // Turns the captured point into a readable place name. OpenStreetMap needs no
+  // API key; a failure just leaves the coordinates showing.
+  useEffect(() => {
+    if (!form.latitude || !form.longitude) return
+    const url = 'https://nominatim.openstreetmap.org/reverse?format=jsonv2'
+      + `&lat=${form.latitude}&lon=${form.longitude}`
+    fetch(url, { headers: { Accept: 'application/json' } })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => { if (data?.display_name) setPlaceName(data.display_name) })
+      .catch(() => {})
+  }, [form.latitude, form.longitude])
+  const mineQuery = useQuery({ queryKey: salonKeys.mine, queryFn: getMySalon, retry: false })
   const validSubdomain = /^[a-z0-9](?:[a-z0-9-]{1,28}[a-z0-9])?$/.test(form.subdomain)
   const availability = useQuery({ queryKey: salonKeys.availability(form.subdomain), queryFn: () => checkSubdomain(form.subdomain), enabled: validSubdomain, staleTime: 30_000, retry: false })
   const createMutation = useMutation({
@@ -74,24 +98,57 @@ export default function SalonSignup() {
 
   function clearLocation() {
     setForm((c) => ({ ...c, latitude: '', longitude: '' }))
+    setPlaceName('')
+    setMapsLink('')
     setGeoStatus({ pending: false, error: '' })
   }
 
-  if (createdSalon) {
+  // Accepts a Google Maps URL (…/@lat,lng…, ?q=lat,lng, !3dlat!4dlng) or a
+  // plain "lat, lng" pair.
+  function applyMapsLink(value) {
+    setMapsLink(value)
+    const match = value.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
+      || value.match(/[?&]q=(-?\d+\.\d+),\s*(-?\d+\.\d+)/)
+      || value.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/)
+      || value.match(/^\s*(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)\s*$/)
+    if (!match) return
+    setForm((c) => ({ ...c, latitude: Number(match[1]).toFixed(6), longitude: Number(match[2]).toFixed(6) }))
+    setGeoStatus({ pending: false, error: '' })
+  }
+
+  if (mineQuery.isLoading) {
+    return <main className="state-page" aria-live="polite">Loading your salon…</main>
+  }
+
+  // An owner has at most one salon, so an existing application replaces the
+  // registration wizard.
+  const existing = createdSalon || mineQuery.data
+  if (existing) {
+    const approved = existing.status === 'ACTIVE'
+    const address = salonUrl(existing.subdomain)
     return (
       <main className="max-w-[1280px] mx-auto px-4 py-20">
         <GlassPanel className="max-w-lg mx-auto text-center">
           <div className="w-16 h-16 rounded-full brass-gradient flex items-center justify-center mx-auto mb-6">
-            <Icon name="check" className="text-espresso text-3xl" />
+            <Icon name={approved ? 'storefront' : 'schedule'} className="text-espresso text-3xl" />
           </div>
-          <p className="font-body text-label-md text-secondary tracking-wider uppercase mb-2">Application received</p>
-          <h1 className="font-display text-headline-md text-on-surface mb-4">{createdSalon.name || form.name}</h1>
-          <p className="font-body text-body-lg text-on-surface-variant mb-6">Our team will review your details. Your salon will be live after approval.</p>
-          <div className="bg-surface-container rounded-lg p-4 border border-bronze-muted/50 mb-6">
-            <div className="flex justify-between text-body-md mb-2"><span className="text-on-surface-variant">Address</span><span className="text-secondary font-medium">{salonUrl(createdSalon.subdomain || form.subdomain)}</span></div>
-            <div className="flex justify-between text-body-md"><span className="text-on-surface-variant">Status</span><span className="text-[#A89048] font-medium">{createdSalon.status || 'PENDING'}</span></div>
+          <p className="font-body text-label-md text-secondary tracking-wider uppercase mb-2">
+            {approved ? 'Your salon is live' : 'Application received'}
+          </p>
+          <h1 className="font-display text-headline-md text-on-surface mb-4">{existing.name}</h1>
+          <p className="font-body text-body-lg text-on-surface-variant mb-6">
+            {approved
+              ? 'Customers can book you online now.'
+              : 'Our team will review your details. Your salon will be live after approval.'}
+          </p>
+          <div className="bg-surface-container rounded-lg p-4 border border-bronze-muted/50 mb-6 text-left">
+            <div className="flex justify-between text-body-md mb-2"><span className="text-on-surface-variant">Address</span><span className="text-secondary font-medium">{address}</span></div>
+            <div className="flex justify-between text-body-md mb-2"><span className="text-on-surface-variant">City</span><span className="text-on-surface">{existing.city}</span></div>
+            <div className="flex justify-between text-body-md"><span className="text-on-surface-variant">Status</span><span className="text-[#A89048] font-medium">{existing.status}</span></div>
           </div>
-          <BrassButton to="/">Return Home</BrassButton>
+          {approved
+            ? <a href={`${address}/dashboard`} className="button">Open dashboard</a>
+            : <BrassButton to="/">Return Home</BrassButton>}
         </GlassPanel>
       </main>
     )
@@ -160,15 +217,11 @@ export default function SalonSignup() {
                 className="input-glass w-full rounded py-2 px-3 text-body-md resize-none" />
             </div>
             <InputField label="Street address" icon="location_on" name="address" value={form.address} onChange={update} required maxLength={255} autoComplete="street-address" />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <InputField label="City" icon="location_city" name="city" value={form.city} onChange={update} required maxLength={100} />
-              <InputField label="Phone" icon="phone" type="tel" name="phone" value={form.phone} onChange={update} required maxLength={40} />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <InputField label="Email" icon="mail" type="email" name="email" value={form.email} onChange={update} required maxLength={320} />
-              <InputField label="Timezone" icon="schedule" name="timezone" value={form.timezone} onChange={update} required maxLength={80} />
-            </div>
-            <InputField label="Logo URL (optional)" icon="image" type="url" name="logoUrl" value={form.logoUrl} onChange={update} maxLength={500} placeholder="https://..." />
+            <InputField label="City" icon="location_city" name="city" value={form.city} onChange={update} required maxLength={100} />
+            <p className="font-body text-label-sm text-outline">
+              Customers will see {form.phone || 'your account phone'} and {form.email || 'your account email'}.
+              You can add a logo later in Salon details.
+            </p>
 
             {/* Map location so customers can find the salon by distance */}
             <div>
@@ -179,8 +232,13 @@ export default function SalonSignup() {
                 <div className="flex items-center gap-2 bg-[rgba(168,144,72,0.12)] border border-secondary/40 rounded px-3 py-2.5">
                   <Icon name="place" filled className="text-secondary text-[18px]" />
                   <span className="font-body text-label-sm text-secondary flex-grow">
-                    {form.latitude}, {form.longitude}
+                    {placeName || `${form.latitude}, ${form.longitude}`}
                   </span>
+                  <a href={`https://www.google.com/maps/search/?api=1&query=${form.latitude},${form.longitude}`}
+                    target="_blank" rel="noreferrer" aria-label="Open in Google Maps"
+                    className="text-on-surface-variant hover:text-secondary transition-colors">
+                    <Icon name="map" className="text-[18px]" />
+                  </a>
                   <button type="button" onClick={clearLocation} aria-label="Clear location"
                     className="text-on-surface-variant hover:text-error transition-colors">
                     <Icon name="close" className="text-[18px]" />
@@ -193,6 +251,14 @@ export default function SalonSignup() {
                   {geoStatus.pending ? 'Getting location...' : 'Use my current location'}
                 </button>
               )}
+              <div className="mt-2">
+                <label className="font-body text-label-sm text-on-surface-variant block mb-1">
+                  Or paste a Google Maps link
+                </label>
+                <input value={mapsLink} onChange={(e) => applyMapsLink(e.target.value)}
+                  placeholder="https://maps.google.com/...  or  28.6451, 77.1183"
+                  className="input-glass w-full rounded py-2 px-3 text-body-md" />
+              </div>
               <p className="font-body text-label-sm text-outline mt-1">
                 Stand at your salon and tap this so nearby customers can find you.
               </p>
@@ -218,7 +284,6 @@ export default function SalonSignup() {
                 ['Web address', `${form.subdomain}.${baseDomain}`],
                 ['Address', `${form.address}, ${form.city}`],
                 ['Contact', `${form.email} / ${form.phone}`],
-                ['Timezone', form.timezone],
                 ['Map location', form.latitude && form.longitude
                   ? `${form.latitude}, ${form.longitude}`
                   : 'Not set — you can add it later'],

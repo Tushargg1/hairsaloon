@@ -46,7 +46,8 @@ public class SecurityConfiguration {
                     .hasRole("CUSTOMER")
                 .requestMatchers("/api/platform/my-bookings").hasRole("CUSTOMER")
                 .requestMatchers("/api/platform/admin/**").hasRole("PLATFORM_ADMIN")
-                .requestMatchers(HttpMethod.GET, "/api/platform/salons/check-subdomain")
+                .requestMatchers(HttpMethod.GET, "/api/platform/salons/check-subdomain",
+                    "/api/platform/salons/mine")
                     .hasRole("SALON_OWNER")
                 .requestMatchers(HttpMethod.POST, "/api/platform/salons")
                     .hasRole("SALON_OWNER")
