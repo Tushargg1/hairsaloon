@@ -62,20 +62,9 @@ export default function AuthPage({ mode }) {
 
   async function submitSignup(e) {
     e.preventDefault()
-    if (signupStage === 'request') { if (await sendOtp('SIGNUP')) setSignupStage('verify'); return }
-    if (signupStage === 'verify') {
-      setStatus({ pending: true, error: '', success: '' })
-      try {
-        const proof = await verifyOtp({ challengeId, code: form.code.trim() })
-        setVerificationProof(proof.verificationProof)
-        setSignupStage('details')
-        setStatus({ pending: false, error: '', success: 'Phone verified. Complete your details.' })
-      } catch (error) { fail(error, 'Verification code could not be confirmed.') }
-      return
-    }
     setStatus({ pending: true, error: '', success: '' })
     try {
-      await signup({ phone: form.phone.trim(), email: form.email.trim() || undefined, password: form.password, verificationProof })
+      await signup({ phone: form.phone.trim(), email: form.email.trim() || undefined, password: form.password })
       navigate('/salons', { replace: true })
     } catch (error) { fail(error, 'Unable to create account.') }
   }
@@ -173,7 +162,7 @@ export default function AuthPage({ mode }) {
             )}
 
             {/* Progress dots for OTP flow */}
-            {inOtpFlow && (
+            {!isSignup && inOtpFlow && (
               <div className="flex justify-center gap-3 mb-8">
                 {[1, 2, 3].map((s) => (
                   <div key={s} className={`w-12 h-1 rounded-full transition-colors duration-300 ${s <= currentStep ? 'bg-brass' : 'bg-outline-variant/30'}`} />
@@ -183,11 +172,11 @@ export default function AuthPage({ mode }) {
 
             {/* Heading */}
             <h2 className="font-display text-headline-sm text-on-surface mb-2">{heading}</h2>
-            {inOtpFlow && <p className="font-body text-body-md text-on-surface-variant mb-6">Step {currentStep} of 3</p>}
+            {!isSignup && inOtpFlow && <p className="font-body text-body-md text-on-surface-variant mb-6">Step {currentStep} of 3</p>}
 
             <form onSubmit={submit} className="flex flex-col gap-5">
-              {/* Step 1: Phone (for OTP) or Login fields */}
-              {(otpStage === 'request' || !inOtpFlow) && (
+              {/* Phone field (shown for login, signup step 1, reset step 1) */}
+              {((!isSignup && (otpStage === 'request' || !inOtpFlow)) || isSignup) && (
                 <InputField
                   label="Phone Number"
                   icon="phone_iphone"
@@ -202,6 +191,36 @@ export default function AuthPage({ mode }) {
                   autoComplete="tel"
                   inputMode="tel"
                 />
+              )}
+
+              {/* Signup: email + password shown directly */}
+              {isSignup && (
+                <>
+                  <InputField
+                    label="Email (optional)"
+                    icon="mail"
+                    type="email"
+                    name="email"
+                    value={form.email}
+                    onChange={update}
+                    placeholder="you@example.com"
+                    maxLength={320}
+                    autoComplete="email"
+                  />
+                  <InputField
+                    label="Password"
+                    icon="lock"
+                    type="password"
+                    name="password"
+                    value={form.password}
+                    onChange={update}
+                    placeholder="Create a strong password"
+                    required
+                    minLength={8}
+                    maxLength={72}
+                    autoComplete="new-password"
+                  />
+                </>
               )}
 
               {/* Login password */}
@@ -221,7 +240,7 @@ export default function AuthPage({ mode }) {
                 />
               )}
 
-              {/* Step 2: OTP Verification */}
+              {/* Step 2: OTP Verification (only for password reset) */}
               {otpStage === 'verify' && (
                 <>
                   <p className="font-body text-body-md text-on-surface-variant">
@@ -252,36 +271,7 @@ export default function AuthPage({ mode }) {
                 </>
               )}
 
-              {/* Step 3: Details (Signup) */}
-              {isSignup && signupStage === 'details' && (
-                <>
-                  <InputField label="Verified Phone" icon="check_circle" type="tel" value={form.phone} readOnly />
-                  <InputField
-                    label="Email (optional)"
-                    icon="mail"
-                    type="email"
-                    name="email"
-                    value={form.email}
-                    onChange={update}
-                    placeholder="you@example.com"
-                    maxLength={320}
-                    autoComplete="email"
-                  />
-                  <InputField
-                    label="Password"
-                    icon="lock"
-                    type="password"
-                    name="password"
-                    value={form.password}
-                    onChange={update}
-                    placeholder="Create a strong password"
-                    required
-                    minLength={8}
-                    maxLength={72}
-                    autoComplete="new-password"
-                  />
-                </>
-              )}
+
 
               {/* Reset: new password */}
               {!isSignup && resetStage === 'reset' && (
@@ -307,9 +297,9 @@ export default function AuthPage({ mode }) {
               {/* Submit */}
               <BrassButton type="submit" disabled={status.pending || retryIn > 0} size="lg" className="w-full mt-2">
                 {status.pending ? 'Please wait...' : retryIn > 0 ? `Try again in ${retryIn}s`
+                  : isSignup ? 'Create account'
                   : otpStage === 'request' ? 'Send verification code'
                   : otpStage === 'verify' ? 'Verify code'
-                  : isSignup ? 'Create account'
                   : resetStage ? 'Reset password'
                   : 'Log In'}
               </BrassButton>
