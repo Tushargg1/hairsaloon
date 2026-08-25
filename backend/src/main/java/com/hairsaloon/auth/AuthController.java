@@ -128,9 +128,12 @@ class AuthController {
         LoginRequest { phone = phone == null ? null : phone.trim(); }
     }
 
-    record UserResponse(Long id, String name, String phone, String email, UserRole role) {
+    record UserResponse(Long id, String name, String phone, String email, UserRole role, String subdomain) {
         static UserResponse from(AuthenticatedUser user) {
-            return new UserResponse(user.id(), user.name(), user.phone(), user.email(), user.role());
+            return new UserResponse(user.id(), user.name(), user.phone(), user.email(), user.role(), null);
+        }
+        static UserResponse from(AuthenticatedUser user, String subdomain) {
+            return new UserResponse(user.id(), user.name(), user.phone(), user.email(), user.role(), subdomain);
         }
     }
 }

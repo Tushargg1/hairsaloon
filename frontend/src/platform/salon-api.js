@@ -43,3 +43,19 @@ export async function createOwner(payload) {
   const { data } = await apiClient.post('/api/platform/admin/owners', payload)
   return data
 }
+
+
+export async function getAllSalons() {
+  const { data } = await apiClient.get('/api/platform/admin/salons')
+  return data
+}
+
+export async function getAllCustomers() {
+  const { data } = await apiClient.get('/api/platform/admin/customers')
+  return data
+}
+
+export async function getCustomerDetail(id) {
+  const { data } = await apiClient.get(`/api/platform/admin/customers/${id}`)
+  return data
+}

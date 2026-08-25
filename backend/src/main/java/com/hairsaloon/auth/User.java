@@ -99,4 +99,8 @@ public class User {
     void markPhoneVerified(Instant verifiedAt) {
         this.phoneVerifiedAt = verifiedAt;
     }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
 }

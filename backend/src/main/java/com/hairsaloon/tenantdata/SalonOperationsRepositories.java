@@ -36,10 +36,11 @@ interface SalonStaffRepository extends TenantScopedRepository<SalonStaff> {
     SalonStaff save(SalonStaff entity);
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("update SalonStaff staff set staff.name = :name, staff.photoUrl = :photoUrl, "
-        + "staff.active = :active where staff.id = :id and staff.salonId = :salonId")
+        + "staff.characterKey = :characterKey, staff.active = :active "
+        + "where staff.id = :id and staff.salonId = :salonId")
     int updateByIdAndSalonId(@Param("id") long id, @Param("salonId") long salonId,
         @Param("name") String name, @Param("photoUrl") String photoUrl,
-        @Param("active") boolean active);
+        @Param("characterKey") String characterKey, @Param("active") boolean active);
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("update SalonStaff staff set staff.active = false "
         + "where staff.id = :id and staff.salonId = :salonId")
@@ -72,6 +73,8 @@ interface StaffWorkingHourRepository extends TenantScopedRepository<StaffWorking
     @Modifying
     void deleteAllBySalonIdAndStaffId(long salonId, long staffId);
     <S extends StaffWorkingHour> List<S> saveAll(Iterable<S> entities);
+    /** Lets a full replacement delete before inserting reused start times. */
+    void flush();
 }
 
 interface StaffTimeOffRepository extends TenantScopedRepository<StaffTimeOff> {

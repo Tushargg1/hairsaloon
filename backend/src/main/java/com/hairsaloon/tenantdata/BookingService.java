@@ -64,31 +64,42 @@ class BookingService {
     @Transactional(readOnly = true)
     List<BookingDtos.AvailabilitySlot> availability(List<Long> serviceIds, Long staffId,
                                                      LocalDate date, boolean includeUnavailable) {
-        if (serviceIds == null || serviceIds.isEmpty())
-            throw InputPolicy.validation("serviceId", "at least one service is required");
-        if (serviceIds.stream().anyMatch(id -> id == null || id <= 0))
+        List<Long> requested = serviceIds == null ? List.of() : serviceIds;
+        if (requested.stream().anyMatch(id -> id == null || id <= 0))
             throw InputPolicy.validation("serviceId", "must be positive");
         if (date == null) throw InputPolicy.validation("date", "is required");
         long salonId = TenantContext.requireSalonId();
         Salon salon = currentSalon(salonId);
-        // The chain occupies one continuous block, so the grid steps by the
-        // combined duration of every selected service.
-        int totalDuration = 0;
-        for (Long serviceId : serviceIds) {
-            totalDuration += services.findByIdAndSalonId(serviceId, salonId)
-                .filter(SalonServiceEntity::isActive)
-                .orElseThrow(() -> InputPolicy.notFound("service"))
-                .getDurationMinutes();
+        // The grid steps by the longest selected service rather than their sum,
+        // so the times shown stay the same as a customer adds services.
+        int longest = 0;
+        if (requested.isEmpty()) {
+            // Nothing picked yet, so the shortest service is used to show as much
+            // of the day as possible; the grid re-computes once a service is
+            // chosen.
+            for (SalonServiceEntity service
+                    : services.findAllBySalonIdAndActiveTrueOrderByIdAsc(salonId)) {
+                longest = longest == 0 ? service.getDurationMinutes()
+                    : Math.min(longest, service.getDurationMinutes());
+            }
+            if (longest == 0) return List.of();
+        } else {
+            for (Long serviceId : requested) {
+                longest = Math.max(longest, services.findByIdAndSalonId(serviceId, salonId)
+                    .filter(SalonServiceEntity::isActive)
+                    .orElseThrow(() -> InputPolicy.notFound("service"))
+                    .getDurationMinutes());
+            }
         }
-        final int chainDuration = totalDuration;
+        final int chainDuration = longest;
         List<SalonStaff> candidates;
         if (staffId == null) {
             candidates = staff.findAllBySalonIdAndActiveTrueOrderByIdAsc(salonId).stream()
-                .filter(member -> servesAll(salonId, member.getId(), serviceIds)).toList();
+                .filter(member -> servesAll(salonId, member.getId(), requested)).toList();
         } else {
             candidates = staff.findByIdAndSalonId(staffId, salonId)
                 .filter(SalonStaff::isActive)
-                .filter(member -> servesAll(salonId, member.getId(), serviceIds))
+                .filter(member -> servesAll(salonId, member.getId(), requested))
                 .stream().toList();
         }
         ZoneId zone = ZoneId.of(salon.getTimezone());

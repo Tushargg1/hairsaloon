@@ -6,6 +6,7 @@ import GlassPanel from '../shared/components/GlassPanel.jsx'
 import BrassButton from '../shared/components/BrassButton.jsx'
 import InputField from '../shared/components/InputField.jsx'
 import Icon from '../shared/components/Icon.jsx'
+import AdminNav from './AdminNav.jsx'
 
 export default function AdminApprovals() {
   const queryClient = useQueryClient()
@@ -33,6 +34,7 @@ export default function AdminApprovals() {
 
   return (
     <main className="max-w-[1280px] mx-auto px-4 py-12">
+      <AdminNav />
       {/* Header */}
       <div className="flex justify-between items-start mb-8">
         <div>

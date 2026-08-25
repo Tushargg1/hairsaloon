@@ -371,7 +371,11 @@
     @apply flex flex-col gap-3 pt-4 border-t border-outline-variant/20;
   }
   .staff-subform h4 { @apply font-body font-semibold text-secondary text-base; }
-  .staff-existing { @apply grid grid-cols-1 md:grid-cols-[5rem_minmax(0,1fr)] gap-x-3 gap-y-1; }
+  .staff-existing {
+    @apply grid grid-cols-1 md:grid-cols-[5rem_minmax(0,1fr)] gap-x-3 gap-y-1 rounded-lg p-4;
+    background-color: rgb(var(--c-surface-container) / 0.6);
+    border: 1px solid rgb(var(--c-outline-variant) / 0.3);
+  }
   .staff-existing > div { @apply contents; }
   .staff-existing dt { @apply font-body text-label-sm text-outline; }
   .staff-existing dd { @apply font-body text-label-md font-normal text-on-surface; }
@@ -379,21 +383,54 @@
   .staff-panels { @apply grid grid-cols-1 md:grid-cols-2 gap-4 items-start; }
   .staff-panels > .staff-subform { @apply border-t-0 pt-0; }
 
+  /* Name, photo, save and cancel on one line. */
+  .staff-edit-row {
+    @apply grid gap-3 items-end;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) auto auto;
+  }
+  .character-preview {
+    @apply w-20 h-20 rounded-full object-cover mt-1;
+    border: 1px solid rgba(200, 176, 132, 0.5);
+  }
+  @media (max-width: 640px) {
+    .staff-edit-row { grid-template-columns: minmax(0, 1fr); }
+  }
+
+  /* Label beside the dropdown instead of above it. */
+  .staff-assign-row > .multi-select { @apply max-w-md; }
+
+  /* Starts, ends, reason and the button on one line. */
+  .timeoff-row {
+    @apply grid gap-3 items-end;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) auto;
+  }
+  @media (max-width: 900px) {
+    .timeoff-row { grid-template-columns: minmax(0, 1fr); }
+  }
+
   /* Compact schedule: one day per line with small type, so it fits a half
-     width column. */
+     width column. Break columns make the day a split shift. */
   .staff-subform .hours-grid { @apply grid-cols-1 gap-1; }
-  .hours-row { @apply flex items-center gap-2 text-label-sm; }
+  .hours-head,
+  .hours-row {
+    @apply grid items-center gap-2 text-label-sm;
+    grid-template-columns: 2.25rem 5.5rem repeat(4, minmax(0, 1fr));
+  }
+  .hours-head > span {
+    @apply font-body text-[10px] uppercase text-center;
+    color: rgb(var(--c-outline));
+    letter-spacing: 0.08em;
+  }
   .hours-row > strong {
-    @apply font-body text-label-sm w-9 flex-shrink-0;
+    @apply font-body text-label-sm;
     color: rgb(var(--c-on-surface-variant));
   }
   .hours-row .checkbox-field {
-    @apply flex-row items-center gap-1 text-label-sm w-20 flex-shrink-0;
+    @apply flex-row items-center gap-1 text-label-sm;
   }
-  .hours-row label { @apply gap-0; }
   .hours-row input[type="time"] {
-    @apply py-1 px-2 text-label-sm;
-    width: auto;
+    @apply py-1 px-1 text-label-sm text-center;
+    width: 100%;
     min-width: 0;
   }
   .choice-grid { @apply flex flex-wrap gap-2; }
@@ -828,9 +865,9 @@
   .price-search-input:focus { border-color: #9B7D46; }
 
   .price-category { @apply flex items-center justify-center mb-2; }
-  .price-category-line { @apply h-px w-16 flex-shrink-0; background-color: #3a3022; }
+  .price-category-line { @apply h-px flex-1 flex-shrink; background-color: #3a3022; min-width: 8px; }
   .price-category > h3 {
-    @apply font-engraved text-lg px-4 uppercase truncate min-w-0;
+    @apply font-engraved text-lg px-4 uppercase min-w-0 whitespace-nowrap;
     color: #b89860;
     letter-spacing: 0.1em;
   }
@@ -968,6 +1005,9 @@
   .booking-pill-row { @apply flex gap-2 overflow-x-auto pb-2; scrollbar-width: none; }
   .booking-pill-row::-webkit-scrollbar { display: none; }
 
+  /* Every open time is visible at once rather than hidden behind a scroll. */
+  .booking-slot-grid { @apply relative z-10 grid gap-2; grid-template-columns: repeat(auto-fill, minmax(4.75rem, 1fr)); }
+
   .booking-pill {
     @apply flex-shrink-0 px-4 py-2 font-body text-[10px] uppercase transition-colors
            focus:outline-none focus-visible:ring-1;
@@ -1014,7 +1054,7 @@
     letter-spacing: 0.15em;
   }
 
-  .booking-roster { @apply flex items-center justify-between gap-8; }
+  .booking-roster { @apply flex items-center justify-between gap-2; }
   .booking-staff-list { @apply flex flex-col gap-2 items-start; }
   .booking-staff-name {
     @apply font-display uppercase text-xs transition-opacity text-left
@@ -1026,7 +1066,7 @@
   .booking-staff-name.is-selected { opacity: 1; }
 
   .booking-avatar {
-    @apply w-28 h-28 flex-shrink-0;
+    @apply w-32 h-44 flex-shrink-0;
     animation: groomit-float 3s ease-in-out infinite;
   }
   .booking-avatar > div {
@@ -1035,7 +1075,8 @@
     background-color: #151310;
     box-shadow: 0 0 20px rgba(200, 176, 132, 0.15);
   }
-  .booking-avatar img { @apply w-full h-full rounded-full object-cover; }
+  .booking-avatar img,
+  .booking-avatar video { @apply w-full h-full rounded-full object-cover; }
   .booking-avatar-initial { @apply font-display text-3xl; color: #C8B084; }
 
   .booking-confirm {
@@ -1150,6 +1191,11 @@
     border-top: 1px solid #2A251D;
     color: #5a4a35;
     letter-spacing: 0.4em;
+  }
+  .salon-footer-site {
+    @apply font-body text-xs text-center py-3 flex items-center justify-center gap-2;
+    color: #8A857D;
+    border-top: 1px solid #2A251D;
   }
 }
 

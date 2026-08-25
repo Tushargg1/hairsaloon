@@ -38,7 +38,7 @@ class PublicSalonController {
     List<StaffResponse> staff() {
         return service.activeStaff().stream().map(view -> new StaffResponse(
             view.staff().getId(), view.staff().getName(), view.staff().getPhotoUrl(),
-            view.serviceIds())).toList();
+            view.staff().getCharacterKey(), view.serviceIds())).toList();
     }
 
     private static ServiceResponse response(SalonServiceEntity service) {
@@ -55,5 +55,6 @@ class PublicSalonController {
     record PhotoResponse(Long id, String photoUrl, String altText, int sortOrder) {}
     record ServiceResponse(Long id, String name, int durationMinutes, BigDecimal price,
                            String category) {}
-    record StaffResponse(Long id, String name, String photoUrl, List<Long> serviceIds) {}
+    record StaffResponse(Long id, String name, String photoUrl, String characterKey,
+                         List<Long> serviceIds) {}
 }

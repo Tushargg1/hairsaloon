@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import useAuth from '../shared/auth/useAuth.js'
+import { characterVideo } from '../shared/characters.js'
 import {
   createBooking, errorMessage, getAvailability, getPublicServices, getPublicStaff, tenantKeys,
 } from './tenant-api.js'
@@ -53,7 +54,6 @@ export default function SlotBookingWidget({ selectedIds, onToggleService, salonN
   const location = useLocation()
   const queryClient = useQueryClient()
   const requestKey = useRef('')
-  const defaulted = useRef(false)
 
   const [day, setDay] = useState(today)
   const [startAt, setStartAt] = useState('')
@@ -65,18 +65,9 @@ export default function SlotBookingWidget({ selectedIds, onToggleService, salonN
   const staff = useQuery({ queryKey: tenantKeys.publicStaff, queryFn: getPublicStaff })
 
   const chainKey = selectedIds.join(',')
-  const firstServiceId = services.data?.[0]?.id
 
-  // Start on the first service so the time grid is filled the moment the page
-  // loads. Only once, so clearing the chain later is still respected.
-  useEffect(() => {
-    if (defaulted.current || firstServiceId == null) return
-    defaulted.current = true
-    if (!selectedIds.length) onToggleService(firstServiceId)
-  }, [firstServiceId, selectedIds.length, onToggleService])
-
-  // Clear a chosen time whenever the service chain changes, since the combined
-  // duration moves the whole grid.
+  // Clear a chosen time whenever the service chain changes, since the grid can
+  // move when the longest service changes.
   useEffect(() => {
     setStartAt('')
     setStaffId('any')
@@ -84,11 +75,13 @@ export default function SlotBookingWidget({ selectedIds, onToggleService, salonN
   }, [chainKey])
 
   // Every barber's openings are fetched at once so the barber list can be
-  // narrowed to whoever is actually free at the time the customer picks.
+  // narrowed to whoever is actually free at the time the customer picks. With
+  // no service chosen the backend falls back to the longest service, so the
+  // board is never empty.
   const availability = useQuery({
     queryKey: tenantKeys.availability(chainKey, day, 'all'),
     queryFn: () => getAvailability({ serviceIds: selectedIds, date: day, includeUnavailable: true }),
-    enabled: selectedIds.length > 0 && Boolean(day),
+    enabled: Boolean(day),
   })
 
   // One entry per clock time. A time is bookable when at least one barber is
@@ -119,6 +112,20 @@ export default function SlotBookingWidget({ selectedIds, onToggleService, salonN
     ? freeBarbers[0]
     : freeBarbers.find((option) => String(option.staffId) === String(staffId))
   const chosenProfile = staff.data?.find((member) => String(member.id) === String(chosen?.staffId))
+  // For "Any Barber", use the 2nd-to-last barber's character
+  const anyCharacterProfile = freeBarbers.length >= 2
+    ? staff.data?.find((member) => String(member.id) === String(freeBarbers[freeBarbers.length - 2]?.staffId))
+    : chosenProfile
+  const activeProfile = staffId === 'any' ? anyCharacterProfile : chosenProfile
+  const characterClip = characterVideo(activeProfile?.characterKey)
+  const shouldLoop = staffId !== 'any'
+  // Chosen services move to the front of the scrolling pill row so they stay in
+  // view; the rest keep their menu order behind them.
+  const pillOrder = useMemo(() => {
+    const picked = (item) => selectedIds.includes(String(item.id))
+    return [...(services.data || [])].sort((left, right) => picked(right) - picked(left))
+  }, [services.data, selectedIds])
+
   const chosenServices = (services.data || [])
     .filter((item) => selectedIds.includes(String(item.id)))
   const totalMinutes = chosenServices.reduce((sum, item) => sum + item.durationMinutes, 0)
@@ -163,6 +170,8 @@ export default function SlotBookingWidget({ selectedIds, onToggleService, salonN
 
   function confirm() {
     if (!chosen) return
+    // Times are shown before anything is picked, so the service is checked here.
+    if (!selectedIds.length) return setNotice('Pick a service from the price list first.')
     if (!user) return navigate('/login', { state: { from: location } })
     if (user.role !== 'CUSTOMER') return setNotice('A customer account is required to book.')
     setNotice('')
@@ -209,7 +218,7 @@ export default function SlotBookingWidget({ selectedIds, onToggleService, salonN
             <div className="booking-body">
               {services.data?.length > 1 && (
                 <div className="booking-pill-row" role="group" aria-label="Services">
-                  {services.data.map((item) => {
+                  {pillOrder.map((item) => {
                     const on = selectedIds.includes(String(item.id))
                     return (
                       <button key={item.id} type="button"
@@ -230,13 +239,11 @@ export default function SlotBookingWidget({ selectedIds, onToggleService, salonN
                 </p>
               )}
 
-              <div className="booking-pill-row" role="group" aria-label="Available times">
+              <div className="booking-slot-grid" role="group" aria-label="Available times">
                 {availability.isLoading ? (
                   <span className="booking-note">Finding open times...</span>
                 ) : availability.isError ? (
                   <span className="booking-note is-error">{errorMessage(availability.error)}</span>
-                ) : !selectedIds.length ? (
-                  <span className="booking-note">Pick a service from the price list.</span>
                 ) : timeSlots.length ? (
                   timeSlots.map((entry) => {
                     const taken = entry.free.length === 0
@@ -280,9 +287,14 @@ export default function SlotBookingWidget({ selectedIds, onToggleService, salonN
 
                 <div className="booking-avatar">
                   <div>
-                    {chosenProfile?.photoUrl
-                      ? <img src={chosenProfile.photoUrl} alt="" />
-                      : <span className="booking-avatar-initial">{chosen?.staffName?.[0] || '\u2702'}</span>}
+                    {characterClip ? (
+                      <video key={characterClip + shouldLoop} src={characterClip} autoPlay loop={shouldLoop} muted
+                        playsInline aria-hidden="true" tabIndex={-1} />
+                    ) : chosenProfile?.photoUrl ? (
+                      <img src={chosenProfile.photoUrl} alt="" />
+                    ) : (
+                      <span className="booking-avatar-initial">{chosen?.staffName?.[0] || '\u2702'}</span>
+                    )}
                   </div>
                 </div>
               </div>

@@ -47,11 +47,11 @@ function offerTerms(promotion) {
 function ScissorsMark() {
   return (
     <svg className="price-scissors" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <path
-        d="M14.121 14.121L19 19m-7-7l3-3m-3 3l-3-3m3 3L7 19m2.121-9.121l-3-3m0 0a3 3 0 11-4.243-4.243 3 3 0 014.243 4.243zm9.193 9.193a3 3 0 11-4.243-4.243 3 3 0 014.243 4.243zm-9.193-9.193L12 12m0 0l3-3m-3 3l-3-3"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      <circle cx="6" cy="6" r="3" />
+      <circle cx="6" cy="18" r="3" />
+      <line x1="20" y1="4" x2="8.12" y2="15.88" />
+      <line x1="14.47" y1="14.48" x2="20" y2="20" />
+      <line x1="8.12" y1="8.12" x2="12" y2="12" />
     </svg>
   )
 }

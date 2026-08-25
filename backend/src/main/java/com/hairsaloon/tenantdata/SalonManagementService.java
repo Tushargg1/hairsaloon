@@ -138,20 +138,24 @@ class SalonManagementService {
     }
 
     @Transactional
-    StaffDetails createStaff(String name, String photoUrl) {
+    StaffDetails createStaff(String name, String photoUrl, String characterKey) {
         long salonId = TenantContext.requireSalonId();
         SalonStaff member = staff.save(new SalonStaff(salonId,
             InputPolicy.text(name, 160, "name", true),
-            InputPolicy.url(photoUrl, "photoUrl")));
+            InputPolicy.url(photoUrl, "photoUrl"),
+            InputPolicy.text(characterKey, 40, "characterKey", false)));
         return details(salonId, member);
     }
 
     @Transactional
-    StaffDetails updateStaff(long id, String name, String photoUrl, boolean active) {
+    StaffDetails updateStaff(long id, String name, String photoUrl, String characterKey,
+                             boolean active) {
         long salonId = TenantContext.requireSalonId();
         String safeName = InputPolicy.text(name, 160, "name", true);
         String safePhotoUrl = InputPolicy.url(photoUrl, "photoUrl");
-        if (staff.updateByIdAndSalonId(id, salonId, safeName, safePhotoUrl, active) == 0)
+        String safeCharacter = InputPolicy.text(characterKey, 40, "characterKey", false);
+        if (staff.updateByIdAndSalonId(id, salonId, safeName, safePhotoUrl, safeCharacter,
+                active) == 0)
             throw InputPolicy.notFound("staff");
         SalonStaff member = staff.findByIdAndSalonId(id, salonId).orElseThrow(() ->
             InputPolicy.notFound("staff"));
@@ -194,6 +198,9 @@ class SalonManagementService {
         List<HourInput> values = inputs == null ? List.of() : List.copyOf(inputs);
         validateHours(values);
         hours.deleteAllBySalonIdAndStaffId(salonId, staffId);
+        // Hibernate would otherwise order the inserts before the delete and trip
+        // staff_working_hours_unique when a start time is reused.
+        hours.flush();
         return hours.saveAll(values.stream()
             .sorted(Comparator.comparingInt(HourInput::dayOfWeek)
                 .thenComparing(HourInput::startTime))

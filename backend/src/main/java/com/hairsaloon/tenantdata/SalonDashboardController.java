@@ -107,7 +107,8 @@ class SalonDashboardController {
     StaffResponse createStaff(@AuthenticationPrincipal AuthenticatedUser user,
                               @Valid @RequestBody CreateStaffRequest request) {
         ownership.verifyOwner(user);
-        return staffResponse(service.createStaff(request.name(), request.photoUrl()));
+        return staffResponse(service.createStaff(request.name(), request.photoUrl(),
+            request.characterKey()));
     }
 
     @PutMapping("/staff/{id}")
@@ -116,7 +117,7 @@ class SalonDashboardController {
                               @Valid @RequestBody UpdateStaffRequest request) {
         ownership.verifyOwner(user);
         return staffResponse(service.updateStaff(id, request.name(), request.photoUrl(),
-            request.active()));
+            request.characterKey(), request.active()));
     }
 
     @DeleteMapping("/staff/{id}")
@@ -187,7 +188,8 @@ class SalonDashboardController {
     private static StaffResponse staffResponse(SalonManagementService.StaffDetails value) {
         SalonStaff member = value.staff();
         return new StaffResponse(member.getId(), member.getName(), member.getPhotoUrl(),
-            member.isActive(), value.serviceIds(), value.workingHours().stream()
+            member.getCharacterKey(), member.isActive(), value.serviceIds(),
+            value.workingHours().stream()
                 .map(SalonDashboardController::hourResponse).toList());
     }
 
@@ -230,10 +232,12 @@ class SalonDashboardController {
 
     @JsonIgnoreProperties(ignoreUnknown = false)
     record CreateStaffRequest(@NotBlank @Size(max = 160) String name,
-                              @Size(max = 2048) String photoUrl) {}
+                              @Size(max = 2048) String photoUrl,
+                              @Size(max = 40) String characterKey) {}
     @JsonIgnoreProperties(ignoreUnknown = false)
     record UpdateStaffRequest(@NotBlank @Size(max = 160) String name,
                               @Size(max = 2048) String photoUrl,
+                              @Size(max = 40) String characterKey,
                               @NotNull Boolean active) {}
 
     @JsonIgnoreProperties(ignoreUnknown = false)
@@ -256,8 +260,9 @@ class SalonDashboardController {
         String mapsUrl, List<String> categoryOrder) {}
     record ServiceResponse(Long id, String name, int durationMinutes, BigDecimal price,
                            String category, boolean active) {}
-    record StaffResponse(Long id, String name, String photoUrl, boolean active,
-                         List<Long> serviceIds, List<WorkingHourResponse> workingHours) {}
+    record StaffResponse(Long id, String name, String photoUrl, String characterKey,
+                         boolean active, List<Long> serviceIds,
+                         List<WorkingHourResponse> workingHours) {}
     record WorkingHourResponse(Long id, int dayOfWeek, LocalTime startTime,
                                LocalTime endTime) {}
     record TimeOffResponse(Long id, LocalDateTime startDateTime, LocalDateTime endDateTime,

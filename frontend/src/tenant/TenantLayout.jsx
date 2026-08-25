@@ -297,6 +297,10 @@ export default function TenantLayout() {
           </div>
 
         </div>
+        <p className="salon-footer-site">
+          <Icon name="language" className="text-[14px]" />
+          {window.location.hostname}
+        </p>
         <p className="salon-footer-mark">{salonName}</p>
       </footer>
     </div>

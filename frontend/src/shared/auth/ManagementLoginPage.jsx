@@ -1,12 +1,16 @@
 import { useEffect, useState } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { apiErrorMessage, retryAfterSeconds } from '../api/client.js'
-import { isPlatformHost, platformUrl } from '../../platform/platform-config.js'
+import { isPlatformHost, platformUrl, salonUrl } from '../../platform/platform-config.js'
 import useAuth from './useAuth.js'
 
-function destinationFor(role, platformHost) {
+function destinationFor(role, platformHost, subdomain) {
   if (role === 'PLATFORM_ADMIN') return platformHost ? '/admin/approvals' : platformUrl('/admin/approvals')
-  if (role === 'SALON_OWNER') return platformHost ? '/salon-signup' : '/dashboard'
+  if (role === 'SALON_OWNER') {
+    if (platformHost && subdomain) return salonUrl(subdomain) + '/dashboard'
+    if (platformHost) return '/salon-signup'
+    return '/dashboard'
+  }
   return null
 }
 
@@ -41,7 +45,7 @@ export default function ManagementLoginPage() {
     return () => window.clearTimeout(timer)
   }, [retryIn])
 
-  const authenticatedDestination = user && destinationFor(user.role, platformHost)
+  const authenticatedDestination = user && destinationFor(user.role, platformHost, user.subdomain)
   useEffect(() => {
     if (externalDestination(authenticatedDestination)) window.location.replace(authenticatedDestination)
   }, [authenticatedDestination])
@@ -65,7 +69,7 @@ export default function ManagementLoginPage() {
     setStatus({ pending: true, error: '' })
     try {
       const signedInUser = await privilegedLogin({ email: form.email.trim(), password: form.password })
-      const fallback = destinationFor(signedInUser.role, platformHost)
+      const fallback = destinationFor(signedInUser.role, platformHost, signedInUser.subdomain)
       if (!fallback) {
         setStatus({ pending: false, error: 'This account does not have management access.' })
         return
@@ -91,7 +95,7 @@ export default function ManagementLoginPage() {
       </section>
       <section className="form-card" aria-labelledby="management-login-heading">
         <h2 id="management-login-heading">Staff and admin login</h2>
-        {user && !destinationFor(user.role, platformHost) && (
+        {user && !destinationFor(user.role, platformHost, user.subdomain) && (
           <p className="form-status error" role="alert">Your current account does not have management access. Sign in with an authorised staff or administrator account.</p>
         )}
         <form onSubmit={submit}>

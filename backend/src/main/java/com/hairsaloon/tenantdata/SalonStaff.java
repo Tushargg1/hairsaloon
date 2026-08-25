@@ -20,6 +20,8 @@ public class SalonStaff {
     private String name;
     @Column(name = "photo_url", columnDefinition = "text")
     private String photoUrl;
+    @Column(name = "character_key", length = 40)
+    private String characterKey;
     @Column(name = "is_active", nullable = false)
     private boolean active = true;
     @CreationTimestamp @Column(name = "created_at", nullable = false, updatable = false)
@@ -27,14 +29,15 @@ public class SalonStaff {
 
     protected SalonStaff() {}
 
-    public SalonStaff(long salonId, String name, String photoUrl) {
+    public SalonStaff(long salonId, String name, String photoUrl, String characterKey) {
         this.salonId = salonId;
-        update(name, photoUrl);
+        update(name, photoUrl, characterKey);
     }
 
-    public void update(String name, String photoUrl) {
+    public void update(String name, String photoUrl, String characterKey) {
         this.name = name;
         this.photoUrl = photoUrl;
+        this.characterKey = characterKey;
     }
 
     public void setActive(boolean active) { this.active = active; }
@@ -44,6 +47,7 @@ public class SalonStaff {
     public Long getSalonId() { return salonId; }
     public String getName() { return name; }
     public String getPhotoUrl() { return photoUrl; }
+    public String getCharacterKey() { return characterKey; }
     public boolean isActive() { return active; }
     public Instant getCreatedAt() { return createdAt; }
 }

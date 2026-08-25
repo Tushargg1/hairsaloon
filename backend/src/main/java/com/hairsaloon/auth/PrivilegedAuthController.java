@@ -1,5 +1,7 @@
 package com.hairsaloon.auth;
 
+import com.hairsaloon.tenant.Salon;
+import com.hairsaloon.tenant.SalonRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
@@ -19,12 +21,14 @@ class PrivilegedAuthController {
     private final AuthService authService;
     private final AuthCookieService cookies;
     private final LoginRateLimiter rateLimiter;
+    private final SalonRepository salons;
 
     PrivilegedAuthController(AuthService authService, AuthCookieService cookies,
-                             LoginRateLimiter rateLimiter) {
+                             LoginRateLimiter rateLimiter, SalonRepository salons) {
         this.authService = authService;
         this.cookies = cookies;
         this.rateLimiter = rateLimiter;
+        this.salons = salons;
     }
 
     @PostMapping("/login")
@@ -41,9 +45,14 @@ class PrivilegedAuthController {
             AuthService.AuthResult result = authService.privilegedLogin(request.email(),
                 request.password());
             rateLimiter.recordSuccess("privileged-login", ip, principal);
+            String subdomain = null;
+            if (result.user().role() == UserRole.SALON_OWNER) {
+                subdomain = salons.findByOwnerId(result.user().id())
+                    .map(Salon::getSubdomain).orElse(null);
+            }
             return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookies.authenticated(result.token()).toString())
-                .body(AuthController.UserResponse.from(result.user()));
+                .body(AuthController.UserResponse.from(result.user(), subdomain));
         } catch (AuthException failure) {
             rateLimiter.recordFailure("privileged-login", ip, principal);
             throw failure;

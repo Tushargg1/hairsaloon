@@ -16,4 +16,6 @@ public interface SalonRepository extends JpaRepository<Salon, Long> {
     boolean existsBySubdomain(String subdomain);
 
     boolean existsByOwnerId(Long ownerId);
+
+    Optional<Salon> findByOwnerId(Long ownerId);
 }
