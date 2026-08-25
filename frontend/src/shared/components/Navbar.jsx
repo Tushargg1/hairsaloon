@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { NavLink, Link } from 'react-router-dom'
 import useAuth from '../auth/useAuth.js'
 import BrassButton from './BrassButton.jsx'
@@ -10,9 +11,11 @@ const navClass = ({ isActive }) =>
 
 export default function Navbar() {
   const { user, logout } = useAuth()
+  const [menuOpen, setMenuOpen] = useState(false)
+  const close = () => setMenuOpen(false)
 
   return (
-    <nav className="fixed top-0 w-full z-50 bg-[#230F08]/85 backdrop-blur-xl border-b border-outline-variant/30 shadow-md transition-all duration-300">
+    <nav className="fixed top-0 w-full z-50 bg-[#230F08]/60 backdrop-blur-xl border-b border-outline-variant/30 shadow-md transition-all duration-300">
       <div className="flex justify-between items-center w-full px-4 lg:px-[80px] py-2 max-w-[1280px] mx-auto h-20">
         {/* Brand */}
         <Link to="/" className="flex items-center gap-3" aria-label="Groomit home">
@@ -57,10 +60,32 @@ export default function Navbar() {
         </div>
 
         {/* Mobile Menu Toggle */}
-        <button className="md:hidden text-secondary p-1 rounded hover:bg-surface-container-high transition-colors">
-          <Icon name="menu" filled />
+        <button className="md:hidden text-secondary p-1 rounded hover:bg-surface-container-high transition-colors"
+          onClick={() => setMenuOpen((o) => !o)} aria-expanded={menuOpen} aria-label={menuOpen ? 'Close menu' : 'Open menu'}>
+          <Icon name={menuOpen ? 'close' : 'menu'} filled />
         </button>
       </div>
+
+      {/* Mobile Menu */}
+      {menuOpen && (
+        <div className="md:hidden border-t border-outline-variant/30 bg-[#230F08]/90 backdrop-blur-xl px-4 py-4 flex flex-col gap-4">
+          <NavLink to="/salons" onClick={close} className="font-body text-label-md text-on-surface-variant">Find a Salon</NavLink>
+          <NavLink to="/pricing" onClick={close} className="font-body text-label-md text-on-surface-variant">Pricing</NavLink>
+          <NavLink to="/about" onClick={close} className="font-body text-label-md text-on-surface-variant">About</NavLink>
+          <NavLink to="/for-business" onClick={close} className="font-body text-label-md text-secondary">List your salon</NavLink>
+          {user?.role === 'SALON_OWNER' && (
+            <NavLink to="/salon-signup" onClick={close} className="font-body text-label-md text-secondary">My Salon</NavLink>
+          )}
+          {user?.role === 'PLATFORM_ADMIN' && (
+            <NavLink to="/admin/approvals" onClick={close} className="font-body text-label-md text-secondary">Admin</NavLink>
+          )}
+          {user ? (
+            <button onClick={() => { close(); logout() }} className="font-body text-label-sm text-on-surface-variant text-left">Logout</button>
+          ) : (
+            <NavLink to="/login" onClick={close} className="font-body text-label-md text-secondary">Login / Signup</NavLink>
+          )}
+        </div>
+      )}
     </nav>
   )
 }
