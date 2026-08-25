@@ -16,7 +16,7 @@ export default function Navbar() {
 
   return (
     <nav className="fixed top-0 w-full z-50 bg-[#230F08]/60 backdrop-blur-xl border-b border-outline-variant/30 shadow-md transition-all duration-300">
-      <div className="flex justify-between items-center w-full px-4 lg:px-[80px] py-2 max-w-[1280px] mx-auto h-20">
+      <div className="flex justify-between items-center w-full px-4 lg:px-[80px] py-2 max-w-[1280px] mx-auto h-16">
         {/* Brand */}
         <Link to="/" className="flex items-center gap-3" aria-label="Groomit home">
           <div className="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center border border-outline-variant/50">
