@@ -8,76 +8,33 @@ import Icon from '../shared/components/Icon.jsx'
  * Plan definitions. Every listed capability maps to a feature that exists in the
  * product today, so the page does not promise anything we cannot deliver.
  */
-const PLANS = [
-  {
-    id: 'starter',
-    name: 'Starter',
-    tagline: 'For a single chair getting online',
-    monthly: 0,
-    yearly: 0,
-    badge: 'Free forever',
-    cta: 'Start free',
-    highlighted: false,
-    features: [
-      'Your own booking page at yourname.groomit.in',
-      'Up to 2 staff members',
-      'Up to 10 services',
-      'Unlimited online bookings',
-      'Walk-in bookings from the calendar',
-      'Email confirmations and reminders',
-      'Customer reviews on your page',
-      'Day and week calendar view',
-    ],
-    absent: ['Promotional discount codes', 'Photo gallery', 'Analytics dashboard'],
-  },
-  {
-    id: 'studio',
-    name: 'Studio',
-    tagline: 'For a growing salon with a team',
-    monthly: 799,
-    yearly: 7990,
-    badge: 'Most popular',
-    cta: 'Choose Studio',
-    highlighted: true,
-    features: [
-      'Everything in Starter',
-      'Up to 10 staff members',
-      'Unlimited services',
-      'Promotional discount codes',
-      'Photo gallery and logo uploads',
-      'Analytics dashboard with revenue and no-show trends',
-      'Per-staff working hours and time off',
-      'Web push notifications',
-      'Priority email support',
-    ],
-    absent: [],
-  },
-  {
-    id: 'signature',
-    name: 'Signature',
-    tagline: 'For established multi-stylist salons',
-    monthly: 1999,
-    yearly: 19990,
-    badge: null,
-    cta: 'Choose Signature',
-    highlighted: false,
-    features: [
-      'Everything in Studio',
-      'Unlimited staff members',
-      'Advanced analytics with service and staff breakdowns',
-      'Custom cancellation windows',
-      'Featured placement in the salon directory',
-      'Onboarding call and data import help',
-      'Priority support with same-day response',
-    ],
-    absent: [],
-  },
-]
+const PLAN = {
+  name: 'Complete',
+  tagline: 'Every feature, no limits',
+  oneMonth: 999,
+  oneMonthWas: 1999,
+  twoMonth: 1499,
+  features: [
+    'Your own booking page at yourname.groomit.in',
+    'Unlimited staff members and services',
+    'Unlimited online bookings',
+    'Walk-in bookings from the calendar',
+    'Email confirmations and reminders',
+    'Customer reviews on your page',
+    'Day and week calendar view',
+    'Promotional discount codes and combo offers',
+    'Photo gallery and logo uploads',
+    'Analytics dashboard with revenue and no-show trends',
+    'Per-staff working hours, breaks and time off',
+    'Web push notifications',
+    'Priority email support',
+  ],
+}
 
 const FAQS = [
   {
-    q: 'Is Groomit really free to start?',
-    a: 'Yes. The Starter plan is free with no time limit and no card required. You can take unlimited bookings on it.',
+    q: 'What is included in the plan?',
+    a: 'Everything. There is a single plan with unlimited staff, services and bookings, plus promotions, gallery, analytics and notifications.',
   },
   {
     q: 'Do customers pay Groomit anything?',
@@ -85,15 +42,15 @@ const FAQS = [
   },
   {
     q: 'Do you charge commission per booking?',
-    a: 'No. Plans are a flat monthly or yearly fee. We do not take a cut of your service revenue.',
+    a: 'No. The plan is a flat fee. We do not take a cut of your service revenue.',
   },
   {
-    q: 'Can I change plans later?',
-    a: 'Yes, upgrade or downgrade at any time. Upgrades apply immediately; downgrades take effect at the end of your current billing period.',
+    q: 'Can I switch between 1 month and 2 months?',
+    a: 'Yes. Choose either term at checkout and change it when the current term ends.',
   },
   {
     q: 'What happens if I cancel?',
-    a: 'Your listing stays active until the end of the period you have paid for, then reverts to Starter. Your bookings and customer history are preserved.',
+    a: 'Your listing stays active until the end of the period you have paid for. Your bookings and customer history are preserved.',
   },
   {
     q: 'How do I get paid by customers?',
@@ -108,7 +65,7 @@ function rupees(value) {
 }
 
 export default function PricingPage() {
-  const [yearly, setYearly] = useState(false)
+  const [twoMonths, setTwoMonths] = useState(false)
 
   return (
     <main className="max-w-[1280px] mx-auto px-4 py-12">
@@ -116,106 +73,86 @@ export default function PricingPage() {
       <div className="text-center mb-10">
         <p className="font-body text-label-md text-secondary tracking-wider uppercase mb-2">Pricing</p>
         <h1 className="font-display text-headline-md md:text-display-lg text-on-surface mb-3">
-          Simple plans, no commission
+          One plan, no commission
         </h1>
         <p className="font-body text-body-lg text-on-surface-variant max-w-2xl mx-auto">
-          Start free and upgrade when your salon grows. Every plan includes your own booking
-          page and unlimited appointments.
+          Every feature is included, with unlimited staff, services and appointments. No tiers
+          to compare and no per-booking cut.
         </p>
       </div>
 
       {/* Billing toggle */}
       <div className="flex items-center justify-center gap-4 mb-10">
-        <span className={`font-body text-label-md transition-colors ${yearly ? 'text-on-surface-variant' : 'text-secondary'}`}>
-          Monthly
+        <span className={`font-body text-label-md transition-colors ${twoMonths ? 'text-on-surface-variant' : 'text-secondary'}`}>
+          1 month
         </span>
         <button
           type="button"
           role="switch"
-          aria-checked={yearly}
-          aria-label="Toggle yearly billing"
-          onClick={() => setYearly((v) => !v)}
-          className={`relative w-14 h-7 rounded-full border transition-colors ${yearly ? 'brass-gradient border-brass' : 'bg-surface-container-high border-outline-variant/50'}`}
+          aria-checked={twoMonths}
+          aria-label="Toggle two month billing"
+          onClick={() => setTwoMonths((v) => !v)}
+          className={`relative w-14 h-7 rounded-full border transition-colors ${twoMonths ? 'brass-gradient border-brass' : 'bg-surface-container-high border-outline-variant/50'}`}
         >
-          <span className={`absolute top-1 w-5 h-5 rounded-full bg-on-surface transition-all ${yearly ? 'left-8' : 'left-1'}`} />
+          <span className={`absolute top-1 w-5 h-5 rounded-full bg-on-surface transition-all ${twoMonths ? 'left-8' : 'left-1'}`} />
         </button>
-        <span className={`font-body text-label-md transition-colors ${yearly ? 'text-secondary' : 'text-on-surface-variant'}`}>
-          Yearly
+        <span className={`font-body text-label-md transition-colors ${twoMonths ? 'text-secondary' : 'text-on-surface-variant'}`}>
+          2 months
           <span className="ml-2 bg-[rgba(168,144,72,0.15)] text-[#A89048] px-2 py-0.5 rounded-full text-label-sm">
-            2 months free
+            Save {rupees(PLAN.oneMonth * 2 - PLAN.twoMonth)}
           </span>
         </span>
       </div>
 
-      {/* Plans */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-16 items-start">
-        {PLANS.map((plan) => {
-          const price = yearly ? plan.yearly : plan.monthly
-          const isFree = price === 0
-          return (
-            <GlassPanel
-              key={plan.id}
-              className={`flex flex-col h-full relative ${plan.highlighted ? 'border-secondary/50 amber-glow lg:-mt-3 lg:pb-10' : ''}`}
-            >
-              {plan.badge && (
-                <span className={`absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full font-body text-label-sm whitespace-nowrap ${plan.highlighted ? 'brass-gradient' : 'bg-surface-container-high text-secondary border border-outline-variant/50'}`}>
-                  {plan.badge}
-                </span>
-              )}
+      {/* Plan */}
+      <div className="max-w-md mx-auto mb-16">
+        <GlassPanel className="flex flex-col relative border-secondary/50 amber-glow">
+          <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full font-body text-label-sm whitespace-nowrap brass-gradient">
+            Launch offer
+          </span>
 
-              <div className="mb-6 pt-2">
-                <h2 className="font-display text-headline-sm text-secondary-fixed mb-1">{plan.name}</h2>
-                <p className="font-body text-label-sm text-on-surface-variant">{plan.tagline}</p>
-              </div>
+          <div className="mb-6 pt-2">
+            <h2 className="font-display text-headline-sm text-secondary-fixed mb-1">{PLAN.name}</h2>
+            <p className="font-body text-label-sm text-on-surface-variant">{PLAN.tagline}</p>
+          </div>
 
-              <div className="mb-6">
-                <span className="font-display text-display-lg-mobile text-on-surface">
-                  {isFree ? 'Free' : rupees(price)}
-                </span>
-                {!isFree && (
-                  <span className="font-body text-body-md text-on-surface-variant">
-                    {yearly ? ' / year' : ' / month'}
-                  </span>
-                )}
-                {!isFree && yearly && (
-                  <p className="font-body text-label-sm text-outline mt-1">
-                    Works out to {rupees(Math.round(plan.yearly / 12))} per month
-                  </p>
-                )}
-              </div>
+          <div className="mb-6">
+            {!twoMonths && (
+              <span className="font-display text-headline-sm text-outline line-through mr-3">
+                {rupees(PLAN.oneMonthWas)}
+              </span>
+            )}
+            <span className="font-display text-display-lg-mobile text-on-surface">
+              {rupees(twoMonths ? PLAN.twoMonth : PLAN.oneMonth)}
+            </span>
+            <span className="font-body text-body-md text-on-surface-variant">
+              {twoMonths ? ' / 2 months' : ' / month'}
+            </span>
+            <p className="font-body text-label-sm text-outline mt-1">
+              {twoMonths
+                ? `Works out to ${rupees(Math.round(PLAN.twoMonth / 2))} per month`
+                : `Offer price, down from ${rupees(PLAN.oneMonthWas)}`}
+            </p>
+          </div>
 
-              <BrassButton
-                to="/for-business"
-                variant={plan.highlighted ? 'primary' : 'outline'}
-                className="w-full mb-6"
-              >
-                {plan.cta}
-              </BrassButton>
+          <BrassButton to="/for-business" className="w-full mb-6">Get started</BrassButton>
 
-              <ul className="flex flex-col gap-2.5 flex-grow">
-                {plan.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2">
-                    <Icon name="check" className="text-[#A89048] text-[18px] mt-0.5 flex-shrink-0" />
-                    <span className="font-body text-body-md text-on-surface-variant">{f}</span>
-                  </li>
-                ))}
-                {plan.absent.map((f) => (
-                  <li key={f} className="flex items-start gap-2 opacity-50">
-                    <Icon name="close" className="text-outline text-[18px] mt-0.5 flex-shrink-0" />
-                    <span className="font-body text-body-md text-outline line-through">{f}</span>
-                  </li>
-                ))}
-              </ul>
-            </GlassPanel>
-          )
-        })}
+          <ul className="flex flex-col gap-2.5">
+            {PLAN.features.map((f) => (
+              <li key={f} className="flex items-start gap-2">
+                <Icon name="check" className="text-[#A89048] text-[18px] mt-0.5 flex-shrink-0" />
+                <span className="font-body text-body-md text-on-surface-variant">{f}</span>
+              </li>
+            ))}
+          </ul>
+        </GlassPanel>
       </div>
 
       {/* Trust strip */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-16">
         {[
           { icon: 'payments', title: 'No commission', text: 'Keep every rupee your services earn.' },
-          { icon: 'credit_card_off', title: 'No card to start', text: 'The Starter plan needs no payment details.' },
+          { icon: 'style', title: 'All features included', text: 'No tiers, no locked features.' },
           { icon: 'logout', title: 'Cancel anytime', text: 'No lock-in contracts or exit fees.' },
         ].map((item) => (
           <div key={item.title} className="glass-surface metallic-border rounded-lg p-6 text-center">
@@ -247,8 +184,7 @@ export default function PricingPage() {
           Ready to take bookings online?
         </h2>
         <p className="font-body text-body-lg text-on-surface-variant mb-8 max-w-xl mx-auto">
-          Set up your salon in a few minutes. Start on the free plan and upgrade whenever you
-          are ready.
+          Set up your salon in a few minutes and take bookings the same day.
         </p>
         <div className="flex flex-wrap gap-3 justify-center">
           <BrassButton to="/for-business" size="lg">List Your Salon</BrassButton>

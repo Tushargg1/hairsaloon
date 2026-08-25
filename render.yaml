@@ -61,7 +61,7 @@ services:
       - key: BASE_DOMAIN
         value: groomit.in
       - key: PLATFORM_HOSTS
-        value: groomit.in,www.groomit.in
+        value: groomit.in,www.groomit.in,groomit-backend.onrender.com
       # Exact origins for credentialed requests; wildcards are not permitted here.
       # Add or replace the Vercel origin once a custom domain is in place.
       - key: CORS_ALLOWED_ORIGINS
