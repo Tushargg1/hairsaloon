@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import GlassPanel from '../shared/components/GlassPanel.jsx'
 import BrassButton from '../shared/components/BrassButton.jsx'
@@ -14,6 +13,7 @@ const PLAN = {
   oneMonth: 999,
   oneMonthWas: 1999,
   twoMonth: 1499,
+  twoMonthWas: 3999,
   features: [
     'Your own booking page at yourname.groomit.in',
     'Unlimited staff members and services',
@@ -65,7 +65,6 @@ function rupees(value) {
 }
 
 export default function PricingPage() {
-  const [twoMonths, setTwoMonths] = useState(false)
 
   return (
     <main className="max-w-[1280px] mx-auto px-4 py-12">
@@ -81,31 +80,9 @@ export default function PricingPage() {
         </p>
       </div>
 
-      {/* Billing toggle */}
-      <div className="flex items-center justify-center gap-4 mb-10">
-        <span className={`font-body text-label-md transition-colors ${twoMonths ? 'text-on-surface-variant' : 'text-secondary'}`}>
-          1 month
-        </span>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={twoMonths}
-          aria-label="Toggle two month billing"
-          onClick={() => setTwoMonths((v) => !v)}
-          className={`relative w-14 h-7 rounded-full border transition-colors ${twoMonths ? 'brass-gradient border-brass' : 'bg-surface-container-high border-outline-variant/50'}`}
-        >
-          <span className={`absolute top-1 w-5 h-5 rounded-full bg-on-surface transition-all ${twoMonths ? 'left-8' : 'left-1'}`} />
-        </button>
-        <span className={`font-body text-label-md transition-colors ${twoMonths ? 'text-secondary' : 'text-on-surface-variant'}`}>
-          2 months
-          <span className="ml-2 bg-[rgba(168,144,72,0.15)] text-[#A89048] px-2 py-0.5 rounded-full text-label-sm">
-            Save {rupees(PLAN.oneMonth * 2 - PLAN.twoMonth)}
-          </span>
-        </span>
-      </div>
-
-      {/* Plan */}
-      <div className="max-w-md mx-auto mb-16">
+      {/* Plans side by side */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto mb-16">
+        {/* 1 Month Plan */}
         <GlassPanel className="flex flex-col relative border-secondary/50 amber-glow">
           <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full font-body text-label-sm whitespace-nowrap brass-gradient">
             Launch offer
@@ -113,25 +90,55 @@ export default function PricingPage() {
 
           <div className="mb-6 pt-2">
             <h2 className="font-display text-headline-sm text-secondary-fixed mb-1">{PLAN.name}</h2>
-            <p className="font-body text-label-sm text-on-surface-variant">{PLAN.tagline}</p>
+            <p className="font-body text-label-sm text-on-surface-variant">1 month</p>
           </div>
 
           <div className="mb-6">
-            {!twoMonths && (
-              <span className="font-display text-headline-sm text-outline line-through mr-3">
-                {rupees(PLAN.oneMonthWas)}
-              </span>
-            )}
+            <span className="font-display text-headline-sm text-outline line-through mr-3">
+              {rupees(PLAN.oneMonthWas)}
+            </span>
             <span className="font-display text-display-lg-mobile text-on-surface">
-              {rupees(twoMonths ? PLAN.twoMonth : PLAN.oneMonth)}
+              {rupees(PLAN.oneMonth)}
             </span>
-            <span className="font-body text-body-md text-on-surface-variant">
-              {twoMonths ? ' / 2 months' : ' / month'}
-            </span>
+            <span className="font-body text-body-md text-on-surface-variant"> / month</span>
             <p className="font-body text-label-sm text-outline mt-1">
-              {twoMonths
-                ? `Works out to ${rupees(Math.round(PLAN.twoMonth / 2))} per month`
-                : `Offer price, down from ${rupees(PLAN.oneMonthWas)}`}
+              Offer price, down from {rupees(PLAN.oneMonthWas)}
+            </p>
+          </div>
+
+          <BrassButton to="/for-business" className="w-full mb-6">Get started</BrassButton>
+
+          <ul className="flex flex-col gap-2.5">
+            {PLAN.features.map((f) => (
+              <li key={f} className="flex items-start gap-2">
+                <Icon name="check" className="text-[#A89048] text-[18px] mt-0.5 flex-shrink-0" />
+                <span className="font-body text-body-md text-on-surface-variant">{f}</span>
+              </li>
+            ))}
+          </ul>
+        </GlassPanel>
+
+        {/* 2 Months Plan */}
+        <GlassPanel className="flex flex-col relative border-secondary/50 amber-glow">
+          <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full font-body text-label-sm whitespace-nowrap brass-gradient">
+            Best value
+          </span>
+
+          <div className="mb-6 pt-2">
+            <h2 className="font-display text-headline-sm text-secondary-fixed mb-1">{PLAN.name}</h2>
+            <p className="font-body text-label-sm text-on-surface-variant">2 months</p>
+          </div>
+
+          <div className="mb-6">
+            <span className="font-display text-headline-sm text-outline line-through mr-3">
+              {rupees(PLAN.twoMonthWas)}
+            </span>
+            <span className="font-display text-display-lg-mobile text-on-surface">
+              {rupees(PLAN.twoMonth)}
+            </span>
+            <span className="font-body text-body-md text-on-surface-variant"> / 2 months</span>
+            <p className="font-body text-label-sm text-outline mt-1">
+              Save {rupees(PLAN.twoMonthWas - PLAN.twoMonth)} — works out to {rupees(Math.round(PLAN.twoMonth / 2))}/mo
             </p>
           </div>
 
