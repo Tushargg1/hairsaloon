@@ -48,14 +48,16 @@ export default function VideoHero({ poster, alt = '' }) {
     setVideoReady(true)
   }
 
+  const [imgLoaded, setImgLoaded] = useState(false)
+
   return (
-    <div className="absolute inset-0 z-0">
+    <div className="absolute inset-0 z-0" style={{ backgroundColor: '#12110f' }}>
       {/* Static image shown immediately */}
       <img
         src={imgSrc}
         alt=""
-        className={`absolute inset-0 w-full h-full object-cover ${!isMobile ? 'scale-[0.99]' : ''}`}
-        style={{ color: 'transparent' }}
+        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${imgLoaded ? 'opacity-100' : 'opacity-0'} ${!isMobile ? 'scale-[0.99]' : ''}`}
+        onLoad={() => setImgLoaded(true)}
       />
 
       {/* Video loads in background, fades in when ready */}

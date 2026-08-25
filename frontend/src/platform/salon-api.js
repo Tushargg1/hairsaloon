@@ -5,6 +5,7 @@ export const salonKeys = {
   list: (filters) => ['platform-salons', filters],
   pending: ['platform-salons', 'pending'],
   availability: (name) => ['platform-salons', 'availability', name],
+  mine: ['platform-salons', 'mine'],
 }
 
 export const errorMessage = apiErrorMessage
@@ -21,6 +22,11 @@ export async function checkSubdomain(name) {
   const { data } = await apiClient.get('/api/platform/salons/check-subdomain', {
     params: { name },
   })
+  return data
+}
+
+export async function getMySalon() {
+  const { data } = await apiClient.get('/api/platform/salons/mine')
   return data
 }
 
