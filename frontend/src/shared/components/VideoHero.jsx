@@ -53,8 +53,9 @@ export default function VideoHero({ poster, alt = '' }) {
       {/* Static image shown immediately */}
       <img
         src={imgSrc}
-        alt={alt}
+        alt=""
         className={`absolute inset-0 w-full h-full object-cover ${!isMobile ? 'scale-[0.99]' : ''}`}
+        style={{ color: 'transparent' }}
       />
 
       {/* Video loads in background, fades in when ready */}
