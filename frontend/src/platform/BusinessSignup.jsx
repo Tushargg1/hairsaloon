@@ -26,18 +26,13 @@ function useCountdown(value, setValue) {
 }
 
 export default function BusinessSignup() {
-  const { user, businessSignup, requestOtp, verifyOtp } = useAuth()
+  const { user, businessSignup } = useAuth()
   const navigate = useNavigate()
-  const [stage, setStage] = useState('request')
-  const [form, setForm] = useState({ name: '', phone: '', email: '', password: '', code: '' })
-  const [challengeId, setChallengeId] = useState('')
-  const [verificationProof, setVerificationProof] = useState('')
+  const [form, setForm] = useState({ name: '', phone: '', email: '', password: '' })
   const [status, setStatus] = useState({ pending: false, error: '', success: '' })
   const [retryIn, setRetryIn] = useState(0)
-  const [resendIn, setResendIn] = useState(0)
 
   useCountdown(retryIn, setRetryIn)
-  useCountdown(resendIn, setResendIn)
 
   if (user) {
     const destination = user.role === 'SALON_OWNER' ? '/salon-signup'
@@ -51,31 +46,8 @@ export default function BusinessSignup() {
     setStatus({ pending: false, success: '', error: errorMessage(error, fallback) })
   }
 
-  async function sendOtp() {
-    setStatus({ pending: true, error: '', success: '' })
-    try {
-      const challenge = await requestOtp({ phone: form.phone.trim(), purpose: 'SIGNUP' })
-      setChallengeId(challenge.challengeId)
-      setForm((c) => ({ ...c, code: '' }))
-      setResendIn(Number(challenge.resendAfterSeconds) || 0)
-      setStatus({ pending: false, error: '', success: 'Verification code sent.' })
-      return true
-    } catch (error) { fail(error, 'Unable to send verification code.'); return false }
-  }
-
   async function submit(e) {
     e.preventDefault()
-    if (stage === 'request') { if (await sendOtp()) setStage('verify'); return }
-    if (stage === 'verify') {
-      setStatus({ pending: true, error: '', success: '' })
-      try {
-        const proof = await verifyOtp({ challengeId, code: form.code.trim() })
-        setVerificationProof(proof.verificationProof)
-        setStage('details')
-        setStatus({ pending: false, error: '', success: 'Phone verified.' })
-      } catch (error) { fail(error, 'Verification code could not be confirmed.') }
-      return
-    }
     setStatus({ pending: true, error: '', success: '' })
     try {
       await businessSignup({
@@ -83,13 +55,10 @@ export default function BusinessSignup() {
         phone: form.phone.trim(),
         email: form.email.trim(),
         password: form.password,
-        verificationProof,
       })
       navigate('/salon-signup', { replace: true })
     } catch (error) { fail(error, 'Unable to create your business account.') }
   }
-
-  const step = stage === 'request' ? 1 : stage === 'verify' ? 2 : 3
 
   return (
     <main className="relative min-h-screen flex items-center justify-center p-4 md:p-6 overflow-hidden">
@@ -124,75 +93,32 @@ export default function BusinessSignup() {
           </div>
 
           <GlassPanel>
-            {/* Progress */}
-            <div className="flex justify-center gap-3 mb-8">
-              {[1, 2, 3].map((s) => (
-                <div key={s} className={`w-12 h-1 rounded-full transition-colors duration-300 ${s <= step ? 'bg-brass' : 'bg-outline-variant/30'}`} />
-              ))}
-            </div>
-
-            <h2 className="font-display text-headline-sm text-on-surface mb-1">
-              {stage === 'request' ? 'Create your account'
-                : stage === 'verify' ? 'Verify your phone'
-                : 'Almost there'}
-            </h2>
-            <p className="font-body text-body-md text-on-surface-variant mb-6">Step {step} of 3</p>
+            <h2 className="font-display text-headline-sm text-on-surface mb-1">Create your account</h2>
+            <p className="font-body text-body-md text-on-surface-variant mb-6">Fill in your details to get started.</p>
 
             <form onSubmit={submit} className="flex flex-col gap-5">
-              {stage === 'request' && (
-                <InputField
-                  label="Business phone number" icon="phone_iphone" type="tel" name="phone"
-                  value={form.phone} onChange={update} placeholder="9876543210"
-                  required minLength={10} maxLength={15} autoComplete="tel" inputMode="tel"
-                />
-              )}
-
-              {stage === 'verify' && (
-                <>
-                  <p className="font-body text-body-md text-on-surface-variant">
-                    Enter the code sent to <strong className="text-on-surface">{form.phone}</strong>.
-                  </p>
-                  <InputField
-                    label="Verification code" icon="pin" type="text" name="code"
-                    value={form.code} onChange={update} placeholder="123456"
-                    required minLength={4} maxLength={9} autoComplete="one-time-code" inputMode="numeric"
-                  />
-                  <div className="flex gap-3">
-                    <button type="button" onClick={() => { setStage('request'); setChallengeId(''); setResendIn(0) }}
-                      className="flex-1 border border-outline-variant rounded-lg py-2 font-body text-label-md text-on-surface-variant hover:bg-surface-container-high transition-colors">
-                      Change phone
-                    </button>
-                    <button type="button" onClick={() => { if (!(resendIn > 0 || retryIn > 0 || status.pending)) sendOtp() }}
-                      disabled={resendIn > 0 || retryIn > 0 || status.pending}
-                      className="flex-1 border border-outline-variant rounded-lg py-2 font-body text-label-md text-secondary hover:bg-secondary/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                      {resendIn > 0 ? `Resend in ${resendIn}s` : 'Resend code'}
-                    </button>
-                  </div>
-                </>
-              )}
-
-              {stage === 'details' && (
-                <>
-                  <InputField label="Verified phone" icon="check_circle" type="tel" value={form.phone} readOnly />
-                  <InputField
-                    label="Your name" icon="person" name="name" value={form.name} onChange={update}
-                    placeholder="Full name" required minLength={2} maxLength={160} autoComplete="name"
-                  />
-                  <InputField
-                    label="Business email" icon="mail" type="email" name="email" value={form.email}
-                    onChange={update} placeholder="owner@yoursalon.com" required maxLength={320} autoComplete="email"
-                  >
-                    <p className="font-body text-label-sm text-outline mt-1">
-                      You'll sign in with this email at the management login.
-                    </p>
-                  </InputField>
-                  <InputField
-                    label="Password" icon="lock" type="password" name="password" value={form.password}
-                    onChange={update} placeholder="At least 8 characters" required minLength={8}
-                    maxLength={72} autoComplete="new-password"
-                  />
-                </>
-              )}
+              <InputField
+                label="Your name" icon="person" name="name" value={form.name} onChange={update}
+                placeholder="Full name" required minLength={2} maxLength={160} autoComplete="name"
+              />
+              <InputField
+                label="Business phone number" icon="phone_iphone" type="tel" name="phone"
+                value={form.phone} onChange={update} placeholder="9876543210"
+                required minLength={10} maxLength={15} autoComplete="tel" inputMode="tel"
+              />
+              <InputField
+                label="Business email" icon="mail" type="email" name="email" value={form.email}
+                onChange={update} placeholder="owner@yoursalon.com" required maxLength={320} autoComplete="email"
+              >
+                <p className="font-body text-label-sm text-outline mt-1">
+                  You'll sign in with this email at the management login.
+                </p>
+              </InputField>
+              <InputField
+                label="Password" icon="lock" type="password" name="password" value={form.password}
+                onChange={update} placeholder="At least 8 characters" required minLength={8}
+                maxLength={72} autoComplete="new-password"
+              />
 
               {status.error && <p className="font-body text-body-md text-error bg-error-container/20 rounded px-3 py-2" role="alert">{status.error}</p>}
               {status.success && <p className="font-body text-body-md text-[#A89048] bg-[rgba(168,144,72,0.1)] rounded px-3 py-2" role="status">{status.success}</p>}
@@ -200,8 +126,6 @@ export default function BusinessSignup() {
               <BrassButton type="submit" disabled={status.pending || retryIn > 0} size="lg" className="w-full">
                 {status.pending ? 'Please wait...'
                   : retryIn > 0 ? `Try again in ${retryIn}s`
-                  : stage === 'request' ? 'Send verification code'
-                  : stage === 'verify' ? 'Verify code'
                   : 'Create business account'}
               </BrassButton>
             </form>

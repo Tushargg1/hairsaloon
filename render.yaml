@@ -84,6 +84,8 @@ services:
       # logs. Set this to false once a real SmsGateway is configured.
       - key: OTP_ALLOW_CODE_LOGGING
         value: "true"
+      - key: OTP_REQUIRE_SIGNUP_VERIFICATION
+        value: "false"
 
       # --- First-run administrator ---------------------------------------
       # Enable once, sign in at /manage/login, then set this back to false and
