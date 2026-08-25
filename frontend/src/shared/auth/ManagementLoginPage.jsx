@@ -87,13 +87,14 @@ export default function ManagementLoginPage() {
   }
 
   return (
-    <main className="auth-page page-width">
-      <section className="auth-intro">
+    <main className="auth-page page-width relative overflow-hidden" style={{ backgroundImage: "url('/background-windows-img.png')", backgroundSize: 'cover', backgroundPosition: 'center' }}>
+      <div className="absolute inset-0 bg-background/80 z-0" />
+      <section className="auth-intro relative z-10">
         <p className="eyebrow">Management access</p>
         <h1>Run your salon securely.</h1>
         <p>Staff and platform administrators sign in here with their work email.</p>
       </section>
-      <section className="form-card" aria-labelledby="management-login-heading">
+      <section className="form-card relative z-10" aria-labelledby="management-login-heading">
         <h2 id="management-login-heading">Staff and admin login</h2>
         {user && !destinationFor(user.role, platformHost, user.subdomain) && (
           <p className="form-status error" role="alert">Your current account does not have management access. Sign in with an authorised staff or administrator account.</p>
