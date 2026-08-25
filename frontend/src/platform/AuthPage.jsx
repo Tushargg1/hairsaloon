@@ -7,7 +7,7 @@ import GlassPanel from '../shared/components/GlassPanel.jsx'
 import BrassButton from '../shared/components/BrassButton.jsx'
 import InputField from '../shared/components/InputField.jsx'
 
-const AUTH_BG = 'https://lh3.googleusercontent.com/aida-public/AB6AXuAlRph_NbANkQiitgPiFLyVCbA-xOK3Gr9WsN5qB2N-1j9PleSEIpMOhq4dls0GnT2gy0iyQVU_OMKlgRDKlOh9FpoSaV-FXEJ82dwhTj8QBLv02JDQDsLOe96tu7pe55ixfK7E3D9ZT4xU87tAte5pegfITWQy66DODqQxeE_C0S5s4ZB0aeCGINQzzFWidbQSp5iNyh0VyjiIvU1tbQ-PCnK3PMMnZSSjcPdMMs8GJV5utDtNIf0sLxDMu1RoqbsLGQ'
+const AUTH_BG = '/background-windows-img.png'
 
 function useCountdown(value, setValue) {
   useEffect(() => {
