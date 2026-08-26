@@ -312,13 +312,6 @@
   .dashboard-state { @apply mt-4; }
   .public-loading, .manager-loading { @apply font-body text-body-md text-on-surface-variant py-8 text-center; }
 
-  .success-card { @apply glass-panel rounded-xl p-10 text-center max-w-lg mx-auto; }
-  .success-card h1 { @apply font-display text-headline-md text-on-surface mb-3; }
-  .success-icon {
-    @apply brass-gradient w-16 h-16 rounded-full inline-flex items-center justify-center
-           text-3xl mb-4;
-  }
-
   /* --- Public salon page sections --- */
   .public-section { @apply py-12 px-4 max-w-[1280px] mx-auto w-full; }
   .public-section-heading { @apply mb-6; }
@@ -433,7 +426,6 @@
     width: 100%;
     min-width: 0;
   }
-  .choice-grid { @apply flex flex-wrap gap-2; }
 
   /* --- Multi-select dropdown --- */
   .multi-select { @apply relative; }
@@ -493,19 +485,6 @@
   .staff-subform:has(.multi-select[open]) {
     @apply relative z-50;
   }
-
-  /* --- Promotions manager --- */
-  .promotion-item { @apply glass-panel rounded-xl p-6 flex flex-col gap-3; }
-  .promotion-summary { @apply flex flex-wrap justify-between items-center gap-3; }
-  .promotion-summary h3 { @apply font-display text-title-lg text-secondary-fixed; }
-  .promotion-details { @apply grid grid-cols-2 md:grid-cols-4 gap-3; }
-  .promotion-details dt, .promotion-details strong {
-    @apply font-body text-label-sm text-outline block;
-  }
-  .promotion-details dd, .promotion-details span {
-    @apply font-body text-body-md text-on-surface;
-  }
-  .promotion-services { @apply font-body text-label-sm text-on-surface-variant; }
 
   /* --- Media manager --- */
   .media-gallery { @apply grid grid-cols-2 md:grid-cols-4 gap-4; }
@@ -688,13 +667,6 @@
 
   .walk-in-form { @apply glass-panel rounded-xl p-6 flex flex-col gap-4; }
   .walk-in-fields { @apply grid grid-cols-1 md:grid-cols-2 gap-4; }
-
-  /* --- Tables --- */
-  .table-scroll { @apply overflow-x-auto; }
-  .table-scroll table { @apply w-full text-left border-collapse; }
-  .table-scroll thead { @apply border-b border-outline-variant/30; }
-  .table-scroll th { @apply font-body text-label-md text-on-surface-variant py-2 px-3; }
-  .table-scroll td { @apply font-body text-body-md text-on-surface py-2 px-3 border-b border-outline-variant/10; }
 
   /* --- Backend status banner --- */
   .backend-status-banner {

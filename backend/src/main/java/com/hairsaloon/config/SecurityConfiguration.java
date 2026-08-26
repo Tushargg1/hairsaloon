@@ -26,6 +26,7 @@ public class SecurityConfiguration {
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtFilter,
+                                            CsrfOriginFilter csrfOriginFilter,
                                             ApiErrorWriter errors) throws Exception {
         return http
             .cors(Customizer.withDefaults())
@@ -63,7 +64,12 @@ public class SecurityConfiguration {
                     .hasRole("CUSTOMER")
                 .requestMatchers("/api/salon/bookings", "/api/salon/bookings/**")
                     .hasRole("CUSTOMER")
-                .anyRequest().permitAll())
+                // Remaining public reads, enumerated so the default can stay closed.
+                .requestMatchers(HttpMethod.GET, "/api/salon/profile", "/api/salon/services",
+                    "/api/salon/staff", "/api/salon/availability", "/api/salon/promotions")
+                    .permitAll()
+                // Fail closed: a new endpoint is denied until it is listed above.
+                .anyRequest().denyAll())
             .exceptionHandling(exceptions -> exceptions
                 .authenticationEntryPoint((request, response, exception) ->
                     errors.unauthorized(response))
@@ -73,6 +79,7 @@ public class SecurityConfiguration {
             .formLogin(form -> form.disable())
             .httpBasic(basic -> basic.disable())
             .logout(logout -> logout.disable())
+            .addFilterBefore(csrfOriginFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
             .build();
     }

@@ -15,7 +15,11 @@ public final class InputPolicy {
     private InputPolicy() {}
 
     public static String text(String input, int max, String field, boolean required) {
-        String value = input == null ? "" : input.replaceAll("(?s)<[^>]*>", "")
+        // Tags are stripped even when unterminated: "<img src=x onerror=..." with no
+        // closing bracket previously passed through untouched and became markup once
+        // rendered. Any leftover angle bracket is dropped so nothing can open a tag.
+        String value = input == null ? "" : input.replaceAll("(?s)<[^>]*(?:>|$)", "")
+            .replace("<", "").replace(">", "")
             .chars().filter(c -> !Character.isISOControl(c) || c == '\n' || c == '\t')
             .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
             .toString().trim();

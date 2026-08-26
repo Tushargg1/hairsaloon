@@ -58,6 +58,13 @@ public class TenantResolutionFilter extends OncePerRequestFilter {
             }
 
             if (platformHosts.contains(host)) {
+                // Tenant endpoints need a salon; without this they reach the handler
+                // with no tenant and throw, returning 500 and logging a stack trace
+                // for anyone who calls /api/salon/** on the platform host.
+                if (request.getRequestURI().startsWith("/api/salon/")) {
+                    salonNotFound(response);
+                    return;
+                }
                 filterChain.doFilter(request, response);
                 return;
             }

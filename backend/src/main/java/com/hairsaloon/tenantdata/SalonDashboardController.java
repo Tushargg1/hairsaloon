@@ -215,7 +215,8 @@ class SalonDashboardController {
         @Size(max = 2048) String mapsUrl) {}
 
     @JsonIgnoreProperties(ignoreUnknown = false)
-    record CategoryOrderRequest(@NotNull List<@Size(max = 20) String> categories) {}
+    record CategoryOrderRequest(
+        @NotNull @Size(max = 100) List<@Size(max = 20) String> categories) {}
     record CategoryOrderResponse(List<String> categories) {}
 
     @JsonIgnoreProperties(ignoreUnknown = false)
@@ -241,9 +242,10 @@ class SalonDashboardController {
                               @NotNull Boolean active) {}
 
     @JsonIgnoreProperties(ignoreUnknown = false)
-    record AssignmentRequest(@NotNull List<@Positive Long> serviceIds) {}
+    record AssignmentRequest(@NotNull @Size(max = 200) List<@Positive Long> serviceIds) {}
     @JsonIgnoreProperties(ignoreUnknown = false)
-    record WorkingHoursRequest(@NotNull @Valid List<WorkingHourRequest> workingHours) {}
+    record WorkingHoursRequest(
+        @NotNull @Valid @Size(max = 50) List<WorkingHourRequest> workingHours) {}
     @JsonIgnoreProperties(ignoreUnknown = false)
     record WorkingHourRequest(@Min(0) @Max(6) int dayOfWeek,
                               @NotNull LocalTime startTime,

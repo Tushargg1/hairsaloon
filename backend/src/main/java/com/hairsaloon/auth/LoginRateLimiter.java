@@ -1,5 +1,6 @@
 package com.hairsaloon.auth;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -117,6 +118,22 @@ class LoginRateLimiter {
             }
         }
         return new Decision(blocked, retry);
+    }
+
+    /**
+     * Client address for rate-limit buckets. `forward-headers-strategy: framework`
+     * makes {@code getRemoteAddr()} return the first X-Forwarded-For entry, which the
+     * caller supplies and can rotate to get a fresh bucket per request. Proxies append,
+     * so the last entry is the hop our own edge observed.
+     */
+    static String clientIp(HttpServletRequest request) {
+        String forwarded = request.getHeader("X-Forwarded-For");
+        if (forwarded != null && !forwarded.isBlank()) {
+            String[] hops = forwarded.split(",");
+            String last = hops[hops.length - 1].trim();
+            if (!last.isEmpty()) return last;
+        }
+        return request.getRemoteAddr();
     }
 
     private List<String> keys(String scope, String clientIp, String principal) {

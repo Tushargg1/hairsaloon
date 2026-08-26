@@ -60,7 +60,6 @@ class AuthChallenge {
     String getPhoneHash() { return phoneHash; }
     AuthChallengePurpose getPurpose() { return purpose; }
     String getCodeHash() { return codeHash; }
-    String getProofHash() { return proofHash; }
     Instant getExpiresAt() { return expiresAt; }
     Instant getProofExpiresAt() { return proofExpiresAt; }
     int getAttempts() { return attempts; }

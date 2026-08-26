@@ -34,7 +34,7 @@ class PrivilegedAuthController {
     @PostMapping("/login")
     ResponseEntity<AuthController.UserResponse> login(@Valid @RequestBody LoginRequest request,
                                                        HttpServletRequest httpRequest) {
-        String ip = httpRequest.getRemoteAddr();
+        String ip = LoginRateLimiter.clientIp(httpRequest);
         String principal = AuthService.normalize(request.email());
         LoginRateLimiter.Decision decision = rateLimiter.check("privileged-login", ip, principal);
         if (decision.blocked()) {

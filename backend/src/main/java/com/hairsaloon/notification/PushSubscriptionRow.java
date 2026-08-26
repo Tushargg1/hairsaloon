@@ -41,7 +41,4 @@ class PushSubscriptionRow {
         this.p256dh = p256dh; this.auth = auth; this.createdAt = now; this.updatedAt = now;
     }
 
-    void replaceKeys(String p256dh, String auth, Instant now) {
-        this.p256dh = p256dh; this.auth = auth; this.updatedAt = now;
-    }
 }

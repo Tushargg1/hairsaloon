@@ -47,7 +47,11 @@ class PlatformAdminBootstrap implements ApplicationRunner {
             if (existing.getRole() != UserRole.PLATFORM_ADMIN) {
                 throw new IllegalStateException("Bootstrap email belongs to a non-admin user");
             }
-        }, () -> users.save(new User("admin", email, passwordEncoder.encode(config.getPassword()),
+            // Idempotent: re-running bootstrap resets the password so a locked-out
+            // administrator can recover.
+            existing.setPasswordHash(passwordEncoder.encode(config.getPassword()));
+            users.save(existing);
+        }, () -> users.save(new User(email, email, passwordEncoder.encode(config.getPassword()),
             UserRole.PLATFORM_ADMIN)));
     }
 

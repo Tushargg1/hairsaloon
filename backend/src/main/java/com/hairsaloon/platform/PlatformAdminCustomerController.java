@@ -3,8 +3,6 @@ package com.hairsaloon.platform;
 import com.hairsaloon.auth.User;
 import com.hairsaloon.auth.UserRepository;
 import com.hairsaloon.auth.UserRole;
-import com.hairsaloon.tenantdata.Booking;
-import java.time.Instant;
 import java.util.List;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,8 +32,7 @@ class PlatformAdminCustomerController {
 
     @GetMapping("/{id}")
     CustomerDetailView customerDetail(@PathVariable long id) {
-        User user = users.findById(id).orElseThrow(() ->
-            new IllegalArgumentException("Customer not found"));
+        User user = users.findById(id).orElseThrow(() -> InputPolicy.notFound("customer"));
         List<BookingView> bookings = jdbc.query(
             """
             SELECT b.id, b.salon_id, s.name as salon_name, b.service_name_snapshot,

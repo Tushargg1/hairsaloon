@@ -11,9 +11,11 @@ spring:
   application:
     name: groomit-backend
   datasource:
-    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/hairsaloon}
-    username: ${POSTGRES_USER:hairsaloon}
-    password: ${POSTGRES_PASSWORD:hairsaloon}
+    # No defaults: an incomplete production environment must fail to start rather
+    # than silently connect somewhere else.
+    url: ${DATABASE_URL}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
   jpa:
     hibernate:
       ddl-auto: validate
@@ -33,12 +35,19 @@ server:
   port: ${SERVER_PORT:8080}
   shutdown: graceful
   forward-headers-strategy: framework
+  # Bean Validation runs after Jackson has already materialised the body, so the
+  # size limit has to be enforced by the container.
+  max-http-request-header-size: 16KB
+  tomcat:
+    max-swallow-size: 256KB
+    max-http-form-post-size: 256KB
+    max-http-response-header-size: 16KB
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health
   endpoint:
     health:
       probes:
