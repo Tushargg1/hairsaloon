@@ -19,6 +19,8 @@ const localHosts = new Set(['localhost', '127.0.0.1', '[::1]'])
 export function isPlatformHost(hostname = window.location.hostname) {
   const host = hostname.toLowerCase()
   if (localHosts.has(host)) return true
+  // Vercel's own hosts can never be a tenant subdomain, so serve the platform app there.
+  if (host.endsWith('.vercel.app')) return true
   if (host === 'groomit.in' || host === 'www.groomit.in') return true
   return host === baseDomain || host === `www.${baseDomain}`
 }

@@ -31,13 +31,13 @@ class OtpController {
                                                        HttpServletRequest httpRequest) {
         String principal = AuthService.normalizePhone(request.phone());
         String scope = "otp-request-" + request.purpose().name().toLowerCase();
-        enforce(scope, httpRequest.getRemoteAddr(), principal);
+        enforce(scope, LoginRateLimiter.clientIp(httpRequest), principal);
         try {
             OtpService.ChallengeResult result = otpService.request(request.phone(), request.purpose());
-            rateLimiter.recordFailure(scope, httpRequest.getRemoteAddr(), principal);
+            rateLimiter.recordFailure(scope, LoginRateLimiter.clientIp(httpRequest), principal);
             return ResponseEntity.accepted().body(result);
         } catch (AuthException failure) {
-            rateLimiter.recordFailure(scope, httpRequest.getRemoteAddr(), principal);
+            rateLimiter.recordFailure(scope, LoginRateLimiter.clientIp(httpRequest), principal);
             throw failure;
         }
     }
@@ -45,7 +45,7 @@ class OtpController {
     @PostMapping("/verify")
     OtpService.ProofResult verify(@Valid @RequestBody VerifyRequest request,
                                   HttpServletRequest httpRequest) {
-        String ip = httpRequest.getRemoteAddr();
+        String ip = LoginRateLimiter.clientIp(httpRequest);
         enforce("otp-verify", ip, request.challengeId());
         try {
             OtpService.ProofResult result = otpService.verify(request.challengeId(), request.code());
@@ -60,7 +60,7 @@ class OtpController {
     @PostMapping("/reset-password")
     ResponseEntity<Void> resetPassword(@Valid @RequestBody PasswordResetRequest request,
                                        HttpServletRequest httpRequest) {
-        String ip = httpRequest.getRemoteAddr();
+        String ip = LoginRateLimiter.clientIp(httpRequest);
         String principal = AuthService.normalizePhone(request.phone());
         enforce("password-reset", ip, principal);
         try {

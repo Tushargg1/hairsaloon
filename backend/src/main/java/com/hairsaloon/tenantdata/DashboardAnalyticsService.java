@@ -2,37 +2,21 @@ package com.hairsaloon.tenantdata;
 
 import com.hairsaloon.platform.InputPolicy;
 import com.hairsaloon.tenant.Salon;
-import com.hairsaloon.platform.InputPolicy;
 import com.hairsaloon.tenant.TenantContext;
-import com.hairsaloon.platform.InputPolicy;
 import java.math.BigDecimal;
-import com.hairsaloon.platform.InputPolicy;
 import java.math.RoundingMode;
-import com.hairsaloon.platform.InputPolicy;
 import java.time.Clock;
-import com.hairsaloon.platform.InputPolicy;
 import java.time.DayOfWeek;
-import com.hairsaloon.platform.InputPolicy;
 import java.time.LocalDate;
-import com.hairsaloon.platform.InputPolicy;
 import java.time.ZoneId;
-import com.hairsaloon.platform.InputPolicy;
 import java.time.temporal.ChronoUnit;
-import com.hairsaloon.platform.InputPolicy;
 import java.time.temporal.TemporalAdjusters;
-import com.hairsaloon.platform.InputPolicy;
 import java.util.ArrayList;
-import com.hairsaloon.platform.InputPolicy;
 import java.util.EnumMap;
-import com.hairsaloon.platform.InputPolicy;
 import java.util.LinkedHashMap;
-import com.hairsaloon.platform.InputPolicy;
 import java.util.List;
-import com.hairsaloon.platform.InputPolicy;
 import java.util.Map;
-import com.hairsaloon.platform.InputPolicy;
 import org.springframework.stereotype.Service;
-import com.hairsaloon.platform.InputPolicy;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -48,8 +32,6 @@ class DashboardAnalyticsService {
         this.clock = clock;
     }
 
-    @Transactional(readOnly = true)
-    Analytics currentSalonWeek(Salon salon) { return analytics(salon, null, null); }
 
     @Transactional(readOnly = true)
     Analytics analytics(Salon salon, LocalDate requestedStart, LocalDate requestedEnd) {

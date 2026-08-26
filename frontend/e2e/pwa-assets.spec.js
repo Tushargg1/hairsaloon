@@ -26,12 +26,10 @@ for (const [path, size] of [['/icon-192.png', 192], ['/icon-512.png', 512], ['/m
   })
 }
 
-test('favicon is a real multi-image ICO and service worker is served', async ({ request }) => {
-  const favicon = await request.get('/favicon.ico')
-  expect(favicon.ok()).toBeTruthy()
-  const icon = await favicon.body()
-  expect([...icon.subarray(0, 4)]).toEqual([0, 0, 1, 0])
-  expect(icon.readUInt16LE(4)).toBeGreaterThanOrEqual(3)
+test('svg icon and service worker are served', async ({ request }) => {
+  const icon = await request.get('/icon.svg')
+  expect(icon.ok()).toBeTruthy()
+  expect(await icon.text()).toContain('<svg')
 
   const worker = await request.get('/service-worker.js')
   expect(worker.ok()).toBeTruthy()

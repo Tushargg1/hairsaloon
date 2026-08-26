@@ -5,6 +5,7 @@ import com.hairsaloon.auth.AuthenticatedUser;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -56,9 +57,10 @@ class CustomerBookingController {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = false)
+    // Bounded so a single request cannot ask for an unreasonable chain.
     record CreateBookingRequest(@NotNull @Positive Long staffId,
                                 @Positive Long serviceId,
-                                List<@Positive Long> serviceIds,
+                                @Size(max = 10) List<@Positive Long> serviceIds,
                                 @NotNull LocalDateTime startDatetime,
                                 String promoCode) {
         /** Accepts either a single serviceId or an ordered serviceIds chain. */

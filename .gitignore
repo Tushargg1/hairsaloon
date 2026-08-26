@@ -15,6 +15,7 @@ frontend/playwright-report/
 !frontend/public/icon-192.png
 !frontend/public/icon-512.png
 !frontend/public/maskable-512.png
+!frontend/public/background-windows-img.png
 .playwright-mcp/
 .vercel
 .env*.local

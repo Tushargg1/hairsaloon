@@ -29,19 +29,30 @@ class AuthController {
     }
 
     @PostMapping("/signup")
-    ResponseEntity<UserResponse> signup(@Valid @RequestBody SignupRequest request) {
-        AuthService.AuthResult result = authService.signup(request.phone(), request.email(),
-            request.password(), request.verificationProof());
-        return ResponseEntity.status(HttpStatus.CREATED)
-            .header(HttpHeaders.SET_COOKIE, cookies.authenticated(result.token()).toString())
-            .body(UserResponse.from(result.user()));
+    ResponseEntity<UserResponse> signup(@Valid @RequestBody SignupRequest request,
+                                        HttpServletRequest httpRequest) {
+        String ip = LoginRateLimiter.clientIp(httpRequest);
+        String principal = AuthService.normalizePhone(request.phone());
+        enforceRateLimit("signup", ip, principal);
+        try {
+            AuthService.AuthResult result = authService.signup(request.phone(), request.email(),
+                request.password(), request.verificationProof());
+            rateLimiter.recordSuccess("signup", ip, principal);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                .header(HttpHeaders.SET_COOKIE, cookies.authenticated(result.token()).toString())
+                .body(UserResponse.from(result.user()));
+        } catch (AuthException failure) {
+            // Without this the endpoint allows unlimited account-existence probing.
+            rateLimiter.recordFailure("signup", ip, principal);
+            throw failure;
+        }
     }
 
     @PostMapping("/business-signup")
     ResponseEntity<UserResponse> businessSignup(
             @Valid @RequestBody BusinessSignupRequest request,
             HttpServletRequest httpRequest) {
-        String ip = httpRequest.getRemoteAddr();
+        String ip = LoginRateLimiter.clientIp(httpRequest);
         String principal = AuthService.normalizePhone(request.phone());
         enforceRateLimit("business-signup", ip, principal);
         try {
@@ -61,7 +72,7 @@ class AuthController {
     @PostMapping("/login")
     ResponseEntity<UserResponse> login(@Valid @RequestBody LoginRequest request,
                                         HttpServletRequest httpRequest) {
-        String ip = httpRequest.getRemoteAddr();
+        String ip = LoginRateLimiter.clientIp(httpRequest);
         String principal = AuthService.normalizePhone(request.phone());
         enforceRateLimit("customer-login", ip, principal);
         try {

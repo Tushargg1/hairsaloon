@@ -55,7 +55,7 @@ export default function VideoHero({ poster, alt = '' }) {
       {/* Static image shown immediately */}
       <img
         src={imgSrc}
-        alt=""
+        alt={alt}
         className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${imgLoaded ? 'opacity-100' : 'opacity-0'} ${!isMobile ? 'scale-[0.99]' : ''}`}
         onLoad={() => setImgLoaded(true)}
       />

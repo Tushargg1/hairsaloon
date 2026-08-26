@@ -2,15 +2,10 @@ package com.hairsaloon.tenantdata;
 
 import com.hairsaloon.platform.InputPolicy;
 import com.hairsaloon.tenant.Salon;
-import com.hairsaloon.platform.InputPolicy;
 import com.hairsaloon.tenant.SalonRepository;
-import com.hairsaloon.platform.InputPolicy;
 import com.hairsaloon.tenant.TenantContext;
-import com.hairsaloon.platform.InputPolicy;
 import java.util.List;
-import com.hairsaloon.platform.InputPolicy;
 import org.springframework.stereotype.Service;
-import com.hairsaloon.platform.InputPolicy;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service

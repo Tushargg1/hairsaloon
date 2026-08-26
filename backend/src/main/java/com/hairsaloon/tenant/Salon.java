@@ -179,8 +179,4 @@ public class Salon {
     public BigDecimal getLongitude() { return longitude; }
     public Instant getCreatedAt() { return createdAt; }
 
-    public void updateCoordinates(BigDecimal latitude, BigDecimal longitude) {
-        this.latitude = latitude;
-        this.longitude = longitude;
-    }
 }

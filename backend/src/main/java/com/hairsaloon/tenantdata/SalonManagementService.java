@@ -2,28 +2,17 @@ package com.hairsaloon.tenantdata;
 
 import com.hairsaloon.platform.InputPolicy;
 import com.hairsaloon.tenant.Salon;
-import com.hairsaloon.platform.InputPolicy;
 import com.hairsaloon.tenant.SalonRepository;
-import com.hairsaloon.platform.InputPolicy;
 import com.hairsaloon.tenant.TenantContext;
-import com.hairsaloon.platform.InputPolicy;
 import java.math.BigDecimal;
-import com.hairsaloon.platform.InputPolicy;
 import java.time.LocalDateTime;
-import com.hairsaloon.platform.InputPolicy;
 import java.time.LocalTime;
-import com.hairsaloon.platform.InputPolicy;
 import java.util.ArrayList;
-import com.hairsaloon.platform.InputPolicy;
 import java.util.Comparator;
-import com.hairsaloon.platform.InputPolicy;
 import java.util.HashSet;
-import com.hairsaloon.platform.InputPolicy;
 import java.util.List;
 import java.util.Objects;
-import com.hairsaloon.platform.InputPolicy;
 import org.springframework.stereotype.Service;
-import com.hairsaloon.platform.InputPolicy;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -242,12 +231,6 @@ class SalonManagementService {
     private Salon currentSalon() {
         long salonId = TenantContext.requireSalonId();
         return salons.findById(salonId).orElseThrow(() -> InputPolicy.notFound("salon"));
-    }
-
-    private SalonServiceEntity requireService(long id) {
-        long salonId = TenantContext.requireSalonId();
-        return services.findByIdAndSalonId(id, salonId).orElseThrow(() ->
-            InputPolicy.notFound("service"));
     }
 
     private SalonStaff requireStaff(long id) {

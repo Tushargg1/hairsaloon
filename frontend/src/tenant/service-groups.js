@@ -34,8 +34,3 @@ export function groupServicesByCategory(services = [], categoryOrder = []) {
   const rest = [...groups.entries()].sort(([a], [b]) => a.localeCompare(b))
   return [...ordered, ...rest, ...other]
 }
-
-/** Every category currently in use, already in price-list order. */
-export function categoryNames(services = [], categoryOrder = []) {
-  return groupServicesByCategory(services, categoryOrder).map(([name]) => name)
-}

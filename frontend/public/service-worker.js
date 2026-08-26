@@ -2,7 +2,6 @@ const CACHE_NAME = 'groomit-v4'
 const APP_SHELL = [
   '/',
   '/manifest.json',
-  '/favicon.ico',
   '/icon.svg',
   '/icon-192.png',
   '/icon-512.png',
@@ -10,7 +9,11 @@ const APP_SHELL = [
 ]
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)))
+  // Cached individually: addAll rejects the whole install if any single request
+  // fails, which silently disabled the service worker and push notifications.
+  event.waitUntil(caches.open(CACHE_NAME).then((cache) => Promise.allSettled(
+    APP_SHELL.map((url) => cache.add(url)),
+  )))
   self.skipWaiting()
 })
 

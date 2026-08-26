@@ -80,10 +80,10 @@ services:
         value: disabled
       - key: PUSH_ENABLED
         value: "false"
-      # No SMS provider is wired yet, so OTP codes are written to the service
-      # logs. Set this to false once a real SmsGateway is configured.
+      # Never true in production: it would put live verification codes in the
+      # service logs, so log access alone would allow account takeover.
       - key: OTP_ALLOW_CODE_LOGGING
-        value: "true"
+        value: "false"
       - key: OTP_REQUIRE_SIGNUP_VERIFICATION
         value: "false"
 

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { getAllSalons, salonKeys } from './salon-api.js'
+import { getAllSalons } from './salon-api.js'
 import { salonUrl } from './platform-config.js'
 import GlassPanel from '../shared/components/GlassPanel.jsx'
 import Icon from '../shared/components/Icon.jsx'
