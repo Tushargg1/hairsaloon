@@ -15,14 +15,14 @@ export default function Navbar() {
   const close = () => setMenuOpen(false)
 
   return (
-    <nav className="fixed top-0 w-full z-50 bg-[#230F08]/60 backdrop-blur-xl border-b border-outline-variant/30 shadow-md transition-all duration-300">
-      <div className="flex justify-between items-center w-full px-4 lg:px-[80px] py-2 max-w-[1280px] mx-auto h-16">
+    <nav className="fixed top-0 w-full z-50 bg-[#230F08]/40 backdrop-blur-md border-b border-outline-variant/20 shadow-sm transition-all duration-300">
+      <div className="flex justify-between items-center w-full px-4 lg:px-[80px] py-1 max-w-[1280px] mx-auto h-12">
         {/* Brand */}
-        <Link to="/" className="flex items-center gap-3" aria-label="Groomit home">
-          <div className="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center border border-outline-variant/50">
-            <span className="font-display font-bold text-secondary text-xl">G</span>
+        <Link to="/" className="flex items-center gap-2" aria-label="Groomit home">
+          <div className="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center border border-outline-variant/50">
+            <span className="font-display font-bold text-secondary text-lg">G</span>
           </div>
-          <span className="font-display text-secondary-fixed tracking-tight text-[28px]">Groomit</span>
+          <span className="font-display text-secondary-fixed tracking-tight text-[22px]">Groomit</span>
         </Link>
 
         {/* Desktop Nav */}

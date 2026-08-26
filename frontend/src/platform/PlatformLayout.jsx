@@ -6,7 +6,7 @@ export default function PlatformLayout() {
   return (
     <div className="min-h-screen flex flex-col bg-[#161005]">
       <Navbar />
-      <div className="flex-grow pt-16">
+      <div className="flex-grow pt-12">
         <Outlet />
       </div>
       <Footer />
