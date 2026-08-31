@@ -1134,11 +1134,11 @@
   }
   .review-read-more {
     @apply font-body text-[10px] uppercase self-start mt-auto;
-    color: #C8B084;
+    color: #7CA7C8;
     letter-spacing: 0.1em;
     cursor: pointer;
   }
-  .review-read-more:hover { color: #E8D0A4; }
+  .review-read-more:hover { color: #A8CCE8; }
   @keyframes review-marquee-scroll {
     from { transform: translateX(-50%); }
     to { transform: translateX(0); }
