@@ -51,7 +51,14 @@ public class TenantResolutionFilter extends OncePerRequestFilter {
         try {
             String host;
             try {
-                host = parseHost(request.getHeader("Host"));
+                // Tenant sites are served by Vercel and proxy /api to this backend, so the
+                // salon subdomain arrives as X-Forwarded-Host, not the (platform) Host.
+                String forwardedHost = request.getHeader("X-Forwarded-Host");
+                if (forwardedHost != null && forwardedHost.contains(",")) {
+                    forwardedHost = forwardedHost.split(",")[0];
+                }
+                host = parseHost(forwardedHost != null && !forwardedHost.isBlank()
+                    ? forwardedHost : request.getHeader("Host"));
             } catch (IllegalArgumentException invalidHost) {
                 salonNotFound(response);
                 return;
@@ -77,11 +84,10 @@ public class TenantResolutionFilter extends OncePerRequestFilter {
 
             Optional<Long> salonId = tenantResolver.resolveActiveSalonId(subdomain.get());
             if (salonId.isEmpty()) {
-                // A registered but pending or suspended salon gets its own code so the
-                // site can say it is not onboarded instead of claiming it does not exist.
+                // Registered but pending or suspended gets its own code so the site can
+                // show a "waiting for onboarding" notice instead of "not found".
                 if (tenantResolver.exists(subdomain.get())) {
-                    errors.notFound(response, "SALON_INACTIVE",
-                        "This salon is not open yet");
+                    errors.notFound(response, "SALON_INACTIVE", "This salon is not open yet");
                 } else {
                     salonNotFound(response);
                 }
