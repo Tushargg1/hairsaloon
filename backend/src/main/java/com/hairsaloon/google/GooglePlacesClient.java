@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.net.URI;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -55,11 +56,49 @@ public class GooglePlacesClient {
         if (!properties.enabled()) {
             throw new IllegalStateException("Google Places is not configured");
         }
-        String placeId = extractPlaceId(query);
+        // Short maps.app.goo.gl links carry no place data until they redirect, so expand
+        // them first, then look for a place_id or fall back to the readable name/query.
+        String resolved = expandShortLink(query);
+        String placeId = extractPlaceId(resolved);
         if (placeId == null) {
-            placeId = searchPlaceId(query);
+            placeId = searchPlaceId(searchText(resolved));
         }
         return details(placeId);
+    }
+
+    /** Follows a shortened Google Maps link to its full URL; returns input unchanged otherwise. */
+    private String expandShortLink(String query) {
+        if (query == null || !query.matches("(?i)https?://(maps\\.app\\.goo\\.gl|goo\\.gl|g\\.co)/.*")) {
+            return query;
+        }
+        try {
+            HttpClient follower = HttpClient.newBuilder()
+                .followRedirects(HttpClient.Redirect.NORMAL)
+                .connectTimeout(Duration.ofSeconds(10)).build();
+            HttpRequest request = HttpRequest.newBuilder(URI.create(query.trim()))
+                .timeout(Duration.ofSeconds(15)).GET().build();
+            HttpResponse<Void> response = follower.send(request, HttpResponse.BodyHandlers.discarding());
+            String finalUrl = response.uri() != null ? response.uri().toString() : query;
+            return finalUrl == null || finalUrl.isBlank() ? query : finalUrl;
+        } catch (Exception ignored) {
+            return query;
+        }
+    }
+
+    /** Turns an expanded Maps URL into a Text Search query using its readable place segment. */
+    private static String searchText(String url) {
+        if (url == null) return "";
+        java.util.regex.Matcher place = java.util.regex.Pattern
+            .compile("/maps/place/([^/@]+)").matcher(url);
+        if (place.find()) {
+            return URLDecoder.decode(place.group(1), StandardCharsets.UTF_8).replace('+', ' ');
+        }
+        java.util.regex.Matcher q = java.util.regex.Pattern
+            .compile("[?&]q=([^&]+)").matcher(url);
+        if (q.find()) {
+            return URLDecoder.decode(q.group(1), StandardCharsets.UTF_8).replace('+', ' ');
+        }
+        return url;
     }
 
     private String searchPlaceId(String text) throws Exception {
