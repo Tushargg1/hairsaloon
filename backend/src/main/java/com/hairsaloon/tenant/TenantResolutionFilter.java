@@ -17,6 +17,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.CorsUtils;
 import org.springframework.web.cors.CorsProcessor;
 import org.springframework.web.cors.DefaultCorsProcessor;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -61,6 +62,11 @@ public class TenantResolutionFilter extends OncePerRequestFilter {
         // runs, so apply the CORS headers here or the browser discards those responses.
         CorsConfiguration cors = corsSource.getCorsConfiguration(request);
         if (cors != null && !corsProcessor.processRequest(cors, request, response)) {
+            return;
+        }
+        // A CORS preflight carries no tenant and is fully answered above; continuing into
+        // tenant resolution would 404 it and strip the just-written CORS headers.
+        if (CorsUtils.isPreFlightRequest(request)) {
             return;
         }
         try {
