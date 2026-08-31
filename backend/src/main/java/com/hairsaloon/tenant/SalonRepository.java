@@ -13,6 +13,9 @@ public interface SalonRepository extends JpaRepository<Salon, Long> {
         @Param("status") SalonStatus status
     );
 
+    @Query("select salon.id from Salon salon where salon.subdomain = :subdomain")
+    Optional<Long> findIdBySubdomain(@Param("subdomain") String subdomain);
+
     boolean existsBySubdomain(String subdomain);
 
     boolean existsByOwnerId(Long ownerId);

@@ -24,6 +24,11 @@ public class TenantResolver {
         return salonRepository.existsBySubdomain(subdomain);
     }
 
+    /** Any registered salon regardless of status; used to render the not-onboarded page. */
+    public Optional<Long> resolveAnySalonId(String subdomain) {
+        return salonRepository.findIdBySubdomain(subdomain);
+    }
+
     /** Called when an administrator changes a salon's status, so the change is immediate. */
     public void evict(String subdomain) {
         try {

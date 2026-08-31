@@ -4,6 +4,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import useAuth from '../shared/auth/useAuth.js'
 import PushOptIn from '../shared/components/PushOptIn.jsx'
 import Icon from '../shared/components/Icon.jsx'
+import VideoHero from '../shared/components/VideoHero.jsx'
 import { getSalonProfile, mapsUrl, tenantKeys } from './tenant-api.js'
 import { tenantNameFallback } from './tenant-host.js'
 
@@ -135,9 +136,12 @@ export default function TenantLayout() {
   const [menuOpen, setMenuOpen] = useState(false)
   const closeMenu = () => setMenuOpen(false)
   const profileQuery = useQuery({ queryKey: tenantKeys.profile, queryFn: getSalonProfile })
-  // Registered but pending or suspended: the whole tenant site collapses to a notice,
-  // so no services, offers or prices are shown.
-  const notOnboarded = profileQuery.error?.response?.data?.error === 'SALON_INACTIVE'
+  // Pending or suspended: the profile still loads (with status) but the site collapses to
+  // a contact page, so no services, offers or prices are shown. The 404 fallback covers
+  // older backends that returned SALON_INACTIVE without a body.
+  const profileStatus = profileQuery.data?.status
+  const notOnboarded = (profileStatus && profileStatus !== 'ACTIVE')
+    || profileQuery.error?.response?.data?.error === 'SALON_INACTIVE'
   const salonName = profileQuery.data?.name || profileQuery.data?.salonName || tenantNameFallback()
   const addressLine = [profileQuery.data?.address, profileQuery.data?.city].filter(Boolean).join(', ')
   const pushEligible = user?.role === 'CUSTOMER' || user?.role === 'SALON_OWNER'
@@ -171,14 +175,16 @@ export default function TenantLayout() {
             <span className="font-display text-secondary-fixed tracking-tight text-xl">{salonName}</span>
           </NavLink>
 
-          <div className="hidden md:flex items-center gap-6">
-            <NavLink to="/about" className={navLinkClass}>About Us</NavLink>
-            <NavLink to="/team" className={navLinkClass}>Our Team</NavLink>
-            <NavLink to="/contact" className={navLinkClass}>Contact Us</NavLink>
-            <a href="/#services" className="font-body text-label-md text-on-surface-variant hover:text-secondary-fixed transition-colors">Services</a>
-            <a href="/#book-slot" className="font-body text-label-md text-on-surface-variant hover:text-secondary-fixed transition-colors">Book</a>
-            <a href="/#reviews" className="font-body text-label-md text-on-surface-variant hover:text-secondary-fixed transition-colors">Reviews</a>
-          </div>
+          {!notOnboarded && (
+            <div className="hidden md:flex items-center gap-6">
+              <NavLink to="/about" className={navLinkClass}>About Us</NavLink>
+              <NavLink to="/team" className={navLinkClass}>Our Team</NavLink>
+              <NavLink to="/contact" className={navLinkClass}>Contact Us</NavLink>
+              <a href="/#services" className="font-body text-label-md text-on-surface-variant hover:text-secondary-fixed transition-colors">Services</a>
+              <a href="/#book-slot" className="font-body text-label-md text-on-surface-variant hover:text-secondary-fixed transition-colors">Book</a>
+              <a href="/#reviews" className="font-body text-label-md text-on-surface-variant hover:text-secondary-fixed transition-colors">Reviews</a>
+            </div>
+          )}
 
           <div className="hidden md:flex items-center gap-3">
             {logoutError && (
@@ -199,14 +205,16 @@ export default function TenantLayout() {
             )}
           </div>
 
-          <button className="md:hidden text-secondary p-1" onClick={() => setMenuOpen((open) => !open)}
-            aria-expanded={menuOpen} aria-controls="tenant-mobile-menu"
-            aria-label={menuOpen ? 'Close menu' : 'Open menu'}>
-            <Icon name={menuOpen ? 'close' : 'menu'} filled />
-          </button>
+          {!notOnboarded && (
+            <button className="md:hidden text-secondary p-1" onClick={() => setMenuOpen((open) => !open)}
+              aria-expanded={menuOpen} aria-controls="tenant-mobile-menu"
+              aria-label={menuOpen ? 'Close menu' : 'Open menu'}>
+              <Icon name={menuOpen ? 'close' : 'menu'} filled />
+            </button>
+          )}
         </div>
 
-        {menuOpen && (
+        {menuOpen && !notOnboarded && (
           <div id="tenant-mobile-menu"
             className="md:hidden border-t border-outline-variant/30 bg-[#230F08]/70 backdrop-blur-xl px-4 py-4 flex flex-col gap-4">
             <NavLink to="/about" onClick={closeMenu} className="font-body text-label-md text-on-surface-variant">About Us</NavLink>
@@ -242,9 +250,20 @@ export default function TenantLayout() {
 
       <div className="flex-grow pt-16" id="main-content" tabIndex="-1">
         {notOnboarded ? (
-          <main className="state-page" aria-live="polite">
-            <h1 className="font-display text-headline-sm text-on-surface mb-3">{salonName}</h1>
-            <p>This salon is still waiting for onboarding.</p>
+          <main className="flex flex-col" aria-live="polite">
+            <section className="relative w-full -mt-16 min-h-[85vh] md:min-h-[92vh] flex items-end overflow-hidden">
+              <VideoHero poster={profileQuery.data?.logoUrl} alt={salonName} />
+              <div className="relative z-10 w-full max-w-[1280px] mx-auto px-4 lg:px-6 pb-[5vh]">
+                <h1 className="font-display text-display-lg-mobile md:text-display-lg text-on-surface mb-4">{salonName}</h1>
+                <p className="font-body text-body-lg text-on-surface-variant mb-6">This salon is still waiting for onboarding.</p>
+                {profileQuery.data?.whatsappUrl && (
+                  <a href={profileQuery.data.whatsappUrl} target="_blank" rel="noreferrer" className="vintage-cta">
+                    <Icon name="chat" className="text-[18px]" />
+                    Contact the salon
+                  </a>
+                )}
+              </div>
+            </section>
           </main>
         ) : (
           <Outlet context={{ profile: profileQuery.data, profileQuery, salonName }} />
@@ -254,23 +273,27 @@ export default function TenantLayout() {
       {/* Footer */}
       <footer className="salon-footer">
         <div className="salon-footer-grid">
-          <div>
-            <p className="salon-footer-name">{salonName}</p>
-            {profileQuery.data?.description && (
-              <p className="salon-footer-line">{profileQuery.data.description}</p>
-            )}
-            <a href="/#book-slot" className="salon-footer-cta">Book a Slot</a>
-          </div>
+          {!notOnboarded && (
+            <div>
+              <p className="salon-footer-name">{salonName}</p>
+              {profileQuery.data?.description && (
+                <p className="salon-footer-line">{profileQuery.data.description}</p>
+              )}
+              <a href="/#book-slot" className="salon-footer-cta">Book a Slot</a>
+            </div>
+          )}
 
-          <div>
-            <h2 className="salon-footer-title">Salon</h2>
-            <p className="salon-footer-line"><NavLink to="/about">About Us</NavLink></p>
-            <p className="salon-footer-line"><NavLink to="/team">Our Team</NavLink></p>
-            <p className="salon-footer-line"><NavLink to="/contact">Contact Us</NavLink></p>
-            <p className="salon-footer-line"><a href="/#services">Services</a></p>
-            <p className="salon-footer-line"><a href="/#book-slot">Book a Slot</a></p>
-            <p className="salon-footer-line"><a href="/#reviews">Reviews</a></p>
-          </div>
+          {!notOnboarded && (
+            <div>
+              <h2 className="salon-footer-title">Salon</h2>
+              <p className="salon-footer-line"><NavLink to="/about">About Us</NavLink></p>
+              <p className="salon-footer-line"><NavLink to="/team">Our Team</NavLink></p>
+              <p className="salon-footer-line"><NavLink to="/contact">Contact Us</NavLink></p>
+              <p className="salon-footer-line"><a href="/#services">Services</a></p>
+              <p className="salon-footer-line"><a href="/#book-slot">Book a Slot</a></p>
+              <p className="salon-footer-line"><a href="/#reviews">Reviews</a></p>
+            </div>
+          )}
 
           <div>
             <h2 className="salon-footer-title">Visit Us</h2>

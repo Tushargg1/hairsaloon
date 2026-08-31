@@ -98,9 +98,14 @@ public class TenantResolutionFilter extends OncePerRequestFilter {
 
             Optional<Long> salonId = tenantResolver.resolveActiveSalonId(subdomain.get());
             if (salonId.isEmpty()) {
-                // Registered but pending or suspended gets its own code so the site can
-                // show a "waiting for onboarding" notice instead of "not found".
-                if (tenantResolver.exists(subdomain.get())) {
+                // Registered but pending or suspended: only the public profile is served,
+                // carrying status=SUSPENDED/PENDING so the site can render a contact page.
+                // Everything else (services, bookings, ...) stays 404 so nothing is shown.
+                Optional<Long> inactiveId = tenantResolver.resolveAnySalonId(subdomain.get());
+                if (inactiveId.isPresent() && isProfileRequest(request)) {
+                    TenantContext.setSalonId(inactiveId.get());
+                    filterChain.doFilter(request, response);
+                } else if (inactiveId.isPresent()) {
                     errors.notFound(response, "SALON_INACTIVE", "This salon is not open yet");
                 } else {
                     salonNotFound(response);
@@ -173,6 +178,11 @@ public class TenantResolutionFilter extends OncePerRequestFilter {
         if (port > 65535) {
             throw new IllegalArgumentException("Invalid Host port");
         }
+    }
+
+    private static boolean isProfileRequest(HttpServletRequest request) {
+        return "GET".equalsIgnoreCase(request.getMethod())
+            && request.getRequestURI().equals("/api/salon/profile");
     }
 
     private void salonNotFound(HttpServletResponse response) throws IOException {

@@ -22,6 +22,7 @@ class PublicSalonController {
         return new ProfileResponse(salon.getId(), salon.getSubdomain(), salon.getName(),
             salon.getDescription(), salon.getAddress(), salon.getCity(), salon.getPhone(),
             salon.getEmail(), salon.getLogoUrl(), salon.getTimezone(),
+            salon.getStatus().name(),
             salon.getCancellationWindowMinutes(), salon.getInstagramUrl(),
             salon.getFacebookUrl(), salon.getWhatsappUrl(), salon.getYoutubeUrl(),
             salon.getMapsUrl(), salon.getCategoryOrder(), profile.photos().stream()
@@ -48,7 +49,8 @@ class PublicSalonController {
 
     record ProfileResponse(Long id, String subdomain, String name, String description,
                            String address, String city, String phone, String email,
-                           String logoUrl, String timezone, int cancellationWindowMinutes,
+                           String logoUrl, String timezone, String status,
+                           int cancellationWindowMinutes,
                            String instagramUrl, String facebookUrl, String whatsappUrl,
                            String youtubeUrl, String mapsUrl, List<String> categoryOrder,
                            List<PhotoResponse> photos) {}

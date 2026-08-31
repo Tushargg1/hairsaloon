@@ -76,7 +76,7 @@ class SalonPhase5IntegrationTest {
             .andExpect(jsonPath("$.photos[0].sortOrder").value(1))
             .andExpect(jsonPath("$.photos[1].sortOrder").value(2))
             .andExpect(jsonPath("$.ownerId").doesNotExist())
-            .andExpect(jsonPath("$.status").doesNotExist());
+            .andExpect(jsonPath("$.status").value("ACTIVE"));
         mockMvc.perform(get("/api/salon/services").header("Host", owner.host()))
             .andExpect(status().isOk()).andExpect(jsonPath("$[0].name").value("Cut"))
             .andExpect(jsonPath("$[1]").doesNotExist())
