@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { NavLink, Outlet } from 'react-router-dom'
+import { Link, NavLink, Outlet } from 'react-router-dom'
 import Icon from '../../shared/components/Icon.jsx'
 
 const NAV_ITEMS = [
@@ -34,12 +34,19 @@ export default function DashboardLayout() {
             <p className="font-body text-label-md text-secondary tracking-wider uppercase mb-1">Owner dashboard</p>
             <h1 className="font-display text-headline-md text-on-surface">Salon Management</h1>
           </div>
-          <button type="button" onClick={() => setTheme(light ? 'dark' : 'light')}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg border border-outline-variant/50 font-body text-label-sm text-on-surface-variant hover:text-secondary transition-colors"
-            aria-pressed={light} aria-label={`Switch to ${light ? 'dark' : 'light'} theme`}>
-            <Icon name={light ? 'dark_mode' : 'light_mode'} className="text-[18px]" />
-            {light ? 'Dark' : 'Light'}
-          </button>
+          <div className="flex items-center gap-2">
+            <Link to="/"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg border border-outline-variant/50 font-body text-label-sm text-on-surface-variant hover:text-secondary transition-colors">
+              <Icon name="visibility" className="text-[18px]" />
+              Customer view
+            </Link>
+            <button type="button" onClick={() => setTheme(light ? 'dark' : 'light')}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg border border-outline-variant/50 font-body text-label-sm text-on-surface-variant hover:text-secondary transition-colors"
+              aria-pressed={light} aria-label={`Switch to ${light ? 'dark' : 'light'} theme`}>
+              <Icon name={light ? 'dark_mode' : 'light_mode'} className="text-[18px]" />
+              {light ? 'Dark' : 'Light'}
+            </button>
+          </div>
         </div>
 
         {/* Navigation */}

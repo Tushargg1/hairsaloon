@@ -104,10 +104,13 @@ public class TenantResolutionFilter extends OncePerRequestFilter {
                 Optional<Long> inactiveId = tenantResolver.resolveAnySalonId(subdomain.get());
                 if (inactiveId.isEmpty()) {
                     salonNotFound(response);
-                } else if (isProfileRequest(request) || isPlatformRequest(request)) {
-                    // Serve the public profile (for the contact page) and let platform/auth
-                    // routes through so the owner can still sign in and see their request.
-                    // Only /api/salon/** data stays hidden until the salon is active.
+                } else if (isProfileRequest(request) || isPlatformRequest(request)
+                        || isDashboardRequest(request)) {
+                    // Serve the public profile (for the contact page), let platform/auth
+                    // routes through so the owner can sign in, and allow the owner
+                    // dashboard (still guarded by verifyOwner) so they can manage a salon
+                    // that is pending or suspended. Only the public /api/salon reads that
+                    // customers see stay hidden until the salon is active.
                     TenantContext.setSalonId(inactiveId.get());
                     filterChain.doFilter(request, response);
                 } else {
@@ -190,6 +193,10 @@ public class TenantResolutionFilter extends OncePerRequestFilter {
 
     private static boolean isPlatformRequest(HttpServletRequest request) {
         return request.getRequestURI().startsWith("/api/platform/");
+    }
+
+    private static boolean isDashboardRequest(HttpServletRequest request) {
+        return request.getRequestURI().startsWith("/api/salon/dashboard/");
     }
 
     private void salonNotFound(HttpServletResponse response) throws IOException {
