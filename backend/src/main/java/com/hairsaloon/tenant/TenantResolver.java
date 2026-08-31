@@ -20,6 +20,19 @@ public class TenantResolver {
         this.properties = properties;
     }
 
+    public boolean exists(String subdomain) {
+        return salonRepository.existsBySubdomain(subdomain);
+    }
+
+    /** Called when an administrator changes a salon's status, so the change is immediate. */
+    public void evict(String subdomain) {
+        try {
+            redisTemplate.delete(CACHE_PREFIX + subdomain);
+        } catch (RuntimeException redisUnavailable) {
+            // Without a cache entry the next request reads the database anyway.
+        }
+    }
+
     public Optional<Long> resolveActiveSalonId(String subdomain) {
         String key = CACHE_PREFIX + subdomain;
         Optional<Long> cached = readCacheSafely(key);

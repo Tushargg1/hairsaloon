@@ -77,7 +77,14 @@ public class TenantResolutionFilter extends OncePerRequestFilter {
 
             Optional<Long> salonId = tenantResolver.resolveActiveSalonId(subdomain.get());
             if (salonId.isEmpty()) {
-                salonNotFound(response);
+                // A registered but pending or suspended salon gets its own code so the
+                // site can say it is not onboarded instead of claiming it does not exist.
+                if (tenantResolver.exists(subdomain.get())) {
+                    errors.notFound(response, "SALON_INACTIVE",
+                        "This salon is not open yet");
+                } else {
+                    salonNotFound(response);
+                }
                 return;
             }
 

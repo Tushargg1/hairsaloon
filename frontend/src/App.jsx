@@ -12,6 +12,7 @@ import BusinessSignup from './platform/BusinessSignup.jsx'
 import AdminApprovals from './platform/AdminApprovals.jsx'
 import AdminSalons from './platform/AdminSalons.jsx'
 import AdminCustomers from './platform/AdminCustomers.jsx'
+import AdminAddSalon from './platform/AdminAddSalon.jsx'
 import ProfilePage from './platform/ProfilePage.jsx'
 import PricingPage from './platform/PricingPage.jsx'
 import AboutPage from './platform/AboutPage.jsx'
@@ -43,6 +44,7 @@ function PlatformRoutes() {
         </Route>
         <Route element={<RequireRole roles="PLATFORM_ADMIN" unauthenticatedTo="/manage/login" loadingFallback={loadingFallback} />}>
           <Route path="admin/approvals" element={<AdminApprovals />} />
+          <Route path="admin/add-salon" element={<AdminAddSalon />} />
           <Route path="admin/salons" element={<AdminSalons />} />
           <Route path="admin/customers" element={<AdminCustomers />} />
         </Route>

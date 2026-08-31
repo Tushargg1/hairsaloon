@@ -9,6 +9,7 @@ export default function AdminNav() {
   return (
     <div className="flex items-center gap-2 mb-6 border-b border-outline-variant/30 pb-4">
       <NavLink to="/admin/approvals" className={linkClass}>Approvals</NavLink>
+      <NavLink to="/admin/add-salon" className={linkClass}>Add Salon</NavLink>
       <NavLink to="/admin/salons" className={linkClass}>Salons</NavLink>
       <NavLink to="/admin/customers" className={linkClass}>Customers</NavLink>
     </div>

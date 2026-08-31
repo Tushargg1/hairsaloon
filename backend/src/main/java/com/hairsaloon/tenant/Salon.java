@@ -122,6 +122,10 @@ public class Salon {
         status = SalonStatus.ACTIVE;
     }
 
+    public void suspend() {
+        status = SalonStatus.SUSPENDED;
+    }
+
     public void updateProfile(String name, String description, String address, String city,
                               String phone, String email, String logoUrl, String timezone,
                               int cancellationWindowMinutes) {
