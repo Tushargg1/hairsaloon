@@ -59,6 +59,12 @@ public class TenantResolutionFilter extends OncePerRequestFilter {
                 salonNotFound(response);
                 return;
             }
+            if (request.getHeader("X-Debug") != null) {
+                System.out.println("TENANT_DEBUG serverName=" + request.getServerName()
+                    + " host=" + request.getHeader("Host")
+                    + " xfh=" + request.getHeader("X-Forwarded-Host")
+                    + " resolved=" + host);
+            }
 
             if (platformHosts.contains(host)) {
                 // Tenant endpoints need a salon; without this they reach the handler
