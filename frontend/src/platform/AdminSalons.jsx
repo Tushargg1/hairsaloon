@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query'
-import { getAllSalons } from './salon-api.js'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { errorMessage, getAllSalons, setSalonActive } from './salon-api.js'
 import { salonUrl } from './platform-config.js'
 import GlassPanel from '../shared/components/GlassPanel.jsx'
 import Icon from '../shared/components/Icon.jsx'
@@ -7,6 +7,11 @@ import AdminNav from './AdminNav.jsx'
 
 export default function AdminSalons() {
   const salonsQuery = useQuery({ queryKey: ['admin-salons'], queryFn: getAllSalons })
+  const queryClient = useQueryClient()
+  const statusMutation = useMutation({
+    mutationFn: ({ id, active }) => setSalonActive(id, active),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-salons'] }),
+  })
 
   function formatDate(iso) {
     if (!iso) return '—'
@@ -26,6 +31,10 @@ export default function AdminSalons() {
           <span className="font-body text-label-sm text-on-surface-variant">Total salons</span>
         </div>
       </div>
+
+      {statusMutation.isError && (
+        <p className="font-body text-body-sm text-error mb-4" role="alert">{errorMessage(statusMutation.error)}</p>
+      )}
 
       {salonsQuery.isLoading ? (
         <div className="flex flex-col gap-4">{[1, 2, 3].map((i) => <div key={i} className="glass-surface metallic-border rounded-lg h-20 animate-pulse" />)}</div>
@@ -53,6 +62,14 @@ export default function AdminSalons() {
                 <p className="font-body text-label-sm text-on-surface-variant">Registered</p>
                 <p className="font-body text-body-sm text-on-surface">{formatDate(salon.createdAt)}</p>
               </div>
+              {salon.status !== 'PENDING' && (
+                <button type="button"
+                  onClick={() => statusMutation.mutate({ id: salon.id, active: salon.status !== 'ACTIVE' })}
+                  disabled={statusMutation.isPending && statusMutation.variables?.id === salon.id}
+                  className="flex-shrink-0 font-body text-label-sm px-3 py-1.5 rounded border border-outline-variant/50 text-on-surface-variant hover:text-secondary-fixed hover:border-secondary/50 transition-colors disabled:opacity-50">
+                  {salon.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
+                </button>
+              )}
               <a href={salonUrl(salon.subdomain)} target="_blank" rel="noreferrer"
                 className="flex-shrink-0 text-secondary hover:text-secondary-fixed transition-colors">
                 <Icon name="open_in_new" className="text-[18px]" />

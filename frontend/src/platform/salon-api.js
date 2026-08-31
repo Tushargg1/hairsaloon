@@ -45,6 +45,12 @@ export async function approveSalon(id) {
   return data
 }
 
+export async function setSalonActive(id, active) {
+  const action = active ? 'activate' : 'suspend'
+  const { data } = await apiClient.post(`/api/platform/admin/salons/${id}/${action}`)
+  return data
+}
+
 export async function createOwner(payload) {
   const { data } = await apiClient.post('/api/platform/admin/owners', payload)
   return data

@@ -10,6 +10,7 @@ import com.hairsaloon.platform.SalonDtos.SubdomainResponse;
 import com.hairsaloon.tenant.Salon;
 import com.hairsaloon.tenant.SalonRepository;
 import com.hairsaloon.tenant.SalonStatus;
+import com.hairsaloon.tenant.TenantResolver;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Locale;
@@ -24,10 +25,13 @@ class PlatformSalonService {
     private static final BigDecimal ZERO_RATING = BigDecimal.ZERO.setScale(2);
     private final SalonRepository salons;
     private final PlatformSalonQueryRepository queries;
+    private final TenantResolver tenantResolver;
 
-    PlatformSalonService(SalonRepository salons, PlatformSalonQueryRepository queries) {
+    PlatformSalonService(SalonRepository salons, PlatformSalonQueryRepository queries,
+                         TenantResolver tenantResolver) {
         this.salons = salons;
         this.queries = queries;
+        this.tenantResolver = tenantResolver;
     }
 
     private static final double DEFAULT_RADIUS_KM = 10;
@@ -164,14 +168,38 @@ class PlatformSalonService {
 
     @Transactional
     SalonResponse approve(long id) {
-        Salon salon = salons.findById(id).orElseThrow(() ->
-            new PlatformApiException(HttpStatus.NOT_FOUND, "SALON_NOT_FOUND",
-                "Salon was not found"));
+        Salon salon = requireSalon(id);
         if (salon.getStatus() != SalonStatus.PENDING) {
             throw InputPolicy.conflict("INVALID_SALON_STATUS", "Only pending salons can be approved");
         }
         salon.approve();
-        return response(salons.saveAndFlush(salon));
+        return saveAndEvict(salon);
+    }
+
+    @Transactional
+    SalonResponse activate(long id) {
+        Salon salon = requireSalon(id);
+        salon.approve();
+        return saveAndEvict(salon);
+    }
+
+    @Transactional
+    SalonResponse suspend(long id) {
+        Salon salon = requireSalon(id);
+        salon.suspend();
+        return saveAndEvict(salon);
+    }
+
+    private Salon requireSalon(long id) {
+        return salons.findById(id).orElseThrow(() ->
+            new PlatformApiException(HttpStatus.NOT_FOUND, "SALON_NOT_FOUND",
+                "Salon was not found"));
+    }
+
+    private SalonResponse saveAndEvict(Salon salon) {
+        SalonResponse saved = response(salons.saveAndFlush(salon));
+        tenantResolver.evict(salon.getSubdomain());
+        return saved;
     }
 
     private static SalonResponse response(Salon salon) {

@@ -33,6 +33,16 @@ class PlatformAdminSalonController {
         return service.approve(id);
     }
 
+    @PostMapping("/{id}/activate")
+    SalonResponse activate(@PathVariable long id) {
+        return service.activate(id);
+    }
+
+    @PostMapping("/{id}/suspend")
+    SalonResponse suspend(@PathVariable long id) {
+        return service.suspend(id);
+    }
+
     @GetMapping
     List<AdminSalonView> allSalons() {
         return salons.findAll().stream().map(AdminSalonView::from).toList();

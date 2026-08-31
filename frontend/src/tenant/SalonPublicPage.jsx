@@ -138,8 +138,10 @@ export default function SalonPublicPage() {
         </section>
       )}
 
+      {/* Price list + Booking side by side on desktop */}
+      <div className="w-full md:grid md:grid-cols-2 md:gap-6 md:items-start md:max-w-[1280px] md:mx-auto md:px-6">
       {/* Price list */}
-      <section className="py-12 px-4 lg:px-6 w-full" id="services">
+      <section className="py-12 px-4 lg:px-0 w-full" id="services">
         <div className="price-board">
           <div className="price-board-frame" />
           <span className="price-rivet top-3 left-3" />
@@ -221,10 +223,11 @@ export default function SalonPublicPage() {
       </section>
 
       {/* Slot booking */}
-      <section className="pb-12 px-4 lg:px-6 w-full" id="book-slot">
+      <section className="pb-12 px-4 lg:px-0 w-full md:pt-12" id="book-slot">
         <SlotBookingWidget selectedIds={selectedIds} onToggleService={toggleService}
           salonName={salonName} />
       </section>
+      </div>
 
       {/* Gallery */}
       {photos.length > 0 && (
