@@ -22,7 +22,7 @@ public class CorsSecurityConfiguration {
         configuration.setAllowedOriginPatterns(properties.getAllowedOriginPatterns());
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of(
-            "Authorization", "Content-Type", "Idempotency-Key", "X-XSRF-TOKEN"));
+            "Authorization", "Content-Type", "Idempotency-Key", "X-XSRF-TOKEN", "X-Tenant-Host"));
         configuration.setExposedHeaders(List.of("Retry-After"));
         configuration.setMaxAge(3600L);
 

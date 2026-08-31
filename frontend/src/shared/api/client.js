@@ -58,6 +58,16 @@ const apiClient = axios.create({
   timeout: 12000,
 })
 
+// The API is reached at a fixed host that cannot see the salon subdomain, so the
+// tenant site tells the backend which salon by sending its own host.
+apiClient.interceptors.request.use((config) => {
+  if (typeof window !== 'undefined') {
+    config.headers = config.headers || {}
+    config.headers['X-Tenant-Host'] = window.location.host
+  }
+  return config
+})
+
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {

@@ -51,19 +51,16 @@ public class TenantResolutionFilter extends OncePerRequestFilter {
         try {
             String host;
             try {
-                // Tenant sites are served by Vercel and proxy /api to this backend. The
-                // salon subdomain arrives as X-Forwarded-Host; forward-headers-strategy
-                // applies it to getServerName() before this filter runs.
-                host = parseHost(request.getServerName());
+                // Tenant sites are served by Vercel, which proxies /api here but drops the
+                // salon subdomain, so the SPA sends it as X-Tenant-Host. This only selects
+                // which public data is shown; owners are still checked by verifyOwner and
+                // customers only ever see their own rows, so the value need not be trusted.
+                String tenantHost = request.getHeader("X-Tenant-Host");
+                host = parseHost(tenantHost != null && !tenantHost.isBlank()
+                    ? tenantHost : request.getServerName());
             } catch (IllegalArgumentException invalidHost) {
                 salonNotFound(response);
                 return;
-            }
-            if (request.getHeader("X-Debug") != null) {
-                System.out.println("TENANT_DEBUG serverName=" + request.getServerName()
-                    + " host=" + request.getHeader("Host")
-                    + " xfh=" + request.getHeader("X-Forwarded-Host")
-                    + " resolved=" + host);
             }
 
             if (platformHosts.contains(host)) {
