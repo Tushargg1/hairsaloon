@@ -83,7 +83,7 @@ export default function VintageReviews({ salonName }) {
 
   return (
     <div className="booking-frame">
-      <div className="booking-plate">
+      <div className="booking-plate !min-h-0">
         <div className="booking-texture" />
 
         <div className="vintage-heading-row relative z-10">

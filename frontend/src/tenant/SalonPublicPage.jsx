@@ -244,7 +244,7 @@ export default function SalonPublicPage() {
             <h2 className="vintage-heading gold-gradient-text">Gallery</h2>
             <span className="vintage-heading-rule" />
           </div>
-          <div className="relative w-full h-[300px] sm:h-[340px]">
+          <div className="relative w-full h-[260px] sm:h-[320px]">
             <DepthCarousel
               items={galleryItems}
               depth={160}
@@ -257,8 +257,8 @@ export default function SalonPublicPage() {
               blur={6}
               autoplay
               loop
-              cardWidth={300}
-              cardHeight={300}
+              cardWidth={280}
+              cardHeight={260}
               radius={16}
               tint="#1a1206"
               duration={1150}
@@ -272,7 +272,7 @@ export default function SalonPublicPage() {
       )}
 
       {/* Reviews */}
-      <section className="pb-12 px-4 lg:px-6 w-full md:max-w-2xl md:mx-auto" id="reviews">
+      <section className="pt-4 pb-12 px-4 lg:px-6 w-full md:max-w-2xl md:mx-auto" id="reviews">
         <VintageReviews salonName={salonName} />
       </section>
 
