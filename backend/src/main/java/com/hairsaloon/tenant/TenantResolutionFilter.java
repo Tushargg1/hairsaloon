@@ -39,6 +39,11 @@ public class TenantResolutionFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
+        // CORS preflights carry no tenant and must reach Spring's CORS handler with the
+        // response headers intact; resolving a tenant here would 404 them first.
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            return true;
+        }
         String path = request.getRequestURI();
         return path.equals("/actuator/health") || path.startsWith("/actuator/health/");
     }
