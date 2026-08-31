@@ -1103,6 +1103,34 @@
   .review-plate-item-body { @apply font-body text-xs leading-relaxed; color: #B8A074; }
   .review-plate-item-body a:hover { color: #C8B084; }
 
+  /* Auto-scrolling review marquee (loops left to right, pauses on hover). */
+  .review-marquee { @apply relative overflow-hidden w-full; }
+  .review-marquee::before,
+  .review-marquee::after {
+    content: '';
+    @apply absolute top-0 bottom-0 w-12 z-10 pointer-events-none;
+  }
+  .review-marquee::before { left: 0; background: linear-gradient(to right, #0D0C0A, transparent); }
+  .review-marquee::after { right: 0; background: linear-gradient(to left, #0D0C0A, transparent); }
+  .review-marquee-track {
+    @apply flex gap-4 w-max;
+    animation: review-marquee-scroll 40s linear infinite;
+  }
+  .review-marquee:hover .review-marquee-track { animation-play-state: paused; }
+  .review-marquee-card {
+    @apply flex flex-col gap-2 shrink-0 p-4 rounded-lg;
+    width: 280px;
+    border: 1px solid #2A251D;
+    background-color: rgba(20, 18, 6, 0.4);
+  }
+  @keyframes review-marquee-scroll {
+    from { transform: translateX(-50%); }
+    to { transform: translateX(0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .review-marquee-track { animation: none; @apply flex-wrap justify-center w-full; }
+  }
+
   .offer-row {
     @apply flex flex-col items-center gap-1 py-4;
     border-top: 1px solid #2A251D;

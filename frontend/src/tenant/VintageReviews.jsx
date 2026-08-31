@@ -39,6 +39,22 @@ export default function VintageReviews({ salonName }) {
   const googleRating = Number(profile.data?.googleRating || 0)
   const googleCount = Number(profile.data?.googleReviewCount || 0)
 
+  // One shape for the scrolling marquee: native reviews first, then Google ones.
+  const allReviews = [
+    ...list.map((review) => ({
+      rating: review.rating,
+      body: review.comment,
+      author: reviewerName(review.reviewer),
+      meta: reviewDate(review.createdAt),
+    })),
+    ...googleList.map((review) => ({
+      rating: review.rating,
+      body: review.text,
+      author: review.authorName || 'Google user',
+      meta: review.relativeTime,
+    })),
+  ]
+
   return (
     <div className="booking-frame">
       <div className="booking-plate">
@@ -67,66 +83,45 @@ export default function VintageReviews({ salonName }) {
                 </p>
               </div>
 
-              {list.length ? (
-                <div>
-                  {list.map((review) => (
-                    <article className="review-plate-item" key={review.id}>
-                      <div className="review-plate-item-head">
-                        <span className="review-plate-item-stars" aria-label={`${review.rating} out of 5`}>
-                          {stars(review.rating)}
-                        </span>
-                        {reviewDate(review.createdAt) && (
-                          <time className="review-plate-item-date" dateTime={review.createdAt}>
-                            {reviewDate(review.createdAt)}
-                          </time>
+              {googleRating > 0 && (
+                <div className="text-center mb-6">
+                  <p className="card-kicker">From Google</p>
+                  <p className="review-plate-score">{googleRating.toFixed(1)}</p>
+                  <p className="review-plate-stars" aria-label={`${googleRating.toFixed(1)} out of 5 on Google`}>
+                    {stars(googleRating)}
+                  </p>
+                  <p className="review-plate-count">
+                    {googleCount} Google {googleCount === 1 ? 'review' : 'reviews'}
+                  </p>
+                </div>
+              )}
+
+              {allReviews.length ? (
+                <div className="review-marquee">
+                  {/* Track is duplicated so the left-to-right loop is seamless. */}
+                  <div className="review-marquee-track">
+                    {[...allReviews, ...allReviews].map((review, index) => (
+                      <article className="review-marquee-card" key={index} aria-hidden={index >= allReviews.length}>
+                        <div className="review-plate-item-head">
+                          <span className="review-plate-item-stars" aria-label={`${review.rating} out of 5`}>
+                            {stars(review.rating)}
+                          </span>
+                          {review.meta && (
+                            <span className="review-plate-item-date">{review.meta}</span>
+                          )}
+                        </div>
+                        {review.body && (
+                          <p className="review-plate-item-body">&ldquo;{review.body}&rdquo;</p>
                         )}
-                      </div>
-                      {review.comment && (
-                        <p className="review-plate-item-body">&ldquo;{review.comment}&rdquo;</p>
-                      )}
-                      <p className="review-plate-item-date">{reviewerName(review.reviewer)}</p>
-                    </article>
-                  ))}
+                        <p className="review-plate-item-date">{review.author}</p>
+                      </article>
+                    ))}
+                  </div>
                 </div>
               ) : (
                 <p className="booking-note">No reviews yet. They appear after completed appointments.</p>
               )}
             </>
-          )}
-
-          {(googleRating > 0 || googleList.length > 0) && (
-            <div className="mt-8">
-              <div className="text-center mb-6">
-                <p className="card-kicker">From Google</p>
-                {googleRating > 0 && (
-                  <>
-                    <p className="review-plate-score">{googleRating.toFixed(1)}</p>
-                    <p className="review-plate-stars" aria-label={`${googleRating.toFixed(1)} out of 5 on Google`}>
-                      {stars(googleRating)}
-                    </p>
-                    <p className="review-plate-count">
-                      {googleCount} Google {googleCount === 1 ? 'review' : 'reviews'}
-                    </p>
-                  </>
-                )}
-              </div>
-              {googleList.map((review, index) => (
-                <article className="review-plate-item" key={index}>
-                  <div className="review-plate-item-head">
-                    <span className="review-plate-item-stars" aria-label={`${review.rating} out of 5`}>
-                      {stars(review.rating)}
-                    </span>
-                    {review.relativeTime && (
-                      <span className="review-plate-item-date">{review.relativeTime}</span>
-                    )}
-                  </div>
-                  {review.text && (
-                    <p className="review-plate-item-body">&ldquo;{review.text}&rdquo;</p>
-                  )}
-                  <p className="review-plate-item-date">{review.authorName || 'Google user'}</p>
-                </article>
-              ))}
-            </div>
           )}
         </div>
 
