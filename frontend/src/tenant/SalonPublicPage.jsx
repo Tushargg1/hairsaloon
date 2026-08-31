@@ -245,7 +245,7 @@ export default function SalonPublicPage() {
       )}
 
       {/* Reviews */}
-      <section className="pb-12 px-4 lg:px-6 w-full" id="reviews">
+      <section className="pb-12 px-4 lg:px-6 w-full md:max-w-2xl md:mx-auto" id="reviews">
         <VintageReviews salonName={salonName} />
       </section>
 
