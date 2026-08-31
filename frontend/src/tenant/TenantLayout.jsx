@@ -150,6 +150,16 @@ export default function TenantLayout() {
       || profileQuery.error?.response?.data?.error === 'SALON_INACTIVE')
   const salonName = profileQuery.data?.name || profileQuery.data?.salonName || tenantNameFallback()
   const addressLine = [profileQuery.data?.address, profileQuery.data?.city].filter(Boolean).join(', ')
+  // Onboarding contact: WhatsApp the salon with a Groomit-branded note so the owner sees
+  // that customers are trying to book through Groomit. Uses the WhatsApp number if set,
+  // otherwise the salon phone; the message names the signed-in user when available.
+  const rawContactPhone = String(profileQuery.data?.phone || '').replace(/[^\d]/g, '')
+  // wa.me needs a country code; a bare 10-digit Indian number gets 91 prefixed.
+  const contactPhone = rawContactPhone.length === 10 ? `91${rawContactPhone}` : rawContactPhone
+  const contactMessage = `Hi ${salonName}, I ${user?.name ? `(${user.name}) ` : ''}tried to book an appointment with you on Groomit, but your salon isn't registered on Groomit yet. Please join Groomit so I can book online.`
+  const contactWhatsappUrl = contactPhone
+    ? `https://wa.me/${contactPhone}?text=${encodeURIComponent(contactMessage)}`
+    : null
   const pushEligible = user?.role === 'CUSTOMER' || user?.role === 'SALON_OWNER'
 
   async function handleLogout() {
@@ -262,8 +272,8 @@ export default function TenantLayout() {
               <div className="relative z-10 w-full max-w-[1280px] mx-auto px-4 lg:px-6 pb-[5vh]">
                 <h1 className="font-display text-display-lg-mobile md:text-display-lg text-on-surface mb-4">{salonName}</h1>
                 <p className="font-body text-body-lg text-on-surface-variant mb-6">This salon is still waiting for onboarding.</p>
-                {profileQuery.data?.whatsappUrl && (
-                  <a href={profileQuery.data.whatsappUrl} target="_blank" rel="noreferrer" className="vintage-cta">
+                {contactWhatsappUrl && (
+                  <a href={contactWhatsappUrl} target="_blank" rel="noreferrer" className="vintage-cta">
                     <Icon name="chat" className="text-[18px]" />
                     Contact the salon
                   </a>
@@ -271,6 +281,10 @@ export default function TenantLayout() {
               </div>
             </section>
           </main>
+        ) : (!managementRoute && profileQuery.isLoading) ? (
+          // Wait for the salon status before mounting public pages, so an inactive salon
+          // does not briefly fire (and 404) the services/reviews/availability calls.
+          <main className="state-page" aria-live="polite">Loading…</main>
         ) : (
           <Outlet context={{ profile: profileQuery.data, profileQuery, salonName }} />
         )}
