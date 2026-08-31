@@ -11,9 +11,14 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.CorsProcessor;
+import org.springframework.web.cors.DefaultCorsProcessor;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 @Component
@@ -25,13 +30,17 @@ public class TenantResolutionFilter extends OncePerRequestFilter {
 
     private final TenantResolver tenantResolver;
     private final ApiErrorWriter errors;
+    private final CorsConfigurationSource corsSource;
+    private final CorsProcessor corsProcessor = new DefaultCorsProcessor();
     private final String baseDomain;
     private final Set<String> platformHosts;
 
     public TenantResolutionFilter(TenantResolver tenantResolver, ApiErrorWriter errors,
+                                  @Qualifier("corsConfigurationSource") CorsConfigurationSource corsSource,
                                   TenantProperties properties) {
         this.tenantResolver = tenantResolver;
         this.errors = errors;
+        this.corsSource = corsSource;
         this.baseDomain = parseHost(properties.getBaseDomain());
         this.platformHosts = new HashSet<>();
         properties.getPlatformHosts().forEach(host -> platformHosts.add(parseHost(host)));
@@ -39,11 +48,6 @@ public class TenantResolutionFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        // CORS preflights carry no tenant and must reach Spring's CORS handler with the
-        // response headers intact; resolving a tenant here would 404 them first.
-        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
-            return true;
-        }
         String path = request.getRequestURI();
         return path.equals("/actuator/health") || path.startsWith("/actuator/health/");
     }
@@ -53,6 +57,12 @@ public class TenantResolutionFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
         TenantContext.clear();
+        // This filter can end the request with a 404 before Spring Security's CorsFilter
+        // runs, so apply the CORS headers here or the browser discards those responses.
+        CorsConfiguration cors = corsSource.getCorsConfiguration(request);
+        if (cors != null && !corsProcessor.processRequest(cors, request, response)) {
+            return;
+        }
         try {
             String host;
             try {

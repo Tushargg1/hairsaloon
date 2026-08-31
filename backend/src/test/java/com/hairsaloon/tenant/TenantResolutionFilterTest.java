@@ -32,7 +32,7 @@ class TenantResolutionFilterTest {
         properties.setBaseDomain("yoursite.com");
         properties.setPlatformHosts(List.of("yoursite.com", "www.yoursite.com", "api.yoursite.com"));
         filter = new TenantResolutionFilter(resolver,
-            new ApiErrorWriter(new ObjectMapper()), properties);
+            new ApiErrorWriter(new ObjectMapper()), request -> null, properties);
     }
 
     @AfterEach
