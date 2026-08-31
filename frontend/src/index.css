@@ -1117,12 +1117,28 @@
     animation: review-marquee-scroll 40s linear infinite;
   }
   .review-marquee:hover .review-marquee-track { animation-play-state: paused; }
+  .review-marquee-card.is-expanded { height: auto; }
   .review-marquee-card {
-    @apply flex flex-col gap-2 shrink-0 p-4 rounded-lg;
+    @apply flex flex-col gap-2 shrink-0 p-4 rounded-lg overflow-hidden;
     width: 280px;
+    height: 180px;
     border: 1px solid #2A251D;
     background-color: rgba(20, 18, 6, 0.4);
   }
+  .review-marquee-body {
+    @apply font-body text-xs leading-relaxed overflow-hidden;
+    color: #B8A074;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+  }
+  .review-read-more {
+    @apply font-body text-[10px] uppercase self-start mt-auto;
+    color: #C8B084;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+  }
+  .review-read-more:hover { color: #E8D0A4; }
   @keyframes review-marquee-scroll {
     from { transform: translateX(-50%); }
     to { transform: translateX(0); }

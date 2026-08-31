@@ -238,13 +238,13 @@ export default function SalonPublicPage() {
 
       {/* Gallery */}
       {galleryItems.length > 0 && (
-        <section className="py-12 px-4 lg:px-6 w-full" id="gallery">
-          <div className="vintage-heading-row">
+        <section className="pt-8 pb-4 px-4 lg:px-6 w-full" id="gallery">
+          <div className="vintage-heading-row mb-2">
             <span className="vintage-heading-rule" />
             <h2 className="vintage-heading gold-gradient-text">Gallery</h2>
             <span className="vintage-heading-rule" />
           </div>
-          <div className="relative w-full h-[440px] md:h-[520px]">
+          <div className="relative w-full h-[420px]">
             <DepthCarousel
               items={galleryItems}
               depth={160}

@@ -1,13 +1,42 @@
 import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
 import {
   errorMessage, getPublicGoogleReviews, getSalonProfile, getPublicReviews, tenantKeys,
 } from './tenant-api.js'
 
 const PAGE_SIZE = 6
+const READ_MORE_CHARS = 150
 
 const stars = (rating) => {
   const score = Math.max(0, Math.min(5, Math.round(Number(rating) || 0)))
   return '\u2605'.repeat(score) + '\u2606'.repeat(5 - score)
+}
+
+function ReviewCard({ review, ariaHidden }) {
+  const [expanded, setExpanded] = useState(false)
+  const long = (review.body || '').length > READ_MORE_CHARS
+  return (
+    <article className={`review-marquee-card ${expanded ? 'is-expanded' : ''}`} aria-hidden={ariaHidden}>
+      <div className="review-plate-item-head">
+        <span className="review-plate-item-stars" aria-label={`${review.rating} out of 5`}>
+          {stars(review.rating)}
+        </span>
+        {review.meta && <span className="review-plate-item-date">{review.meta}</span>}
+      </div>
+      {review.body && (
+        <p className={expanded ? 'review-plate-item-body' : 'review-marquee-body'}>
+          &ldquo;{review.body}&rdquo;
+        </p>
+      )}
+      {long && (
+        <button type="button" className="review-read-more"
+          onClick={() => setExpanded((v) => !v)}>
+          {expanded ? 'Read less' : 'Read more'}
+        </button>
+      )}
+      <p className="review-plate-item-date">{review.author}</p>
+    </article>
+  )
 }
 const reviewDate = (value) => {
   const date = new Date(value)
@@ -32,9 +61,6 @@ export default function VintageReviews({ salonName }) {
   })
 
   const list = reviews.data?.content || []
-  const summary = reviews.data?.summary || {}
-  const average = Number(summary.averageRating || 0)
-  const count = Number(summary.totalReviews || 0)
   const googleList = googleReviews.data || []
   const googleRating = Number(profile.data?.googleRating || 0)
   const googleCount = Number(profile.data?.googleReviewCount || 0)
@@ -73,16 +99,6 @@ export default function VintageReviews({ salonName }) {
             <p className="booking-note is-error">{errorMessage(reviews.error)}</p>
           ) : (
             <>
-              <div className="text-center mb-6">
-                <p className="review-plate-score">{average.toFixed(1)}</p>
-                <p className="review-plate-stars" aria-label={`${average.toFixed(1)} out of 5`}>
-                  {stars(average)}
-                </p>
-                <p className="review-plate-count">
-                  {count} {count === 1 ? 'review' : 'reviews'}
-                </p>
-              </div>
-
               {googleRating > 0 && (
                 <div className="text-center mb-6">
                   <p className="card-kicker">From Google</p>
@@ -101,20 +117,7 @@ export default function VintageReviews({ salonName }) {
                   {/* Track is duplicated so the left-to-right loop is seamless. */}
                   <div className="review-marquee-track">
                     {[...allReviews, ...allReviews].map((review, index) => (
-                      <article className="review-marquee-card" key={index} aria-hidden={index >= allReviews.length}>
-                        <div className="review-plate-item-head">
-                          <span className="review-plate-item-stars" aria-label={`${review.rating} out of 5`}>
-                            {stars(review.rating)}
-                          </span>
-                          {review.meta && (
-                            <span className="review-plate-item-date">{review.meta}</span>
-                          )}
-                        </div>
-                        {review.body && (
-                          <p className="review-plate-item-body">&ldquo;{review.body}&rdquo;</p>
-                        )}
-                        <p className="review-plate-item-date">{review.author}</p>
-                      </article>
+                      <ReviewCard key={index} review={review} ariaHidden={index >= allReviews.length} />
                     ))}
                   </div>
                 </div>
