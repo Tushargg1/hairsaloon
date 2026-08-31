@@ -103,7 +103,7 @@ export default function SalonPublicPage() {
 
       {/* Offers */}
       {promotionsQuery.data?.length > 0 && (
-        <section className="pt-12 px-4 lg:px-6 w-full" id="offers">
+        <section className="pt-12 px-4 lg:px-6 w-full md:max-w-2xl md:mx-auto" id="offers">
           <div className="booking-frame">
             <div className="booking-plate !min-h-0">
               <div className="booking-texture" />
