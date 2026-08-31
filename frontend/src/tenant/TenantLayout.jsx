@@ -254,7 +254,7 @@ export default function TenantLayout() {
 
       <QuickNavPill />
 
-      <div className="flex-grow pt-16" id="main-content" tabIndex="-1">
+      <div className="flex-grow pt-12" id="main-content" tabIndex="-1">
         {notOnboarded ? (
           <main className="flex flex-col" aria-live="polite">
             <section className="relative w-full -mt-16 min-h-[85vh] md:min-h-[92vh] flex items-end overflow-hidden">
