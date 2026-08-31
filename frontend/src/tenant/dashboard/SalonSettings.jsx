@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import MediaManager from './MediaManager.jsx'
+import GoogleProfileConnect from './GoogleProfileConnect.jsx'
 import {
   errorMessage, getDashboardMedia, getDashboardProfile, tenantKeys, updateDashboardProfile,
   uploadSalonImage,
@@ -185,6 +186,8 @@ export default function SalonSettings() {
         {save.isPending ? 'Saving…' : 'Save details'}
       </button>
     </form>
+
+    <GoogleProfileConnect />
 
     <MediaManager />
   </section>

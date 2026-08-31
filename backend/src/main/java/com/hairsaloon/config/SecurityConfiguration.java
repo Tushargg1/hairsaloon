@@ -66,7 +66,8 @@ public class SecurityConfiguration {
                     .hasRole("CUSTOMER")
                 // Remaining public reads, enumerated so the default can stay closed.
                 .requestMatchers(HttpMethod.GET, "/api/salon/profile", "/api/salon/services",
-                    "/api/salon/staff", "/api/salon/availability", "/api/salon/promotions")
+                    "/api/salon/staff", "/api/salon/availability", "/api/salon/promotions",
+                    "/api/salon/google-reviews")
                     .permitAll()
                 // Fail closed: a new endpoint is denied until it is listed above.
                 .anyRequest().denyAll())

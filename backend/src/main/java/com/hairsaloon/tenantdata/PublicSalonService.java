@@ -15,15 +15,22 @@ class PublicSalonService {
     private final SalonServiceRepository services;
     private final SalonStaffRepository staff;
     private final StaffServiceRepository assignments;
+    private final GoogleReviewRepository googleReviews;
 
     PublicSalonService(SalonRepository salons, SalonPhotoRepository photos,
                        SalonServiceRepository services, SalonStaffRepository staff,
-                       StaffServiceRepository assignments) {
+                       StaffServiceRepository assignments, GoogleReviewRepository googleReviews) {
         this.salons = salons;
         this.photos = photos;
         this.services = services;
         this.staff = staff;
         this.assignments = assignments;
+        this.googleReviews = googleReviews;
+    }
+
+    @Transactional(readOnly = true)
+    List<GoogleReview> googleReviews() {
+        return googleReviews.findAllBySalonIdOrderBySortOrderAsc(TenantContext.requireSalonId());
     }
 
     @Transactional(readOnly = true)

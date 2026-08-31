@@ -85,6 +85,21 @@ public class Salon {
     @Column(precision = 9, scale = 6)
     private BigDecimal longitude;
 
+    @Column(name = "google_place_id", columnDefinition = "TEXT")
+    private String googlePlaceId;
+
+    @Column(name = "google_rating", precision = 2, scale = 1)
+    private BigDecimal googleRating;
+
+    @Column(name = "google_review_count")
+    private Integer googleReviewCount;
+
+    @Column(name = "google_maps_uri", columnDefinition = "TEXT")
+    private String googleMapsUri;
+
+    @Column(name = "google_synced_at")
+    private Instant googleSyncedAt;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -140,6 +155,16 @@ public class Salon {
         this.cancellationWindowMinutes = cancellationWindowMinutes;
     }
 
+    /** Applies the aggregate values imported from a Google Business profile. */
+    public void applyGoogleProfile(String placeId, BigDecimal rating, Integer reviewCount,
+                                   String mapsUri, Instant syncedAt) {
+        this.googlePlaceId = placeId;
+        this.googleRating = rating;
+        this.googleReviewCount = reviewCount;
+        this.googleMapsUri = mapsUri;
+        this.googleSyncedAt = syncedAt;
+    }
+
     public void updateSocialLinks(String instagramUrl, String facebookUrl, String whatsappUrl,
                                   String youtubeUrl, String mapsUrl) {
         this.instagramUrl = instagramUrl;
@@ -181,6 +206,17 @@ public class Salon {
     public int getCancellationWindowMinutes() { return cancellationWindowMinutes; }
     public BigDecimal getLatitude() { return latitude; }
     public BigDecimal getLongitude() { return longitude; }
+    public String getGooglePlaceId() { return googlePlaceId; }
+    public BigDecimal getGoogleRating() { return googleRating; }
+    public Integer getGoogleReviewCount() { return googleReviewCount; }
+    public String getGoogleMapsUri() { return googleMapsUri; }
+    public Instant getGoogleSyncedAt() { return googleSyncedAt; }
     public Instant getCreatedAt() { return createdAt; }
+
+    /** Address/phone are also set from a Google sync when the owner accepts them. */
+    public void applyGoogleContact(String address, String phone) {
+        if (address != null && !address.isBlank()) this.address = address;
+        if (phone != null && !phone.isBlank()) this.phone = phone;
+    }
 
 }

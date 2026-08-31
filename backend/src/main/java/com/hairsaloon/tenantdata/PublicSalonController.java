@@ -25,9 +25,19 @@ class PublicSalonController {
             salon.getStatus().name(),
             salon.getCancellationWindowMinutes(), salon.getInstagramUrl(),
             salon.getFacebookUrl(), salon.getWhatsappUrl(), salon.getYoutubeUrl(),
-            salon.getMapsUrl(), salon.getCategoryOrder(), profile.photos().stream()
+            salon.getMapsUrl(), salon.getGoogleRating(), salon.getGoogleReviewCount(),
+            salon.getGoogleMapsUri(), salon.getCategoryOrder(), profile.photos().stream()
                 .map(photo -> new PhotoResponse(photo.getId(), photo.getPhotoUrl(),
                     photo.getAltText(), photo.getSortOrder())).toList());
+    }
+
+    @GetMapping("/google-reviews")
+    List<GoogleReviewResponse> googleReviews() {
+        return service.googleReviews().stream()
+            .map(review -> new GoogleReviewResponse(review.getAuthorName(),
+                review.getAuthorPhotoUrl(), review.getRating(), review.getText(),
+                review.getRelativeTime()))
+            .toList();
     }
 
     @GetMapping("/services")
@@ -52,8 +62,11 @@ class PublicSalonController {
                            String logoUrl, String timezone, String status,
                            int cancellationWindowMinutes,
                            String instagramUrl, String facebookUrl, String whatsappUrl,
-                           String youtubeUrl, String mapsUrl, List<String> categoryOrder,
-                           List<PhotoResponse> photos) {}
+                           String youtubeUrl, String mapsUrl, BigDecimal googleRating,
+                           Integer googleReviewCount, String googleMapsUri,
+                           List<String> categoryOrder, List<PhotoResponse> photos) {}
+    record GoogleReviewResponse(String authorName, String authorPhotoUrl, short rating,
+                                String text, String relativeTime) {}
     record PhotoResponse(Long id, String photoUrl, String altText, int sortOrder) {}
     record ServiceResponse(Long id, String name, int durationMinutes, BigDecimal price,
                            String category) {}

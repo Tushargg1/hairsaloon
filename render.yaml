@@ -87,6 +87,14 @@ services:
       - key: OTP_REQUIRE_SIGNUP_VERIFICATION
         value: "false"
 
+      # --- Google Business profile import --------------------------------
+      # Places API (New) key with billing enabled. Set in the dashboard; never
+      # committed. The monthly cap stays ~10% under the free-tier allotment.
+      - key: GOOGLE_PLACES_API_KEY
+        sync: false
+      - key: GOOGLE_PLACES_MONTHLY_CAP
+        value: "9000"
+
       # --- First-run administrator ---------------------------------------
       # Enable once, sign in at /manage/login, then set this back to false and
       # clear the password before redeploying.

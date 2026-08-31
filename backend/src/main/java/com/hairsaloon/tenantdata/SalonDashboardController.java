@@ -33,16 +33,34 @@ import org.springframework.web.bind.annotation.RestController;
 class SalonDashboardController {
     private final SalonOwnershipVerifier ownership;
     private final SalonManagementService service;
+    private final GoogleProfileService google;
 
-    SalonDashboardController(SalonOwnershipVerifier ownership, SalonManagementService service) {
+    SalonDashboardController(SalonOwnershipVerifier ownership, SalonManagementService service,
+                             GoogleProfileService google) {
         this.ownership = ownership;
         this.service = service;
+        this.google = google;
     }
 
     @GetMapping("/profile")
     ProfileResponse profile(@AuthenticationPrincipal AuthenticatedUser user) {
         ownership.verifyOwner(user);
         return profileResponse(service.profile());
+    }
+
+    @PostMapping("/google/preview")
+    GoogleProfileService.Preview previewGoogle(@AuthenticationPrincipal AuthenticatedUser user,
+                                               @Valid @RequestBody GoogleRequest request) {
+        ownership.verifyOwner(user);
+        return google.preview(request.googleUrl());
+    }
+
+    @PostMapping("/google/apply")
+    ProfileResponse applyGoogle(@AuthenticationPrincipal AuthenticatedUser user,
+                                @Valid @RequestBody GoogleApplyRequest request) {
+        ownership.verifyOwner(user);
+        return profileResponse(google.apply(request.googleUrl(),
+            Boolean.TRUE.equals(request.overwriteContact())));
     }
 
     @PutMapping("/profile")
@@ -213,6 +231,12 @@ class SalonDashboardController {
         @Size(max = 2048) String instagramUrl, @Size(max = 2048) String facebookUrl,
         @Size(max = 2048) String whatsappUrl, @Size(max = 2048) String youtubeUrl,
         @Size(max = 2048) String mapsUrl) {}
+
+    @JsonIgnoreProperties(ignoreUnknown = false)
+    record GoogleRequest(@NotBlank @Size(max = 2048) String googleUrl) {}
+    @JsonIgnoreProperties(ignoreUnknown = false)
+    record GoogleApplyRequest(@NotBlank @Size(max = 2048) String googleUrl,
+                              Boolean overwriteContact) {}
 
     @JsonIgnoreProperties(ignoreUnknown = false)
     record CategoryOrderRequest(

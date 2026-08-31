@@ -27,6 +27,9 @@ public class SalonPhoto {
     @Column(name = "sort_order", nullable = false)
     private int sortOrder;
 
+    @Column(length = 16, nullable = false, columnDefinition = "varchar(16) default 'MANUAL'")
+    private String source = "MANUAL";
+
     protected SalonPhoto() {
     }
 
@@ -34,6 +37,15 @@ public class SalonPhoto {
         this.salonId = salonId;
         this.photoUrl = photoUrl;
         this.sortOrder = sortOrder;
+    }
+
+    public SalonPhoto(long salonId, String photoUrl, String altText, int sortOrder,
+                      String source) {
+        this.salonId = salonId;
+        this.photoUrl = photoUrl;
+        this.altText = altText;
+        this.sortOrder = sortOrder;
+        this.source = source;
     }
 
     public Long getId() {
@@ -54,5 +66,9 @@ public class SalonPhoto {
 
     public int getSortOrder() {
         return sortOrder;
+    }
+
+    public String getSource() {
+        return source;
     }
 }

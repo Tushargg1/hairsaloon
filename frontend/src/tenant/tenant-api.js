@@ -5,6 +5,7 @@ export const tenantKeys = {
   publicServices: ['tenant', 'public-services'],
   publicStaff: ['tenant', 'public-staff'],
   publicPromotions: ['tenant', 'public-promotions'],
+  publicGoogleReviews: ['tenant', 'public-google-reviews'],
   publicReviews: (page = 0, size = 20) => ['tenant', 'public-reviews', page, size],
   dashboardProfile: ['tenant', 'dashboard-profile'],
   dashboardServices: ['tenant', 'dashboard-services'],
@@ -104,6 +105,20 @@ export async function updateDashboardProfile(payload) {
   const { data } = await apiClient.put('/api/salon/dashboard/profile', payload)
   return data
 }
+
+export async function previewGoogleProfile(googleUrl) {
+  const { data } = await apiClient.post('/api/salon/dashboard/google/preview', { googleUrl })
+  return data
+}
+
+export async function applyGoogleProfile({ googleUrl, overwriteContact }) {
+  const { data } = await apiClient.post('/api/salon/dashboard/google/apply', {
+    googleUrl, overwriteContact,
+  })
+  return data
+}
+
+export const getPublicGoogleReviews = () => getCollection('/api/salon/google-reviews', ['reviews'])
 
 export async function updateServiceCategories(categories) {
   const { data } = await apiClient.put('/api/salon/dashboard/service-categories', { categories })

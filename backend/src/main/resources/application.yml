@@ -119,3 +119,7 @@ app:
     scheduling-enabled: "${EMAIL_SCHEDULING_ENABLED:true}"
     reminder-scan-delay-ms: "${EMAIL_REMINDER_SCAN_DELAY_MS:60000}"
     process-delay-ms: "${EMAIL_PROCESS_DELAY_MS:5000}"
+  google-places:
+    api-key: "${GOOGLE_PLACES_API_KEY:}"
+    # Stay ~10% under Google's ~10k/month free tier for the reviews/photos SKU.
+    monthly-cap: "${GOOGLE_PLACES_MONTHLY_CAP:9000}"
