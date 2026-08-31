@@ -135,6 +135,9 @@ export default function TenantLayout() {
   const [menuOpen, setMenuOpen] = useState(false)
   const closeMenu = () => setMenuOpen(false)
   const profileQuery = useQuery({ queryKey: tenantKeys.profile, queryFn: getSalonProfile })
+  // Registered but pending or suspended: the whole tenant site collapses to a notice,
+  // so no services, offers or prices are shown.
+  const notOnboarded = profileQuery.error?.response?.data?.error === 'SALON_INACTIVE'
   const salonName = profileQuery.data?.name || profileQuery.data?.salonName || tenantNameFallback()
   const addressLine = [profileQuery.data?.address, profileQuery.data?.city].filter(Boolean).join(', ')
   const pushEligible = user?.role === 'CUSTOMER' || user?.role === 'SALON_OWNER'
@@ -238,7 +241,14 @@ export default function TenantLayout() {
       <QuickNavPill />
 
       <div className="flex-grow pt-16" id="main-content" tabIndex="-1">
-        <Outlet context={{ profile: profileQuery.data, profileQuery, salonName }} />
+        {notOnboarded ? (
+          <main className="state-page" aria-live="polite">
+            <h1 className="font-display text-headline-sm text-on-surface mb-3">{salonName}</h1>
+            <p>This salon is still waiting for onboarding.</p>
+          </main>
+        ) : (
+          <Outlet context={{ profile: profileQuery.data, profileQuery, salonName }} />
+        )}
       </div>
 
       {/* Footer */}
