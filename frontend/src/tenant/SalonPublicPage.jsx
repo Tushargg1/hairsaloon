@@ -4,6 +4,7 @@ import SlotBookingWidget from './SlotBookingWidget.jsx'
 import VintageReviews from './VintageReviews.jsx'
 import Icon from '../shared/components/Icon.jsx'
 import VideoHero from '../shared/components/VideoHero.jsx'
+import DepthCarousel from '../shared/components/DepthCarousel.jsx'
 import {
   errorMessage, getPublicPromotions, getPublicServices, getSalonProfile,
   tenantKeys, unwrapCollection,
@@ -80,6 +81,12 @@ export default function SalonPublicPage() {
   const promotionsQuery = useQuery({ queryKey: tenantKeys.publicPromotions, queryFn: getPublicPromotions })
   const profile = profileQuery.data || {}
   const photos = unwrapCollection(profile.photos, ['photos'])
+  const galleryItems = photos
+    .map((photo, i) => {
+      const url = imageUrl(photo)
+      return url ? { image: url, alt: photo.altText || `${profile.name || 'Salon'} photo ${i + 1}` } : null
+    })
+    .filter(Boolean)
   const salonName = profile.name || profile.salonName || tenantNameFallback()
   const heroPhoto = imageUrl(profile.heroPhoto || profile.coverPhoto) || imageUrl(photos[0])
 
@@ -230,16 +237,36 @@ export default function SalonPublicPage() {
       </div>
 
       {/* Gallery */}
-      {photos.length > 0 && (
-        <section className="py-12 px-4 lg:px-6 max-w-[1280px] mx-auto w-full" id="gallery">
-          <h2 className="font-display text-headline-sm text-on-surface mb-6 flex items-center gap-3">
-            <Icon name="photo_library" className="text-secondary text-2xl" /> Gallery
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {photos.map((photo, i) => imageUrl(photo) && (
-              <img key={photo.id || i} src={imageUrl(photo)} alt={photo.altText || `${salonName} photo ${i + 1}`}
-                className="w-full h-48 object-cover rounded-lg border border-outline-variant/30" />
-            ))}
+      {galleryItems.length > 0 && (
+        <section className="py-12 px-4 lg:px-6 w-full" id="gallery">
+          <div className="vintage-heading-row">
+            <span className="vintage-heading-rule" />
+            <h2 className="vintage-heading gold-gradient-text">Gallery</h2>
+            <span className="vintage-heading-rule" />
+          </div>
+          <div className="relative w-full h-[440px] md:h-[520px]">
+            <DepthCarousel
+              items={galleryItems}
+              depth={160}
+              spread={125}
+              tilt={6}
+              tiltDirection="right"
+              perspective={1500}
+              visibleCards={6}
+              falloff={0.11}
+              blur={6}
+              autoplay
+              loop
+              cardWidth={320}
+              cardHeight={390}
+              radius={16}
+              tint="#1a1206"
+              duration={1150}
+              ease="back.out(1.4)"
+              autoplayDelay={2500}
+              showControls
+              showIndicators
+            />
           </div>
         </section>
       )}
