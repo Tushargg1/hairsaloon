@@ -271,7 +271,6 @@ export default function TenantLayout() {
               <VideoHero poster={profileQuery.data?.logoUrl} alt={salonName} />
               <div className="relative z-10 w-full max-w-[1280px] mx-auto px-4 lg:px-6 pb-[5vh]">
                 <h1 className="font-display text-display-lg-mobile md:text-display-lg text-on-surface mb-4">{salonName}</h1>
-                <p className="font-body text-body-lg text-on-surface-variant mb-6">This salon is still waiting for onboarding.</p>
                 {contactWhatsappUrl && (
                   <a href={contactWhatsappUrl} target="_blank" rel="noreferrer" className="vintage-cta">
                     <Icon name="chat" className="text-[18px]" />
@@ -279,6 +278,9 @@ export default function TenantLayout() {
                   </a>
                 )}
               </div>
+            </section>
+            <section className="w-full max-w-[1280px] mx-auto px-4 lg:px-6 py-12 text-center">
+              <p className="font-body text-body-lg text-on-surface-variant">This salon is still waiting for onboarding.</p>
             </section>
           </main>
         ) : (!managementRoute && profileQuery.isLoading) ? (
