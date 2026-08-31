@@ -36,6 +36,12 @@
 - If the task is completed successfully, briefly state what was done.
 - Do not provide a long summary of work that was not requested.
 
+## Reporting Timing
+
+- While performing work, do not send intermediate explanations, progress narration, or status text between tasks. Just do the tasks.
+- Only report after all the work is done.
+- The final message (sent once everything is complete) must be short and brief: a few bullets or sentences on what was done. No long summaries.
+
 ## Strict Rule
 
 Before responding, remove any sentence that does not help the user understand, use, verify, or continue the requested task.
