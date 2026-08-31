@@ -15,7 +15,7 @@ export default function Navbar() {
   const close = () => setMenuOpen(false)
 
   return (
-    <nav className="fixed top-0 w-full z-50 bg-[#230F08]/40 backdrop-blur-md border-b border-outline-variant/20 shadow-sm transition-all duration-300">
+    <nav className="fixed top-0 w-full z-50 bg-[#230F08]/30 backdrop-blur-md border-b border-outline-variant/15 shadow-sm transition-all duration-300">
       <div className="flex justify-between items-center w-full px-4 lg:px-[80px] py-1 max-w-[1280px] mx-auto h-12">
         {/* Brand */}
         <Link to="/" className="flex items-center gap-2" aria-label="Groomit home">

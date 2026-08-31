@@ -234,8 +234,10 @@ class PlatformSalonIntegrationTest {
             .andExpect(jsonPath("$[0].status").value("PENDING"))
             .andExpect(jsonPath("$[1]").doesNotExist());
 
+        // Platform routes (incl. auth) stay reachable on an inactive salon host so the
+        // owner can sign in to see their onboarding request.
         mockMvc.perform(get("/api/platform/salons").header("Host", "approval.localhost"))
-            .andExpect(status().isNotFound());
+            .andExpect(status().isOk());
 
         mockMvc.perform(post("/api/platform/admin/salons/{id}/approve", pendingId)
                 .header("Host", HOST))

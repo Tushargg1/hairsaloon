@@ -102,13 +102,16 @@ public class TenantResolutionFilter extends OncePerRequestFilter {
                 // carrying status=SUSPENDED/PENDING so the site can render a contact page.
                 // Everything else (services, bookings, ...) stays 404 so nothing is shown.
                 Optional<Long> inactiveId = tenantResolver.resolveAnySalonId(subdomain.get());
-                if (inactiveId.isPresent() && isProfileRequest(request)) {
+                if (inactiveId.isEmpty()) {
+                    salonNotFound(response);
+                } else if (isProfileRequest(request) || isPlatformRequest(request)) {
+                    // Serve the public profile (for the contact page) and let platform/auth
+                    // routes through so the owner can still sign in and see their request.
+                    // Only /api/salon/** data stays hidden until the salon is active.
                     TenantContext.setSalonId(inactiveId.get());
                     filterChain.doFilter(request, response);
-                } else if (inactiveId.isPresent()) {
-                    errors.notFound(response, "SALON_INACTIVE", "This salon is not open yet");
                 } else {
-                    salonNotFound(response);
+                    errors.notFound(response, "SALON_INACTIVE", "This salon is not open yet");
                 }
                 return;
             }
@@ -183,6 +186,10 @@ public class TenantResolutionFilter extends OncePerRequestFilter {
     private static boolean isProfileRequest(HttpServletRequest request) {
         return "GET".equalsIgnoreCase(request.getMethod())
             && request.getRequestURI().equals("/api/salon/profile");
+    }
+
+    private static boolean isPlatformRequest(HttpServletRequest request) {
+        return request.getRequestURI().startsWith("/api/platform/");
     }
 
     private void salonNotFound(HttpServletResponse response) throws IOException {

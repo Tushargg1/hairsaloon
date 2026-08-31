@@ -140,8 +140,14 @@ export default function TenantLayout() {
   // a contact page, so no services, offers or prices are shown. The 404 fallback covers
   // older backends that returned SALON_INACTIVE without a body.
   const profileStatus = profileQuery.data?.status
-  const notOnboarded = (profileStatus && profileStatus !== 'ACTIVE')
-    || profileQuery.error?.response?.data?.error === 'SALON_INACTIVE'
+  const location = useLocation()
+  // The owner must still reach management login/dashboard on an inactive salon to see
+  // their onboarding request, so those routes are never collapsed to the contact page.
+  const managementRoute = location.pathname.startsWith('/manage')
+    || location.pathname.startsWith('/dashboard')
+  const notOnboarded = !managementRoute
+    && ((profileStatus && profileStatus !== 'ACTIVE')
+      || profileQuery.error?.response?.data?.error === 'SALON_INACTIVE')
   const salonName = profileQuery.data?.name || profileQuery.data?.salonName || tenantNameFallback()
   const addressLine = [profileQuery.data?.address, profileQuery.data?.city].filter(Boolean).join(', ')
   const pushEligible = user?.role === 'CUSTOMER' || user?.role === 'SALON_OWNER'
@@ -162,8 +168,8 @@ export default function TenantLayout() {
   return (
     <div className="min-h-screen flex flex-col bg-[#161005]">
       {/* Tenant Nav */}
-      <nav className="fixed top-0 z-50 w-full bg-[#230F08]/85 backdrop-blur-xl border-b border-outline-variant/30 shadow-md">
-        <div className="flex justify-between items-center w-full px-4 lg:px-[80px] py-2 max-w-[1280px] mx-auto h-16">
+      <nav className="fixed top-0 z-50 w-full bg-[#230F08]/30 backdrop-blur-md border-b border-outline-variant/15 shadow-sm">
+        <div className="flex justify-between items-center w-full px-4 lg:px-[80px] py-1 max-w-[1280px] mx-auto h-12">
           <NavLink to="/" className="flex items-center gap-3" aria-label={`${salonName} home`}>
             {profileQuery.data?.logoUrl ? (
               <img src={profileQuery.data.logoUrl} alt="" className="w-9 h-9 rounded-full object-cover border border-outline-variant/50" />
