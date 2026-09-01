@@ -1,4 +1,4 @@
-const CACHE_NAME = 'groomit-v4'
+const CACHE_NAME = 'groomit-v5'
 const APP_SHELL = [
   '/',
   '/manifest.json',
@@ -30,6 +30,9 @@ self.addEventListener('fetch', (event) => {
   const request = event.request
   const url = new URL(request.url)
   if (request.method !== 'GET' || url.origin !== self.location.origin || url.pathname.startsWith('/api/')) return
+  // Let the browser handle video/Range requests directly. Routing them through the
+  // SW makes it re-fetch the whole file to satisfy 206 Range, doubling the download.
+  if (request.destination === 'video' || /\.(mp4|webm|mov)$/i.test(url.pathname)) return
 
   if (request.mode === 'navigate') {
     event.respondWith(
