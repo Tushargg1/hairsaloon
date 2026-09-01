@@ -134,6 +134,16 @@ export default function TenantLayout() {
   const [loggingOut, setLoggingOut] = useState(false)
   const [logoutError, setLogoutError] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
+  // Shares the dashboard theme so the nav's Dark toggle and DashboardLayout stay in sync.
+  const [dashTheme, setDashTheme] = useState(
+    () => localStorage.getItem('groomit-dashboard-theme') || 'dark')
+  const dashLight = dashTheme === 'light'
+  const toggleDashTheme = () => {
+    const next = dashLight ? 'dark' : 'light'
+    localStorage.setItem('groomit-dashboard-theme', next)
+    setDashTheme(next)
+    window.dispatchEvent(new CustomEvent('groomit-theme-change', { detail: next }))
+  }
   const closeMenu = () => setMenuOpen(false)
   const profileQuery = useQuery({ queryKey: tenantKeys.profile, queryFn: getSalonProfile })
   // Pending or suspended: the profile still loads (with status) but the site collapses to
@@ -143,8 +153,8 @@ export default function TenantLayout() {
   const location = useLocation()
   // The owner must still reach management login/dashboard on an inactive salon to see
   // their onboarding request, so those routes are never collapsed to the contact page.
-  const managementRoute = location.pathname.startsWith('/manage')
-    || location.pathname.startsWith('/dashboard')
+  const isDashboard = location.pathname.startsWith('/dashboard')
+  const managementRoute = location.pathname.startsWith('/manage') || isDashboard
   const notOnboarded = !managementRoute
     && ((profileStatus && profileStatus !== 'ACTIVE')
       || profileQuery.error?.response?.data?.error === 'SALON_INACTIVE')
@@ -191,7 +201,7 @@ export default function TenantLayout() {
             <span className="font-display text-secondary-fixed tracking-tight text-xl">{salonName}</span>
           </NavLink>
 
-          {!notOnboarded && (
+          {!notOnboarded && !isDashboard && (
             <div className="hidden md:flex items-center gap-6">
               <NavLink to="/about" className={navLinkClass}>About Us</NavLink>
               <NavLink to="/team" className={navLinkClass}>Our Team</NavLink>
@@ -202,26 +212,44 @@ export default function TenantLayout() {
             </div>
           )}
 
-          <div className="hidden md:flex items-center gap-3">
-            {logoutError && (
-              <span className="font-body text-label-sm text-error" role="alert">{logoutError}</span>
-            )}
-            {loading ? <span className="font-body text-label-sm text-on-surface-variant">...</span> : user ? (
-              <>
-                {user.role === 'SALON_OWNER' && <NavLink to="/dashboard" className="font-body text-label-md text-secondary hover:text-secondary-fixed transition-colors">Dashboard</NavLink>}
-                {user.role === 'CUSTOMER' && <NavLink to="/bookings" className="font-body text-label-md text-on-surface-variant hover:text-secondary-fixed transition-colors">My bookings</NavLink>}
-                <button onClick={handleLogout} disabled={loggingOut} className="font-body text-label-sm text-on-surface-variant hover:text-error transition-colors">
-                  {loggingOut ? '...' : 'Logout'}
-                </button>
-              </>
-            ) : (
-              <NavLink to="/login" className="brass-gradient text-espresso font-body text-label-md px-4 py-1.5 rounded transition-all hover:shadow-amber-glow-lg">
-                Login
-              </NavLink>
-            )}
-          </div>
+          {isDashboard ? (
+            /* On the dashboard, the nav is reduced to the management actions. */
+            <div className="flex items-center gap-3">
+              {logoutError && (
+                <span className="font-body text-label-sm text-error" role="alert">{logoutError}</span>
+              )}
+              <NavLink to="/" className="font-body text-label-md text-on-surface-variant hover:text-secondary-fixed transition-colors">Customer view</NavLink>
+              <button onClick={toggleDashTheme}
+                className="font-body text-label-sm text-on-surface-variant hover:text-secondary-fixed transition-colors">
+                {dashLight ? 'Dark' : 'Light'}
+              </button>
+              <NavLink to="/dashboard" className="font-body text-label-md text-secondary hover:text-secondary-fixed transition-colors">Dashboard</NavLink>
+              <button onClick={handleLogout} disabled={loggingOut} className="font-body text-label-sm text-on-surface-variant hover:text-error transition-colors">
+                {loggingOut ? '...' : 'Logout'}
+              </button>
+            </div>
+          ) : (
+            <div className="hidden md:flex items-center gap-3">
+              {logoutError && (
+                <span className="font-body text-label-sm text-error" role="alert">{logoutError}</span>
+              )}
+              {loading ? <span className="font-body text-label-sm text-on-surface-variant">...</span> : user ? (
+                <>
+                  {user.role === 'SALON_OWNER' && <NavLink to="/dashboard" className="font-body text-label-md text-secondary hover:text-secondary-fixed transition-colors">Dashboard</NavLink>}
+                  {user.role === 'CUSTOMER' && <NavLink to="/bookings" className="font-body text-label-md text-on-surface-variant hover:text-secondary-fixed transition-colors">My bookings</NavLink>}
+                  <button onClick={handleLogout} disabled={loggingOut} className="font-body text-label-sm text-on-surface-variant hover:text-error transition-colors">
+                    {loggingOut ? '...' : 'Logout'}
+                  </button>
+                </>
+              ) : (
+                <NavLink to="/login" className="brass-gradient text-espresso font-body text-label-md px-4 py-1.5 rounded transition-all hover:shadow-amber-glow-lg">
+                  Login
+                </NavLink>
+              )}
+            </div>
+          )}
 
-          {!notOnboarded && (
+          {!notOnboarded && !isDashboard && (
             <button className="md:hidden text-secondary p-1" onClick={() => setMenuOpen((open) => !open)}
               aria-expanded={menuOpen} aria-controls="tenant-mobile-menu"
               aria-label={menuOpen ? 'Close menu' : 'Open menu'}>

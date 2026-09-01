@@ -137,6 +137,12 @@ public class Salon {
         status = SalonStatus.ACTIVE;
     }
 
+    /** Rename the salon and, when it changes, its subdomain (the public URL). */
+    public void rename(String newName, String newSubdomain) {
+        if (newName != null && !newName.isBlank()) this.name = newName;
+        if (newSubdomain != null && !newSubdomain.isBlank()) this.subdomain = newSubdomain;
+    }
+
     public void suspend() {
         status = SalonStatus.SUSPENDED;
     }

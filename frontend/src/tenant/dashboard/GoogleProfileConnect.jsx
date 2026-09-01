@@ -68,6 +68,8 @@ export default function GoogleProfileConnect() {
         <div className="google-preview">
           <p className="card-kicker">Found: {preview.googleName || 'Google profile'}</p>
           <div className="google-changes">
+            <ChangeRow label="Name" change={preview.changes?.name} />
+            <ChangeRow label="URL" change={preview.changes?.url} />
             <ChangeRow label="Rating" change={preview.changes?.rating} />
             <ChangeRow label="Review count" change={preview.changes?.reviewCount} />
             <ChangeRow label="Address" change={preview.changes?.address} />
@@ -79,7 +81,7 @@ export default function GoogleProfileConnect() {
           <label className="google-contact-toggle">
             <input type="checkbox" checked={overwriteContact}
               onChange={(e) => setOverwriteContact(e.target.checked)} />
-            Also update my address and phone from Google
+            Also update my address, phone and site URL from Google
           </label>
           <div className="google-preview-actions">
             <button className="button" type="button" disabled={applyMutation.isPending}

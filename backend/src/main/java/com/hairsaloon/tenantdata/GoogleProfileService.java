@@ -8,9 +8,10 @@ import com.hairsaloon.platform.PlatformApiException;
 import com.hairsaloon.tenant.Salon;
 import com.hairsaloon.tenant.SalonRepository;
 import com.hairsaloon.tenant.TenantContext;
-import java.math.BigDecimal;
+import com.hairsaloon.tenant.TenantResolver;
 import java.time.Instant;
 import java.util.List;
+import java.util.Locale;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,13 +30,16 @@ class GoogleProfileService {
     private final SalonRepository salons;
     private final SalonPhotoRepository photos;
     private final GoogleReviewRepository reviews;
+    private final TenantResolver tenantResolver;
 
     GoogleProfileService(GooglePlacesClient places, SalonRepository salons,
-                         SalonPhotoRepository photos, GoogleReviewRepository reviews) {
+                         SalonPhotoRepository photos, GoogleReviewRepository reviews,
+                         TenantResolver tenantResolver) {
         this.places = places;
         this.salons = salons;
         this.photos = photos;
         this.reviews = reviews;
+        this.tenantResolver = tenantResolver;
     }
 
     @Transactional(readOnly = true)
@@ -44,7 +48,10 @@ class GoogleProfileService {
         GooglePlaceData data = fetch(query);
         List<GoogleReviewData> fiveStar = data.reviews().stream()
             .filter(review -> review.rating() == 5).toList();
+        String newSubdomain = suggestSubdomain(data.name(), salon.getSubdomain());
         Changes changes = new Changes(
+            new Change("name", salon.getName(), data.name()),
+            new Change("url", salon.getSubdomain(), newSubdomain),
             new Change("rating", str(salon.getGoogleRating()), str(data.rating())),
             new Change("reviewCount", str(salon.getGoogleReviewCount()), str(data.reviewCount())),
             new Change("address", salon.getAddress(), data.address()),
@@ -61,10 +68,20 @@ class GoogleProfileService {
 
         salon.applyGoogleProfile(data.placeId(), data.rating(), data.reviewCount(),
             data.mapsUri(), Instant.now());
+        // Name always follows Google; the subdomain (URL) only changes when the owner
+        // opts in, and only to a valid, unused value. Old subdomain's cache is evicted.
+        String oldSubdomain = salon.getSubdomain();
+        String newSubdomain = overwriteContact
+            ? suggestSubdomain(data.name(), oldSubdomain) : oldSubdomain;
+        salon.rename(data.name(), newSubdomain);
         if (overwriteContact) {
             salon.applyGoogleContact(data.address(), data.phone());
         }
         salons.save(salon);
+        if (!oldSubdomain.equals(salon.getSubdomain())) {
+            tenantResolver.evict(oldSubdomain);
+            tenantResolver.evict(salon.getSubdomain());
+        }
 
         reviews.deleteAllBySalonId(salonId);
         int reviewOrder = 0;
@@ -114,8 +131,24 @@ class GoogleProfileService {
         return value == null ? null : String.valueOf(value);
     }
 
+    /**
+     * Slug for the public URL derived from the Google name. Returns the current
+     * subdomain unchanged if the slug is invalid or already taken by another salon.
+     */
+    private String suggestSubdomain(String googleName, String current) {
+        if (googleName == null || googleName.isBlank()) return current;
+        String slug = googleName.toLowerCase(Locale.ROOT)
+            .replaceAll("[^a-z0-9]+", "-")
+            .replaceAll("(^-+)|(-+$)", "");
+        if (slug.length() < 3 || slug.length() > 30) return current;
+        if (slug.equals(current)) return current;
+        if (tenantResolver.exists(slug)) return current;
+        return slug;
+    }
+
     record Change(String field, String current, String incoming) {}
-    record Changes(Change rating, Change reviewCount, Change address, Change phone) {}
+    record Changes(Change name, Change url, Change rating, Change reviewCount,
+                   Change address, Change phone) {}
     record Preview(String placeId, String googleName, Changes changes, int fiveStarReviewCount,
                    int photoCount, List<GoogleReviewData> reviews, List<String> photoUrls) {}
 }
