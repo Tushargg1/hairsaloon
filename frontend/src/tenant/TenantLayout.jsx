@@ -190,15 +190,20 @@ export default function TenantLayout() {
       {/* Tenant Nav */}
       <nav className="fixed top-0 z-[100] w-full bg-[#230F08]/70 backdrop-blur-md border-b border-outline-variant/20 shadow-md">
         <div className="flex justify-between items-center w-full px-4 lg:px-[80px] py-1 max-w-[1280px] mx-auto h-12">
-          <NavLink to="/" className="flex items-center gap-3" aria-label={`${salonName} home`}>
+          <NavLink to="/" className="flex items-center gap-3 min-w-0 flex-shrink" aria-label={`${salonName} home`}>
             {profileQuery.data?.logoUrl ? (
-              <img src={profileQuery.data.logoUrl} alt="" className="w-9 h-9 rounded-full object-cover border border-outline-variant/50" />
+              <img src={profileQuery.data.logoUrl} alt="" className="w-9 h-9 rounded-full object-cover border border-outline-variant/50 flex-shrink-0" />
             ) : (
-              <div className="w-9 h-9 rounded-full bg-secondary-container flex items-center justify-center border border-outline-variant/50">
+              <div className="w-9 h-9 rounded-full bg-secondary-container flex items-center justify-center border border-outline-variant/50 flex-shrink-0">
                 <span className="font-display font-bold text-secondary text-sm">{initials(salonName)}</span>
               </div>
             )}
-            <span className="font-display text-secondary-fixed tracking-tight text-xl">{salonName}</span>
+            {/* Stay on one line; shrink the font as the name gets longer, then truncate. */}
+            <span className={`font-display text-secondary-fixed tracking-tight truncate ${
+              salonName.length > 34 ? 'text-sm'
+                : salonName.length > 26 ? 'text-base'
+                  : salonName.length > 18 ? 'text-lg'
+                    : 'text-xl'}`}>{salonName}</span>
           </NavLink>
 
           {!notOnboarded && !isDashboard && (
