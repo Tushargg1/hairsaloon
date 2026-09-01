@@ -26,13 +26,15 @@ function useIsMobile() {
 // Looping barbershop backdrop shared by the platform home page and every salon
 // page. Shows a static image immediately, then loads the video in the background.
 // Once the video is ready to play, it fades in over the image.
-export default function VideoHero({ poster, alt = '' }) {
+// `loadVideo` gates the (heavy) video so the Groomit background image can paint first.
+export default function VideoHero({ poster, alt = '', loadVideo = true }) {
   const reduceMotion = useReducedMotion()
   const isMobile = useIsMobile()
   const video = useRef(null)
   const [videoReady, setVideoReady] = useState(false)
 
   const videoSrc = isMobile ? HERO_VIDEO_MOBILE : HERO_VIDEO
+  // Always the branded Groomit backdrop first; a salon poster (if any) only refines it.
   const imgSrc = poster || (isMobile ? HERO_IMG_MOBILE : HERO_IMG)
 
   useEffect(() => {
@@ -61,7 +63,7 @@ export default function VideoHero({ poster, alt = '' }) {
       />
 
       {/* Video loads in background, fades in when ready */}
-      {!reduceMotion && (
+      {!reduceMotion && loadVideo && (
         <video
           key={videoSrc}
           ref={video}

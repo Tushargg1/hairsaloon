@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import SlotBookingWidget from './SlotBookingWidget.jsx'
 import VintageReviews from './VintageReviews.jsx'
 import Icon from '../shared/components/Icon.jsx'
@@ -79,6 +79,23 @@ export default function SalonPublicPage() {
   const profileQuery = useQuery({ queryKey: tenantKeys.profile, queryFn: getSalonProfile })
   const servicesQuery = useQuery({ queryKey: tenantKeys.publicServices, queryFn: getPublicServices })
   const promotionsQuery = useQuery({ queryKey: tenantKeys.publicPromotions, queryFn: getPublicPromotions })
+
+  // Progressive load for a snappy first paint:
+  //  1: Groomit backdrop + salon name + Book/Contact button (needs the profile only)
+  //  2: background video + offers/price/booking (once the profile has resolved)
+  //  3: barber avatars, salon photos, reviews (after the core data settles)
+  const [stage, setStage] = useState(1)
+  useEffect(() => {
+    if (stage < 2 && !profileQuery.isLoading) setStage(2)
+  }, [stage, profileQuery.isLoading])
+  useEffect(() => {
+    if (stage < 3 && !servicesQuery.isLoading && !promotionsQuery.isLoading) {
+      const t = setTimeout(() => setStage(3), 200)
+      return () => clearTimeout(t)
+    }
+    return undefined
+  }, [stage, servicesQuery.isLoading, promotionsQuery.isLoading])
+
   const profile = profileQuery.data || {}
   const photos = unwrapCollection(profile.photos, ['photos'])
   const galleryItems = photos
@@ -88,21 +105,35 @@ export default function SalonPublicPage() {
     })
     .filter(Boolean)
   const salonName = profile.name || profile.salonName || tenantNameFallback()
-  const heroPhoto = imageUrl(profile.heroPhoto || profile.coverPhoto) || imageUrl(photos[0])
+  const isActive = profile.status ? profile.status === 'ACTIVE' : true
+  const contactPhone = (() => {
+    const raw = String(profile.phone || '').replace(/[^\d]/g, '')
+    return raw.length === 10 ? `91${raw}` : raw
+  })()
+  const contactUrl = contactPhone
+    ? `https://wa.me/${contactPhone}?text=${encodeURIComponent(`Hi ${salonName}, I'd like to book an appointment via Groomit.`)}`
+    : null
 
   return (
     <main className="flex flex-col">
-      {/* Hero */}
+      {/* Hero: branded Groomit backdrop + name + action paint first; video waits for stage 2. */}
       <section className="relative w-full -mt-16 min-h-[85vh] md:min-h-[92vh] flex items-end overflow-hidden">
-        <VideoHero poster={heroPhoto} alt={salonName} />
+        <VideoHero alt={salonName} loadVideo={stage >= 2} />
         <div className="relative z-10 w-full max-w-[1280px] mx-auto px-4 lg:px-6 pb-[5vh]">
           {profileQuery.isLoading ? <p className="text-on-surface-variant">Loading...</p> : (
             <>
               <h1 className="font-display text-display-lg-mobile md:text-display-lg text-on-surface mb-6">{salonName}</h1>
-              <a href="#book-slot" className="vintage-cta">
-                <Icon name="event_available" className="text-[18px]" />
-                Book an Appointment
-              </a>
+              {isActive ? (
+                <a href="#book-slot" className="vintage-cta">
+                  <Icon name="event_available" className="text-[18px]" />
+                  Book an Appointment
+                </a>
+              ) : contactUrl ? (
+                <a href={contactUrl} target="_blank" rel="noreferrer" className="vintage-cta">
+                  <Icon name="chat" className="text-[18px]" />
+                  Contact the salon
+                </a>
+              ) : null}
             </>
           )}
         </div>
@@ -236,8 +267,8 @@ export default function SalonPublicPage() {
       </section>
       </div>
 
-      {/* Gallery */}
-      {galleryItems.length > 0 && (
+      {/* Gallery (deferred to stage 3 so photos load after the core page) */}
+      {stage >= 3 && galleryItems.length > 0 && (
         <section className="pt-8 pb-4 px-4 lg:px-6 w-full" id="gallery">
           <div className="vintage-heading-row mb-2">
             <span className="vintage-heading-rule" />
