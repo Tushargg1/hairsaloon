@@ -283,9 +283,9 @@ export default function SalonPublicPage() {
               tilt={6}
               tiltDirection="right"
               perspective={1500}
-              visibleCards={6}
+              visibleCards={4}
               falloff={0.11}
-              blur={6}
+              blur={0}
               autoplay
               loop
               cardWidth={280}

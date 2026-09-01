@@ -11,11 +11,11 @@ const DepthCarousel = ({
   cardHeight = 380,
   radius = 18,
   tint = '#05060a',
-  depth = 220,
+  depth = 250,
   spread = 90,
-  tilt = 22,
+  tilt = 18,
   tiltDirection = 'right',
-  perspective = 1400,
+  perspective = 1500,
   visibleCards = 4,
   falloff = 0.2,
   blur = 6,
@@ -43,7 +43,6 @@ const DepthCarousel = ({
   const cfgRef = useRef({})
   const onChangeRef = useRef(onChange)
   const dragRef = useRef(null)
-  const wheelTimerRef = useRef(null)
   const autoTimerRef = useRef(null)
   const reducedRef = useRef(false)
   const [active, setActive] = useState(0)
@@ -77,12 +76,11 @@ const DepthCarousel = ({
       let opacity = d < 0 ? Math.max(0, 1 + d) : 1
       if (!shown) opacity = 0
       const brightness = Math.max(0.15, 1 - back * cfg.falloff)
-      const blurPx = cfg.blur > 0
-        ? Math.min(cfg.blur, (back / Math.max(1, cfg.visibleCards)) * cfg.blur) : 0
       const zi = Math.round(2000 - d * 20)
       el.style.transform = `translate(-50%, -50%) scale(${sc}) translateX(${tx.toFixed(2)}px) translateZ(${tz.toFixed(2)}px) rotateY(${ry.toFixed(3)}deg)`
       el.style.opacity = opacity.toFixed(3)
-      el.style.filter = `brightness(${brightness.toFixed(3)}) blur(${blurPx.toFixed(2)}px)`
+      // Brightness only for depth; blur was the main scroll-time GPU cost.
+      el.style.filter = `brightness(${brightness.toFixed(3)})`
       el.style.zIndex = String(zi)
       el.style.pointerEvents = shown && opacity > 0.05 ? 'auto' : 'none'
       const ov = overlayRefs.current[i]
@@ -148,29 +146,6 @@ const DepthCarousel = ({
     ro.observe(root)
     return () => ro.disconnect()
   }, [layout])
-
-  useEffect(() => {
-    const el = rootRef.current
-    if (!el) return undefined
-    const onWheel = (e) => {
-      const cfg = cfgRef.current
-      if (cfg.count < 2) return
-      e.preventDefault()
-      tweenRef.current?.kill()
-      const raw = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY
-      const delta = e.deltaMode === 1 ? raw * 24 : raw
-      const step = clamp(delta / (cfg.cardWidth * 0.9), -0.6, 0.6)
-      posRef.current += step
-      layout(posRef.current)
-      if (wheelTimerRef.current) clearTimeout(wheelTimerRef.current)
-      wheelTimerRef.current = setTimeout(() => setFocus(Math.round(posRef.current), true), 130)
-    }
-    el.addEventListener('wheel', onWheel, { passive: false })
-    return () => {
-      el.removeEventListener('wheel', onWheel)
-      if (wheelTimerRef.current) clearTimeout(wheelTimerRef.current)
-    }
-  }, [layout, setFocus])
 
   const onPointerDown = useCallback((e) => {
     const cfg = cfgRef.current
@@ -275,7 +250,6 @@ const DepthCarousel = ({
 
   useEffect(() => () => {
     tweenRef.current?.kill()
-    if (wheelTimerRef.current) clearTimeout(wheelTimerRef.current)
     if (autoTimerRef.current) clearInterval(autoTimerRef.current)
   }, [])
 
