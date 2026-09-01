@@ -224,7 +224,7 @@ export async function getDashboardBookings(filters = {}) {
   return getCollection(`/api/salon/dashboard/bookings?${params}`, ['bookings'])
 }
 
-export async function createWalkInBooking(payload) {
+export async function createWalkIn(payload) {
   const { data } = await apiClient.post('/api/salon/dashboard/bookings/walk-ins', payload)
   return data
 }
@@ -312,5 +312,3 @@ export async function validatePromotion({ promoCode, serviceId }) {
   const { data } = await apiClient.post('/api/salon/promotions/validate', { promoCode, serviceId })
   return data
 }
-
-export const createWalkIn = createWalkInBooking

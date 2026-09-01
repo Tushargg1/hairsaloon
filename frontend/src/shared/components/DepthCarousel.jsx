@@ -2,20 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import gsap from 'gsap'
 import './DepthCarousel.css'
 
-const DEFAULT_ITEMS = [
-  { image: 'https://picsum.photos/seed/depth1/800/1000', alt: 'Slide 1' },
-  { image: 'https://picsum.photos/seed/depth2/800/1000', alt: 'Slide 2' },
-  { image: 'https://picsum.photos/seed/depth3/800/1000', alt: 'Slide 3' },
-  { image: 'https://picsum.photos/seed/depth4/800/1000', alt: 'Slide 4' },
-  { image: 'https://picsum.photos/seed/depth5/800/1000', alt: 'Slide 5' },
-  { image: 'https://picsum.photos/seed/depth6/800/1000', alt: 'Slide 6' },
-]
-
 const clamp = (v, min, max) => Math.min(Math.max(v, min), max)
 const normalizeItem = (it) => (typeof it === 'string' ? { image: it, alt: '' } : it)
 
 const DepthCarousel = ({
-  items = DEFAULT_ITEMS,
+  items = [],
   cardWidth = 300,
   cardHeight = 380,
   radius = 18,
