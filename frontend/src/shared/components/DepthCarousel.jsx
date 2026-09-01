@@ -132,6 +132,8 @@ const DepthCarousel = ({
   }, [tweenTo, notify])
 
   const navigateBy = useCallback((step) => setFocus(focusRef.current + step, true), [setFocus])
+  const navigateRef = useRef(navigateBy)
+  navigateRef.current = navigateBy
 
   useEffect(() => {
     const root = rootRef.current
@@ -222,7 +224,9 @@ const DepthCarousel = ({
     const start = () => {
       stop()
       autoTimerRef.current = window.setInterval(() => {
-        if (!hovered && !focused) navigateBy(1)
+        // Read the latest callback via ref so the interval isn't torn down and
+        // restarted on every render, which was advancing sooner than the delay.
+        if (!hovered && !focused) navigateRef.current(1)
       }, Math.max(cfgRef.current.autoplayDelay, 600))
     }
     const onEnter = () => { hovered = true }
@@ -241,7 +245,7 @@ const DepthCarousel = ({
       root?.removeEventListener('focusin', onFocusIn)
       root?.removeEventListener('focusout', onFocusOut)
     }
-  }, [autoplay, autoplayDelay, count, navigateBy])
+  }, [autoplay, autoplayDelay, count])
 
   useEffect(() => {
     layout(posRef.current)
