@@ -68,7 +68,7 @@ export default function Navbar() {
 
       {/* Mobile Menu */}
       {menuOpen && (
-        <div className="md:hidden border-t border-outline-variant/30 bg-[#230F08]/90 backdrop-blur-xl px-4 py-4 flex flex-col gap-4">
+        <div className="md:hidden border-t border-outline-variant/20 bg-[#230F08]/30 backdrop-blur-md px-4 py-4 flex flex-col gap-4">
           <NavLink to="/salons" onClick={close} className="font-body text-label-md text-on-surface-variant">Find a Salon</NavLink>
           <NavLink to="/pricing" onClick={close} className="font-body text-label-md text-on-surface-variant">Pricing</NavLink>
           <NavLink to="/about" onClick={close} className="font-body text-label-md text-on-surface-variant">About</NavLink>
