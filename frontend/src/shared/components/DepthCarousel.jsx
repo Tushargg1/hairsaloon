@@ -18,7 +18,6 @@ const DepthCarousel = ({
   perspective = 1500,
   visibleCards = 4,
   falloff = 0.0,
-  blur = 0,
   duration = 700,
   ease = 'power3.out',
   autoplay = true,
@@ -49,7 +48,7 @@ const DepthCarousel = ({
 
   onChangeRef.current = onChange
   cfgRef.current = {
-    count, depth, spread, tilt, tiltDirection, visibleCards, falloff, blur,
+    count, depth, spread, tilt, tiltDirection, visibleCards, falloff,
     duration, ease, loop, cardWidth, autoplayDelay,
   }
 
@@ -249,7 +248,7 @@ const DepthCarousel = ({
 
   useEffect(() => {
     layout(posRef.current)
-  }, [layout, depth, spread, tilt, tiltDirection, visibleCards, falloff, blur,
+  }, [layout, depth, spread, tilt, tiltDirection, visibleCards, falloff,
     cardWidth, cardHeight, radius, count])
 
   useEffect(() => () => {

@@ -285,7 +285,6 @@ export default function SalonPublicPage() {
               perspective={1500}
               visibleCards={4}
               falloff={0.11}
-              blur={0}
               autoplay
               loop
               cardWidth={280}
