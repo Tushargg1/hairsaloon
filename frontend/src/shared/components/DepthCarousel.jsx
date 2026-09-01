@@ -45,6 +45,10 @@ const DepthCarousel = ({
   const autoTimerRef = useRef(null)
   const reducedRef = useRef(false)
   const [active, setActive] = useState(0)
+  // Lightbox: clicking the front card enlarges it, pausing autoplay and page scroll.
+  const [lightbox, setLightbox] = useState(null)
+  const lightboxRef = useRef(false)
+  lightboxRef.current = lightbox !== null
 
   onChangeRef.current = onChange
   cfgRef.current = {
@@ -206,8 +210,10 @@ const DepthCarousel = ({
 
   const onCardClick = useCallback((index) => {
     if (dragRef.current?.moved) return
-    setFocus(index, true)
-  }, [setFocus])
+    // Clicking the front card opens the lightbox; a side card just comes to front.
+    if (index === focusRef.current) setLightbox(data[index])
+    else setFocus(index, true)
+  }, [setFocus, data])
 
   useEffect(() => {
     reducedRef.current = typeof window !== 'undefined'
@@ -225,7 +231,7 @@ const DepthCarousel = ({
       autoTimerRef.current = window.setInterval(() => {
         // Read the latest callback via ref so the interval isn't torn down and
         // restarted on every render, which was advancing sooner than the delay.
-        if (!hovered && !focused) navigateRef.current(1)
+        if (!hovered && !focused && !lightboxRef.current) navigateRef.current(1)
       }, Math.max(cfgRef.current.autoplayDelay, 600))
     }
     const onEnter = () => { hovered = true }
@@ -255,6 +261,19 @@ const DepthCarousel = ({
     tweenRef.current?.kill()
     if (autoTimerRef.current) clearInterval(autoTimerRef.current)
   }, [])
+
+  // While the lightbox is open, lock page scroll and close on Escape.
+  useEffect(() => {
+    if (lightbox === null) return undefined
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const onKey = (e) => { if (e.key === 'Escape') setLightbox(null) }
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [lightbox])
 
   return (
     <div
@@ -331,6 +350,20 @@ const DepthCarousel = ({
               onClick={() => setFocus(i, true)}
             />
           ))}
+        </div>
+      )}
+
+      {lightbox && (
+        <div className="depth-carousel__lightbox" role="dialog" aria-modal="true"
+          onClick={() => setLightbox(null)}>
+          <button type="button" className="depth-carousel__lightbox-close"
+            aria-label="Close image" onClick={() => setLightbox(null)}>
+            <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+              <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </button>
+          <img className="depth-carousel__lightbox-img" src={lightbox.image}
+            alt={lightbox.alt || ''} onClick={(e) => e.stopPropagation()} />
         </div>
       )}
     </div>
