@@ -320,6 +320,53 @@
   .public-section-heading .eyebrow { @apply mb-2 block; }
   .public-section-heading h2 { @apply font-display text-headline-sm text-on-surface; }
 
+  /* --- Dashboard shell (sidebar + content) --- */
+  .dash-shell {
+    @apply min-h-screen w-full flex;
+    background-color: var(--c-page);
+  }
+  .dash-sidebar {
+    @apply hidden lg:flex flex-col gap-1 w-60 shrink-0 px-4 py-6 sticky top-12 self-start;
+    height: calc(100vh - 3rem);
+    border-right: 1px solid rgb(var(--c-panel-border));
+    background-color: rgb(var(--c-surface-container) / 0.4);
+  }
+  .dash-sidebar-brand {
+    @apply flex items-center gap-2 font-body text-label-sm uppercase tracking-wider
+           text-secondary px-3 pb-4 mb-2;
+    border-bottom: 1px solid rgb(var(--c-panel-border));
+  }
+  .dash-nav { @apply flex flex-col gap-1; }
+  .dash-nav-link {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-lg font-body text-label-md
+           text-on-surface-variant transition-colors;
+  }
+  .dash-nav-link:hover {
+    @apply text-secondary;
+    background-color: rgb(var(--c-surface-container-high) / 0.6);
+  }
+  .dash-nav-link.is-active {
+    @apply text-espresso font-semibold;
+    background-image: linear-gradient(135deg, #E8D0A4, #B8A074);
+  }
+
+  .dash-main { @apply flex-1 min-w-0 max-w-[1100px] mx-auto px-4 lg:px-8 py-8; }
+  .dash-header { @apply mb-6; }
+  .dash-header .eyebrow { @apply block mb-1; }
+  .dash-title { @apply font-display text-headline-md text-on-surface; }
+
+  /* Horizontal tab nav shown only on small screens where the sidebar is hidden. */
+  .dash-tabs { @apply flex lg:hidden gap-2 mb-6 overflow-x-auto pb-2 scrollbar-none; }
+  .dash-tab {
+    @apply flex items-center gap-2 px-4 py-2 rounded-lg font-body text-label-md
+           whitespace-nowrap transition-all border border-outline-variant/50
+           text-on-surface-variant;
+  }
+  .dash-tab:hover { @apply text-secondary; background-color: rgb(var(--c-surface-container-high) / 0.6); }
+  .dash-tab.is-active { @apply text-espresso font-semibold border-transparent; background-image: linear-gradient(135deg, #E8D0A4, #B8A074); }
+
+  .dash-content { @apply flex flex-col gap-6; }
+
   /* --- Dashboard manager sections --- */
   .manager-section { @apply flex flex-col gap-4; }
   .manager-heading { @apply mb-2; }

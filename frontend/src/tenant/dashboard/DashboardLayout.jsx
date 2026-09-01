@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import Icon from '../../shared/components/Icon.jsx'
 
 const NAV_ITEMS = [
@@ -14,13 +14,21 @@ const NAV_ITEMS = [
 
 const THEME_KEY = 'groomit-dashboard-theme'
 
+function pageTitle(pathname) {
+  const match = [...NAV_ITEMS].reverse().find((item) => (
+    item.end ? pathname === item.to : pathname.startsWith(item.to)
+  ))
+  return match?.label || 'Overview'
+}
+
 export default function DashboardLayout() {
   const [theme, setTheme] = useState(() => localStorage.getItem(THEME_KEY) || 'dark')
   const light = theme === 'light'
+  const location = useLocation()
 
   useEffect(() => { localStorage.setItem(THEME_KEY, theme) }, [theme])
 
-  // The theme toggle now lives in the top nav; follow the change it broadcasts.
+  // The theme toggle lives in the top nav; follow the change it broadcasts.
   useEffect(() => {
     const onChange = (e) => setTheme(e.detail === 'light' ? 'light' : 'dark')
     window.addEventListener('groomit-theme-change', onChange)
@@ -32,41 +40,46 @@ export default function DashboardLayout() {
     return () => document.body.classList.remove('has-scrollbar')
   }, [])
 
-  return (
-    <div className={`min-h-screen ${light ? 'theme-light' : ''}`} style={{ backgroundColor: 'var(--c-page)' }}>
-      <main className="max-w-[1280px] mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-6 flex items-start justify-between gap-4">
-          <div>
-            <p className="font-body text-label-md text-secondary tracking-wider uppercase mb-1">Owner dashboard</p>
-            <h1 className="font-display text-headline-md text-on-surface">Salon Management</h1>
-          </div>
-        </div>
+  const navClass = ({ isActive }) => `dash-nav-link${isActive ? ' is-active' : ''}`
 
-        {/* Navigation */}
-        <nav className="flex gap-2 mb-8 overflow-x-auto pb-2 scrollbar-none" aria-label="Dashboard navigation">
+  return (
+    <div className={`dash-shell ${light ? 'theme-light' : ''}`}>
+      <aside className="dash-sidebar">
+        <p className="dash-sidebar-brand">
+          <Icon name="content_cut" className="text-[18px]" />
+          Management
+        </p>
+        <nav className="dash-nav" aria-label="Dashboard navigation">
           {NAV_ITEMS.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              className={({ isActive }) =>
-                `flex items-center gap-2 px-4 py-2 rounded-lg font-body text-label-md transition-all whitespace-nowrap ${
-                  isActive
-                    ? 'brass-gradient shadow-amber-glow'
-                    : 'border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-high hover:text-secondary'
-                }`
-              }
-            >
+            <NavLink key={item.to} to={item.to} end={item.end} className={navClass}>
+              <Icon name={item.icon} className="text-[20px]" />
+              <span>{item.label}</span>
+            </NavLink>
+          ))}
+        </nav>
+      </aside>
+
+      <div className="dash-main">
+        <header className="dash-header">
+          <p className="eyebrow">Owner dashboard</p>
+          <h1 className="dash-title">{pageTitle(location.pathname)}</h1>
+        </header>
+
+        {/* Horizontal nav for small screens (sidebar is hidden there). */}
+        <nav className="dash-tabs" aria-label="Dashboard navigation">
+          {NAV_ITEMS.map((item) => (
+            <NavLink key={item.to} to={item.to} end={item.end}
+              className={({ isActive }) => `dash-tab${isActive ? ' is-active' : ''}`}>
               <Icon name={item.icon} className="text-[18px]" />
               {item.label}
             </NavLink>
           ))}
         </nav>
 
-        {/* Content */}
-        <Outlet />
-      </main>
+        <div className="dash-content">
+          <Outlet />
+        </div>
+      </div>
     </div>
   )
 }
