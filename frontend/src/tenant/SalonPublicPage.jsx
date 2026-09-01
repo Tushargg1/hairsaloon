@@ -293,7 +293,7 @@ export default function SalonPublicPage() {
               tint="#1a1206"
               duration={1150}
               ease="back.out(1.4)"
-              autoplayDelay={6000}
+              autoplayDelay={4000}
               showControls
               showIndicators
             />
