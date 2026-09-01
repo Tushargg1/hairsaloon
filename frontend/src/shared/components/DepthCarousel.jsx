@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import gsap from 'gsap'
 import './DepthCarousel.css'
 
@@ -353,7 +354,9 @@ const DepthCarousel = ({
         </div>
       )}
 
-      {lightbox && (
+      {/* Portaled to body so `position: fixed` centres on the viewport, not inside
+          the transformed carousel, and sits above every section. */}
+      {lightbox && createPortal(
         <div className="depth-carousel__lightbox" role="dialog" aria-modal="true"
           onClick={() => setLightbox(null)}>
           <button type="button" className="depth-carousel__lightbox-close"
@@ -364,7 +367,8 @@ const DepthCarousel = ({
           </button>
           <img className="depth-carousel__lightbox-img" src={lightbox.image}
             alt={lightbox.alt || ''} onClick={(e) => e.stopPropagation()} />
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   )

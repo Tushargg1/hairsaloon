@@ -1163,7 +1163,7 @@
   .review-marquee::after { right: 0; background: linear-gradient(to left, #0D0C0A, transparent); }
   .review-marquee-track {
     @apply flex gap-4 w-max;
-    animation: review-marquee-scroll 40s linear infinite;
+    animation: review-marquee-scroll 60s linear infinite;
   }
   .review-marquee:hover .review-marquee-track { animation-play-state: paused; }
   .review-marquee-card.is-expanded { height: auto; }
