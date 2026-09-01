@@ -7,8 +7,8 @@ const normalizeItem = (it) => (typeof it === 'string' ? { image: it, alt: '' } :
 
 const DepthCarousel = ({
   items = [],
-  cardWidth = 300,
-  cardHeight = 380,
+  cardWidth = 350,
+  cardHeight = 500,
   radius = 18,
   tint = '#05060a',
   depth = 250,
