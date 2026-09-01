@@ -70,6 +70,7 @@ class SalonDashboardController {
         return profileResponse(service.updateProfile(request.name(), request.description(),
             request.address(), request.city(), request.phone(), request.email(),
             request.logoUrl(), request.timezone(), request.cancellationWindowMinutes(),
+            request.subdomain(),
             new SalonManagementService.SocialLinks(request.instagramUrl(),
                 request.facebookUrl(), request.whatsappUrl(), request.youtubeUrl(),
                 request.mapsUrl())));
@@ -228,6 +229,7 @@ class SalonDashboardController {
         @Size(max = 320) String email, @Size(max = 2048) String logoUrl,
         @NotBlank @Size(max = 64) String timezone,
         @NotNull @Min(0) @Max(525600) Integer cancellationWindowMinutes,
+        @Size(max = 30) String subdomain,
         @Size(max = 2048) String instagramUrl, @Size(max = 2048) String facebookUrl,
         @Size(max = 2048) String whatsappUrl, @Size(max = 2048) String youtubeUrl,
         @Size(max = 2048) String mapsUrl) {}

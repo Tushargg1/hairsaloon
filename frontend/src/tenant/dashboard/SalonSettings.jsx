@@ -24,7 +24,7 @@ const SOCIAL_FIELDS = [
 
 const emptyForm = {
   name: '', description: '', address: '', city: '', phone: '', email: '', logoUrl: '',
-  timezone: 'Asia/Kolkata', cancellationWindowMinutes: 120,
+  timezone: 'Asia/Kolkata', cancellationWindowMinutes: 120, subdomain: '',
   instagramUrl: '', facebookUrl: '', whatsappUrl: '', youtubeUrl: '', mapsUrl: '',
 }
 
@@ -100,6 +100,7 @@ export default function SalonSettings() {
     save.mutate({
       ...form,
       cancellationWindowMinutes: Number(form.cancellationWindowMinutes),
+      subdomain: form.subdomain.trim().toLowerCase() || null,
       // The API rejects blank strings for optional URLs, so clear them to null.
       ...Object.fromEntries(SOCIAL_FIELDS.map(({ name }) => [name, form[name].trim() || null])),
       logoUrl: form.logoUrl.trim() || null,
@@ -127,6 +128,11 @@ export default function SalonSettings() {
       <div className="manager-form-grid">
         <label htmlFor="settings-name">Salon name<input id="settings-name" name="name" required maxLength="160" value={form.name} onChange={update} /></label>
         <label htmlFor="settings-city">City<input id="settings-city" name="city" required maxLength="120" value={form.city} onChange={update} /></label>
+        <label className="span-2" htmlFor="settings-subdomain">Site URL
+          <input id="settings-subdomain" name="subdomain" maxLength="30" pattern="[a-z0-9-]+"
+            placeholder="yoursalon" value={form.subdomain} onChange={update} />
+          <span className="card-kicker">yoursalon.groomit.in — changing this changes your public link.</span>
+        </label>
         <label className="span-2" htmlFor="settings-description">About us<textarea id="settings-description" name="description" rows="4" maxLength="5000" placeholder="Shown on the About page and in the footer" value={form.description} onChange={update} /></label>
         <label className="span-2" htmlFor="settings-address">Address<input id="settings-address" name="address" required maxLength="500" value={form.address} onChange={update} /></label>
         <div className="span-2 contact-row">

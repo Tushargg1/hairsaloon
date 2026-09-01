@@ -15,4 +15,8 @@ interface SalonPhotoRepository extends TenantScopedRepository<SalonPhoto> {
     @Modifying
     @Query("delete from SalonPhoto photo where photo.salonId = :salonId and photo.source = :source")
     void deleteAllBySalonIdAndSource(@Param("salonId") long salonId, @Param("source") String source);
+
+    @Modifying
+    @Query("delete from SalonPhoto photo where photo.salonId = :salonId")
+    void deleteAllBySalonId(@Param("salonId") long salonId);
 }

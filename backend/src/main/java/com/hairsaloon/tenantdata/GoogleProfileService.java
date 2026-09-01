@@ -92,7 +92,9 @@ class GoogleProfileService {
                 review.publishedAt(), reviewOrder++));
         }
 
-        photos.deleteAllBySalonIdAndSource(salonId, PHOTO_SOURCE);
+        // Full replace: clear every existing photo (manual + prior Google) and keep only
+        // the freshly imported set, so a re-sync fully mirrors the Google profile.
+        photos.deleteAllBySalonId(salonId);
         int photoOrder = 0;
         for (String url : data.photoUrls()) {
             if (photoOrder >= MAX_PHOTOS) break;

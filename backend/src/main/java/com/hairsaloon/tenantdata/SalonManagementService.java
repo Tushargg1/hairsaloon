@@ -4,6 +4,9 @@ import com.hairsaloon.platform.InputPolicy;
 import com.hairsaloon.tenant.Salon;
 import com.hairsaloon.tenant.SalonRepository;
 import com.hairsaloon.tenant.TenantContext;
+import com.hairsaloon.tenant.TenantResolver;
+import java.util.Locale;
+import java.util.regex.Pattern;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -21,23 +24,27 @@ class SalonManagementService {
     static final int SERVICE_NAME_MAX = 36;
     static final int CATEGORY_MAX = 20;
 
+    private static final Pattern SUBDOMAIN = Pattern.compile("[a-z0-9][a-z0-9-]{1,28}[a-z0-9]");
+
     private final SalonRepository salons;
     private final SalonServiceRepository services;
     private final SalonStaffRepository staff;
     private final StaffServiceRepository assignments;
     private final StaffWorkingHourRepository hours;
     private final StaffTimeOffRepository timeOff;
+    private final TenantResolver tenantResolver;
 
     SalonManagementService(SalonRepository salons, SalonServiceRepository services,
                            SalonStaffRepository staff, StaffServiceRepository assignments,
                            StaffWorkingHourRepository hours,
-                           StaffTimeOffRepository timeOff) {
+                           StaffTimeOffRepository timeOff, TenantResolver tenantResolver) {
         this.salons = salons;
         this.services = services;
         this.staff = staff;
         this.assignments = assignments;
         this.hours = hours;
         this.timeOff = timeOff;
+        this.tenantResolver = tenantResolver;
     }
 
     @Transactional(readOnly = true)
@@ -48,11 +55,13 @@ class SalonManagementService {
     @Transactional
     Salon updateProfile(String name, String description, String address, String city,
                         String phone, String email, String logoUrl, String timezone,
-                        int cancellationWindowMinutes, SocialLinks socials) {
+                        int cancellationWindowMinutes, String subdomain, SocialLinks socials) {
         if (cancellationWindowMinutes < 0 || cancellationWindowMinutes > 525600)
             throw InputPolicy.validation("cancellationWindowMinutes",
                 "must be between 0 and 525600");
         Salon salon = currentSalon();
+        String oldSubdomain = salon.getSubdomain();
+        applySubdomain(salon, subdomain);
         salon.updateProfile(InputPolicy.text(name, 160, "name", true),
             InputPolicy.text(description, 5000, "description", false),
             InputPolicy.text(address, 500, "address", true),
@@ -67,7 +76,25 @@ class SalonManagementService {
             InputPolicy.url(links.whatsappUrl(), "whatsappUrl"),
             InputPolicy.url(links.youtubeUrl(), "youtubeUrl"),
             InputPolicy.url(links.mapsUrl(), "mapsUrl"));
-        return salons.save(salon);
+        Salon saved = salons.save(salon);
+        if (!oldSubdomain.equals(saved.getSubdomain())) {
+            tenantResolver.evict(oldSubdomain);
+            tenantResolver.evict(saved.getSubdomain());
+        }
+        return saved;
+    }
+
+    /** Validates and applies a new site subdomain; no-op when unchanged. */
+    private void applySubdomain(Salon salon, String requested) {
+        if (requested == null || requested.isBlank()) return;
+        String slug = requested.trim().toLowerCase(Locale.ROOT);
+        if (slug.equals(salon.getSubdomain())) return;
+        if (!SUBDOMAIN.matcher(slug).matches())
+            throw InputPolicy.validation("subdomain",
+                "must be 3-30 lowercase letters, numbers or hyphens");
+        if (salons.existsBySubdomain(slug))
+            throw InputPolicy.conflict("SUBDOMAIN_TAKEN", "That URL is already in use");
+        salon.rename(null, slug);
     }
 
     @Transactional
