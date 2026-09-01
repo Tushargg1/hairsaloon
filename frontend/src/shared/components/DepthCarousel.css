@@ -144,6 +144,8 @@
   background: rgba(8, 6, 4, 0.9);
   backdrop-filter: blur(4px);
   cursor: zoom-out;
+  touch-action: none;
+  overscroll-behavior: contain;
 }
 .depth-carousel__lightbox-img {
   max-width: 92vw;

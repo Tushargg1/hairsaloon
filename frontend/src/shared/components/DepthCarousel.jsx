@@ -263,15 +263,31 @@ const DepthCarousel = ({
     if (autoTimerRef.current) clearInterval(autoTimerRef.current)
   }, [])
 
-  // While the lightbox is open, lock page scroll and close on Escape.
+  // While the lightbox is open, fully lock page scroll (including touch) and close
+  // on Escape. Pinning the body with a fixed position blocks mobile scroll, which
+  // overflow:hidden alone does not; the scroll offset is restored on close.
   useEffect(() => {
     if (lightbox === null) return undefined
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
+    const scrollY = window.scrollY
+    const body = document.body
+    const prev = {
+      position: body.style.position,
+      top: body.style.top,
+      width: body.style.width,
+      overflow: body.style.overflow,
+    }
+    body.style.position = 'fixed'
+    body.style.top = `-${scrollY}px`
+    body.style.width = '100%'
+    body.style.overflow = 'hidden'
     const onKey = (e) => { if (e.key === 'Escape') setLightbox(null) }
     window.addEventListener('keydown', onKey)
     return () => {
-      document.body.style.overflow = previousOverflow
+      body.style.position = prev.position
+      body.style.top = prev.top
+      body.style.width = prev.width
+      body.style.overflow = prev.overflow
+      window.scrollTo(0, scrollY)
       window.removeEventListener('keydown', onKey)
     }
   }, [lightbox])
