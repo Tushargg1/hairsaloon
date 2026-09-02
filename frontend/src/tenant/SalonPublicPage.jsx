@@ -182,7 +182,7 @@ export default function SalonPublicPage() {
         <VideoHero alt={salonName} loadVideo={stage >= 2} />
         {toggleSiteTheme && (
           <ThemeSwitch checked={!siteLight} onChange={toggleSiteTheme}
-            className="absolute top-16 right-4 lg:right-6 z-20 drop-shadow-lg" style={{ '--toggle-size': '8px' }} />
+            className="absolute top-24 right-4 lg:right-6 z-20 drop-shadow-lg" style={{ '--toggle-size': '8px' }} />
         )}
         <div className="hero-content relative z-10 w-full max-w-[1280px] mx-auto px-4 lg:px-6 pb-[5vh]">
           {profileQuery.isLoading ? <p className="text-on-surface-variant">Loading...</p> : (
