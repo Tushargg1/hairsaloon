@@ -108,9 +108,12 @@
   }
   /* Light dark gradient only on the bottom of the video, so it meets the blend below. */
   .hero-bottom-fade {
-    height: 30%;
+    height: 42%;
     pointer-events: none;
-    background: linear-gradient(to top, rgba(12, 11, 9, 0.85) 0%, transparent 100%);
+    background: linear-gradient(to top,
+      #0c0b09 0%,
+      rgba(12, 11, 9, 0.85) 35%,
+      transparent 100%);
   }
 
   /* The seam is handled *below* the video: the top of the content area carries the
