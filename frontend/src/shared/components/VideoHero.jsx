@@ -65,7 +65,6 @@ export default function VideoHero({ poster, alt = '', loadVideo = true }) {
       {/* Video loads in background, fades in when ready */}
       {!reduceMotion && loadVideo && (
         <video
-          key={videoSrc}
           ref={video}
           className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${videoReady ? 'opacity-100' : 'opacity-0'}`}
           src={videoSrc}

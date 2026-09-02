@@ -6,7 +6,16 @@ import { AuthProvider } from './shared/auth/AuthContext.jsx'
 import ErrorBoundary from './shared/components/ErrorBoundary.jsx'
 import './index.css'
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Reuse cached data across remounts/route revisits instead of refetching.
+      staleTime: 5 * 60 * 1000,
+      gcTime: 30 * 60 * 1000,
+      refetchOnWindowFocus: false,
+    },
+  },
+})
 
 createRoot(document.getElementById('root')).render(
   <ErrorBoundary>
