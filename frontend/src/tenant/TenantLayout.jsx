@@ -197,7 +197,7 @@ export default function TenantLayout() {
   return (
     <div className={`site-root min-h-screen flex flex-col ${siteLight ? 'theme-light' : ''}`}>
       {/* Tenant Nav */}
-      <nav className="site-nav fixed top-0 z-[100] w-full backdrop-blur-md border-b border-outline-variant/20 shadow-md">
+      <nav className="site-nav fixed top-0 z-[100] w-full backdrop-blur-xl border-b border-outline-variant/10">
         <div className="flex justify-between items-center w-full px-4 lg:px-[80px] py-1 max-w-[1280px] mx-auto h-12">
           <NavLink to="/" className="flex items-center gap-3 min-w-0 flex-shrink" aria-label={`${salonName} home`}>
             {profileQuery.data?.logoUrl ? (

@@ -98,8 +98,8 @@
   .site-root.theme-light {
     background-image: radial-gradient(circle at top right, #fbf6ee, #f2e9da);
   }
-  .site-nav { background-color: rgb(35 15 8 / 0.7); }
-  .theme-light .site-nav { background-color: rgb(255 251 244 / 0.85); }
+  .site-nav { background-color: rgb(35 15 8 / 0.35); }
+  .theme-light .site-nav { background-color: rgb(255 251 244 / 0.4); }
 
   /* Hero overlay: fade the video into the page colour at the bottom so there is no
      hard seam. Uses the page colour, so it blends in both dark and light themes. */
