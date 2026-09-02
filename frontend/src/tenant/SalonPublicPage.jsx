@@ -177,8 +177,8 @@ export default function SalonPublicPage() {
 
   return (
     <main className="flex flex-col">
-      {/* Hero stays pinned; the sections below scroll up and over it. */}
-      <section className="sticky top-0 w-full -mt-16 h-[85vh] md:h-[92vh] flex items-end overflow-hidden z-0">
+      {/* Hero is fixed to the viewport; the sections below scroll up and over it. */}
+      <section className="fixed inset-x-0 top-0 w-full h-[85vh] md:h-[92vh] flex items-end overflow-hidden z-0">
         <VideoHero alt={salonName} loadVideo={stage >= 2} />
         {toggleSiteTheme && (
           <ThemeSwitch checked={!siteLight} onChange={toggleSiteTheme}
@@ -203,6 +203,9 @@ export default function SalonPublicPage() {
           )}
         </div>
       </section>
+
+      {/* Spacer occupies the fixed hero's height so content begins below it. */}
+      <div className="h-[85vh] md:h-[92vh]" aria-hidden="true" />
 
       <div className="site-content-top flex flex-col">
       {/* Offers */}
