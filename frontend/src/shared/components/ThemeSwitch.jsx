@@ -1,7 +1,7 @@
 // Animated sun/moon theme toggle. `checked` = dark mode (moon shown).
-export default function ThemeSwitch({ checked, onChange, className = '' }) {
+export default function ThemeSwitch({ checked, onChange, className = '', style }) {
   return (
-    <label className={`theme-switch ${className}`.trim()} aria-label="Toggle light or dark theme">
+    <label className={`theme-switch ${className}`.trim()} style={style} aria-label="Toggle light or dark theme">
       <input type="checkbox" className="theme-switch__checkbox" checked={checked} onChange={onChange} />
       <div className="theme-switch__container">
         <div className="theme-switch__clouds" />

@@ -166,6 +166,7 @@ export default function TenantLayout() {
   // The owner must still reach management login/dashboard on an inactive salon to see
   // their onboarding request, so those routes are never collapsed to the contact page.
   const isDashboard = location.pathname.startsWith('/dashboard')
+  const isHome = location.pathname === '/'
   const managementRoute = location.pathname.startsWith('/manage') || isDashboard
   const notOnboarded = !managementRoute
     && ((profileStatus && profileStatus !== 'ACTIVE')
@@ -237,10 +238,6 @@ export default function TenantLayout() {
                   : salonName.length > 18 ? 'text-lg'
                     : 'text-xl'}`}>{salonName}</span>
           </NavLink>
-
-          {!notOnboarded && !isDashboard && (
-            <ThemeSwitch checked={!siteLight} onChange={toggleSiteTheme} className="hidden md:inline-flex mr-auto ml-4" />
-          )}
 
           {!notOnboarded && !isDashboard && (
             <div className="hidden md:flex items-center gap-6">
@@ -331,6 +328,11 @@ export default function TenantLayout() {
       </nav>
 
       {pushEligible && <PushOptIn role={user.role} />}
+
+      {isHome && !notOnboarded && (
+        <ThemeSwitch checked={!siteLight} onChange={toggleSiteTheme}
+          className="hidden md:inline-flex fixed top-14 right-4 lg:right-[80px] z-[90]" style={{ '--toggle-size': '10px' }} />
+      )}
 
       <QuickNavPill />
 
