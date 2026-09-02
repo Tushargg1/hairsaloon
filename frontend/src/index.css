@@ -1152,7 +1152,6 @@
 
   .booking-avatar {
     @apply w-32 h-44 flex-shrink-0;
-    animation: groomit-float 3s ease-in-out infinite;
   }
   .booking-avatar > div {
     @apply w-full h-full rounded-full p-1 overflow-hidden flex items-center justify-center;
