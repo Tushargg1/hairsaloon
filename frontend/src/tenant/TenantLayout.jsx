@@ -350,7 +350,7 @@ export default function TenantLayout() {
 
       {isHome && !notOnboarded && (
         <ThemeSwitch checked={!siteLight} onChange={toggleSiteTheme}
-          className="fixed top-14 right-4 lg:right-[80px] z-[95] drop-shadow-lg" style={{ '--toggle-size': '11px' }} />
+          className="fixed top-14 right-4 lg:right-[80px] z-[95] drop-shadow-lg" style={{ '--toggle-size': '8px' }} />
       )}
 
       <QuickNavPill />
