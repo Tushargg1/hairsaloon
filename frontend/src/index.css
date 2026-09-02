@@ -101,13 +101,11 @@
   .site-nav { background-color: rgb(35 15 8 / 0.35); }
   .theme-light .site-nav { background-color: rgb(255 251 244 / 0.4); }
 
-  /* Hero overlay stays dark in both themes (do not tint the video). Just enough
-     bottom darkening for the white hero text to stay legible over the footage. */
-  .hero-fade {
-    background: linear-gradient(to top,
-      rgba(20, 16, 8, 0.85) 0%,
-      rgba(20, 16, 8, 0.35) 25%,
-      transparent 55%);
+  /* The video/hero backdrop is left untouched. Hero text gets a soft shadow so it
+     stays legible without any overlay tinting the footage. */
+  .hero-content h1,
+  .hero-content .vintage-cta {
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
   }
 
   /* The seam is handled *below* the video: the top of the content area carries the

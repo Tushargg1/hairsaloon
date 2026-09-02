@@ -119,10 +119,10 @@ export default function SalonPublicPage() {
       {/* Hero: branded Groomit backdrop + name + action paint first; video waits for stage 2. */}
       <section className="relative w-full -mt-16 min-h-[85vh] md:min-h-[92vh] flex items-end overflow-hidden">
         <VideoHero alt={salonName} loadVideo={stage >= 2} />
-        <div className="relative z-10 w-full max-w-[1280px] mx-auto px-4 lg:px-6 pb-[5vh]">
+        <div className="hero-content relative z-10 w-full max-w-[1280px] mx-auto px-4 lg:px-6 pb-[5vh]">
           {profileQuery.isLoading ? <p className="text-on-surface-variant">Loading...</p> : (
             <>
-              <h1 className="font-display text-display-lg-mobile md:text-display-lg text-on-surface mb-6">{salonName}</h1>
+              <h1 className="font-display text-display-lg-mobile md:text-display-lg text-white mb-6">{salonName}</h1>
               {isActive ? (
                 <a href="#book-slot" className="vintage-cta">
                   <Icon name="event_available" className="text-[18px]" />

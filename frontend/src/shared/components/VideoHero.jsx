@@ -80,7 +80,6 @@ export default function VideoHero({ poster, alt = '', loadVideo = true }) {
         />
       )}
 
-      <div className="hero-fade absolute inset-0" />
     </div>
   )
 }
