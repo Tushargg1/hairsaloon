@@ -47,12 +47,12 @@ function offerTerms(promotion) {
 
 function ScissorsMark() {
   return (
-    <svg className="price-scissors" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <circle cx="6" cy="6" r="3" />
-      <circle cx="6" cy="18" r="3" />
-      <line x1="20" y1="4" x2="8.12" y2="15.88" />
-      <line x1="14.47" y1="14.48" x2="20" y2="20" />
-      <line x1="8.12" y1="8.12" x2="12" y2="12" />
+    <svg className="booking-scissors" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M14.348 5.656a4.5 4.5 0 015.656 5.656l-9.9 9.9a4.5 4.5 0 01-5.656-5.656l9.9-9.9z" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M14.348 5.656L9.656 10.348M19.004 10.348l-4.692 4.692" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="6" cy="18" r="2" />
+      <circle cx="18" cy="6" r="2" />
+      <path d="M7.5 16.5L16.5 7.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }
@@ -179,26 +179,22 @@ export default function SalonPublicPage() {
 
       {/* Price list + Booking side by side on desktop */}
       <div className="w-full md:grid md:grid-cols-2 md:gap-6 md:items-start md:max-w-[1280px] md:mx-auto md:px-6">
-      {/* Price list */}
+      {/* Price list — same plate/frame/heading as the booking slot */}
       <section className="py-12 px-4 lg:px-0 w-full" id="services">
-        <div className="price-board">
-          <div className="price-board-frame" />
-          <span className="price-rivet top-3 left-3" />
-          <span className="price-rivet top-3 right-3" />
-          <span className="price-rivet bottom-3 left-3" />
-          <span className="price-rivet bottom-3 right-3" />
+        <div className="booking-frame">
+          <div className="booking-plate">
+            <div className="booking-texture" />
 
-          <header className="price-header">
+          <header className="booking-head">
             <ScissorsMark />
-            <h1 className="price-title">Price List</h1>
-            <div className="price-ornament">
-              <span className="price-ornament-line" />
-              <span className="price-ornament-diamond" />
-              <span className="price-ornament-line is-flipped" />
+            <div className="booking-title-row">
+              <span className="booking-title-rule" />
+              <h2 className="booking-title gold-gradient-text">Price List</h2>
+              <span className="booking-title-rule" />
             </div>
           </header>
 
-          <div className="price-search">
+          <div className="price-search relative z-10">
             <input
               type="text"
               placeholder="Search services..."
@@ -257,7 +253,8 @@ export default function SalonPublicPage() {
             </div>
           )}
 
-          <p className="price-mark">&mdash; {salonName} &mdash;</p>
+          <p className="price-mark relative z-10">&mdash; {salonName} &mdash;</p>
+          </div>
         </div>
       </section>
 
