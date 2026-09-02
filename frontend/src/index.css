@@ -107,6 +107,11 @@
     @apply font-body text-sm uppercase tracking-[0.3em];
     color: rgb(var(--c-on-surface-variant));
   }
+  .site-loader-dots {
+    display: inline-block;
+    width: 1.2em;
+    text-align: left;
+  }
   .site-loader-dots::after {
     content: '';
     animation: site-loader-dots 1.4s steps(4, end) infinite;
