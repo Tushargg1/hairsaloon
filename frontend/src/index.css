@@ -98,6 +98,40 @@
   .site-root.theme-light {
     background-image: radial-gradient(circle at top right, #fbf6ee, #f2e9da);
   }
+  /* Full-screen first-load splash: razor loader + message, no nav/footer. */
+  .site-loader {
+    @apply fixed inset-0 z-[200] flex flex-col items-center justify-center gap-6;
+    background-color: var(--c-page);
+  }
+  .site-loader-text {
+    @apply font-body text-sm uppercase tracking-[0.3em];
+    color: rgb(var(--c-on-surface-variant));
+  }
+  .loader {
+    width: 35px;
+    height: 80px;
+    position: relative;
+  }
+  .loader::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    padding: 3px 5px;
+    border-top: 1px solid #bbb6aa;
+    border-bottom: 4px solid #bbb6aa;
+    background: linear-gradient(#612329 0 0) bottom no-repeat content-box, #e4e0d7;
+    mix-blend-mode: darken;
+    animation: l1 1.5s infinite linear;
+  }
+  .loader::before {
+    content: "";
+    position: absolute;
+    inset: -18px calc(50% - 2px) 8px;
+    background: #eb6b3e;
+    transform-origin: bottom;
+    transform: rotate(8deg);
+  }
+
   .site-nav { background-color: rgb(35 15 8 / 0.22); }
   .theme-light .site-nav { background-color: rgb(255 251 244 / 0.25); }
   /* Mobile dropdown: light tint + light blur so the hero clearly shows through. */
@@ -1007,6 +1041,12 @@
     @apply relative z-10 font-body text-[10px] text-center mt-1.5;
     color: #8A8276;
   }
+}
+
+/* Razor-blade first-load loader. */
+@keyframes l1 {
+  0% { background-size: 100% 100%; }
+  100% { background-size: 100% 5%; }
 }
 
 /* Vintage slot-booking widget: a gilded plate screwed into a dark frame. */

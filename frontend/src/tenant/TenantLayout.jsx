@@ -194,6 +194,16 @@ export default function TenantLayout() {
     }
   }
 
+  // Full-screen loader on first load: no nav/footer until the salon profile resolves.
+  if (profileQuery.isLoading && !isDashboard) {
+    return (
+      <div className={`site-loader ${siteLight ? 'theme-light' : ''}`} aria-live="polite">
+        <div className="loader" />
+        <p className="site-loader-text">Loading</p>
+      </div>
+    )
+  }
+
   return (
     <div className={`site-root min-h-screen flex flex-col ${siteLight ? 'theme-light' : ''}`}>
       {/* Tenant Nav */}
