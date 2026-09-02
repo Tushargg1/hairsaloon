@@ -5,7 +5,6 @@ import useAuth from '../shared/auth/useAuth.js'
 import PushOptIn from '../shared/components/PushOptIn.jsx'
 import Icon from '../shared/components/Icon.jsx'
 import SocialButton from '../shared/components/SocialButton.jsx'
-import ThemeSwitch from '../shared/components/ThemeSwitch.jsx'
 import SleepingCat from '../shared/components/SleepingCat.jsx'
 import VideoHero from '../shared/components/VideoHero.jsx'
 import { getSalonProfile, mapsUrl, tenantKeys } from './tenant-api.js'
@@ -351,11 +350,6 @@ export default function TenantLayout() {
 
       {pushEligible && <PushOptIn role={user.role} />}
 
-      {isHome && !notOnboarded && (
-        <ThemeSwitch checked={!siteLight} onChange={toggleSiteTheme}
-          className="fixed top-14 right-4 lg:right-[80px] z-[95] drop-shadow-lg" style={{ '--toggle-size': '8px' }} />
-      )}
-
       <QuickNavPill />
 
       <div className="flex-grow pt-12" id="main-content" tabIndex="-1">
@@ -382,7 +376,7 @@ export default function TenantLayout() {
           // does not briefly fire (and 404) the services/reviews/availability calls.
           <main className="state-page" aria-live="polite">Loading…</main>
         ) : (
-          <Outlet context={{ profile: profileQuery.data, profileQuery, salonName }} />
+          <Outlet context={{ profile: profileQuery.data, profileQuery, salonName, siteLight, toggleSiteTheme }} />
         )}
       </div>
 

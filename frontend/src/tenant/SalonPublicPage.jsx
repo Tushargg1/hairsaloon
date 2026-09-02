@@ -1,8 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
+import { useOutletContext } from 'react-router-dom'
 import SlotBookingWidget from './SlotBookingWidget.jsx'
 import VintageReviews from './VintageReviews.jsx'
 import Icon from '../shared/components/Icon.jsx'
+import ThemeSwitch from '../shared/components/ThemeSwitch.jsx'
 import VideoHero from '../shared/components/VideoHero.jsx'
 import DepthCarousel from '../shared/components/DepthCarousel.jsx'
 import {
@@ -94,6 +96,7 @@ function useFitToTwoLines(text) {
 }
 
 export default function SalonPublicPage() {
+  const { siteLight, toggleSiteTheme } = useOutletContext() || {}
   // Service selection is shared: the price list and the booking widget both
   // toggle the same chain, in the order the customer picked them.
   const [selectedIds, setSelectedIds] = useState([])
@@ -177,6 +180,10 @@ export default function SalonPublicPage() {
       {/* Hero: branded Groomit backdrop + name + action paint first; video waits for stage 2. */}
       <section className="relative w-full -mt-16 min-h-[85vh] md:min-h-[92vh] flex items-end overflow-hidden">
         <VideoHero alt={salonName} loadVideo={stage >= 2} />
+        {toggleSiteTheme && (
+          <ThemeSwitch checked={!siteLight} onChange={toggleSiteTheme}
+            className="absolute top-16 right-4 lg:right-6 z-20 drop-shadow-lg" style={{ '--toggle-size': '8px' }} />
+        )}
         <div className="hero-content relative z-10 w-full max-w-[1280px] mx-auto px-4 lg:px-6 pb-[5vh]">
           {profileQuery.isLoading ? <p className="text-on-surface-variant">Loading...</p> : (
             <>
