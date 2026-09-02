@@ -278,7 +278,7 @@ export default function TenantLayout() {
 
         {menuOpen && !notOnboarded && (
           <div id="tenant-mobile-menu"
-            className="site-menu md:hidden border-t border-outline-variant/10 backdrop-blur-xl px-4 py-4 flex flex-col gap-4">
+            className="site-menu md:hidden border-t border-outline-variant/10 backdrop-blur-sm px-4 py-4 flex flex-col gap-4">
             <NavLink to="/about" onClick={closeMenu} className="font-body text-label-md text-on-surface-variant">About Us</NavLink>
             <NavLink to="/team" onClick={closeMenu} className="font-body text-label-md text-on-surface-variant">Our Team</NavLink>
             <NavLink to="/contact" onClick={closeMenu} className="font-body text-label-md text-on-surface-variant">Contact Us</NavLink>

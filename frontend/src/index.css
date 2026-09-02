@@ -100,9 +100,9 @@
   }
   .site-nav { background-color: rgb(35 15 8 / 0.35); }
   .theme-light .site-nav { background-color: rgb(255 251 244 / 0.4); }
-  /* Mobile dropdown: matches the bar but more see-through, leaning on the blur. */
-  .site-menu { background-color: rgb(35 15 8 / 0.25); }
-  .theme-light .site-menu { background-color: rgb(255 251 244 / 0.3); }
+  /* Mobile dropdown: light tint + light blur so the hero clearly shows through. */
+  .site-menu { background-color: rgb(20 16 8 / 0.2); }
+  .theme-light .site-menu { background-color: rgb(255 251 244 / 0.18); }
 
   /* Hero text gets a soft shadow so it stays legible over the footage. */
   .hero-content h1,
