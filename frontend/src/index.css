@@ -993,10 +993,12 @@
   .price-state { @apply relative z-10 font-body text-sm text-center py-6; color: #8A8276; }
 
   .price-mark {
-    @apply relative z-10 w-full self-center font-display uppercase text-center;
+    @apply relative z-10 block w-full font-display uppercase text-center;
     color: #5a4a35;
+    /* Trailing letter-spacing adds space after the last char, nudging the text
+       left of centre; the negative text-indent compensates so it reads centred. */
     letter-spacing: 0.1em;
-    /* Keep the salon-name mark on a single line, shrinking on narrow screens. */
+    text-indent: 0.1em;
     white-space: nowrap;
     font-size: clamp(0.5rem, 2.6vw, 0.75rem);
   }
