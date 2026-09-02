@@ -6,6 +6,7 @@ import PushOptIn from '../shared/components/PushOptIn.jsx'
 import Icon from '../shared/components/Icon.jsx'
 import SocialButton from '../shared/components/SocialButton.jsx'
 import ThemeSwitch from '../shared/components/ThemeSwitch.jsx'
+import SleepingCat from '../shared/components/SleepingCat.jsx'
 import VideoHero from '../shared/components/VideoHero.jsx'
 import { getSalonProfile, mapsUrl, tenantKeys } from './tenant-api.js'
 import { tenantNameFallback } from './tenant-host.js'
@@ -202,6 +203,16 @@ export default function TenantLayout() {
       <div className={`site-loader ${siteLight ? 'theme-light' : ''}`} aria-live="polite">
         <div className="loader" />
         <p className="site-loader-text">Loading</p>
+      </div>
+    )
+  }
+
+  // Backend unreachable (network/5xx) and not the inactive-salon case: show a rest screen.
+  if (profileQuery.isError && !notOnboarded && !managementRoute) {
+    return (
+      <div className={`site-loader ${siteLight ? 'theme-light' : ''}`} role="alert">
+        <SleepingCat />
+        <p className="site-loader-text">We&apos;re taking a quick nap. Please try again in a moment.</p>
       </div>
     )
   }

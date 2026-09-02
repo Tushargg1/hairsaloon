@@ -259,6 +259,39 @@
     transform: translateY(-50%);
   }
 
+  /* Sleeping-cat error screen (backend unreachable). */
+  .cat-loader { display: flex; align-items: center; justify-content: center; }
+  .cat-wrapper { display: flex; flex-direction: column; justify-content: center; align-items: center; }
+  .cat-container { display: flex; align-items: center; justify-content: center; position: relative; }
+  .cat-body { width: 80px; }
+  .cat-tail {
+    position: absolute;
+    width: 17px;
+    top: 50%;
+    animation: cat-tail 0.5s ease-in infinite alternate-reverse;
+    transform-origin: top;
+  }
+  @keyframes cat-tail {
+    0% { transform: rotateZ(60deg); }
+    50% { transform: rotateZ(0deg); }
+    100% { transform: rotateZ(-20deg); }
+  }
+  .cat-wall-svg { width: 300px; }
+  .cat-text {
+    display: flex;
+    flex-direction: column;
+    width: 50px;
+    position: absolute;
+    margin: 0 0 100px 120px;
+  }
+  .cat-zzz { color: rgb(var(--c-on-surface)); font-weight: 700; font-size: 15px; animation: cat-zzz 2s linear infinite; }
+  .cat-bigzzz { color: rgb(var(--c-on-surface)); font-weight: 700; font-size: 25px; margin-left: 10px; animation: cat-zzz 2.3s linear infinite; }
+  @keyframes cat-zzz {
+    0% { color: transparent; }
+    50% { color: rgb(var(--c-on-surface)); }
+    100% { color: transparent; }
+  }
+
   .site-nav { background-color: rgb(35 15 8 / 0.22); }
   .theme-light .site-nav { background-color: rgb(255 251 244 / 0.25); }
   /* Mobile dropdown: light tint + light blur so the hero clearly shows through. */
