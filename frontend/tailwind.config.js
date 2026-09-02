@@ -49,7 +49,7 @@ export default {
         'espresso': '#2C1810',
       },
       fontFamily: {
-        display: ['Playfair Display', 'serif'],
+        display: ['Fraunces', 'Playfair Display', 'serif'],
         body: ['Inter', 'sans-serif'],
         engraved: ['Cinzel', 'serif'],
       },
