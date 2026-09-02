@@ -1221,7 +1221,7 @@
   .review-marquee::before,
   .review-marquee::after {
     content: '';
-    @apply absolute top-0 bottom-0 w-12 z-10 pointer-events-none;
+    @apply absolute top-0 bottom-0 w-5 z-10 pointer-events-none;
   }
   .review-marquee::before { left: 0; background: linear-gradient(to right, #0D0C0A, transparent); }
   .review-marquee::after { right: 0; background: linear-gradient(to left, #0D0C0A, transparent); }
