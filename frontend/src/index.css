@@ -320,6 +320,11 @@
   .theme-light .site-nav .text-secondary,
   .theme-light .site-menu .text-secondary,
   .theme-light .site-nav .text-secondary-fixed { color: rgb(243 187 144); }
+  /* Salon name over the translucent nav needs a shadow to stay legible in light mode. */
+  .theme-light .site-nav .font-display.text-secondary-fixed {
+    color: rgb(250 224 200);
+    text-shadow: 0 1px 3px rgb(20 12 6 / 0.7);
+  }
 
   /* Hero text gets a soft shadow so it stays legible over the footage. */
   .hero-content h1,
