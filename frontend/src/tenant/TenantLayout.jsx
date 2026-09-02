@@ -185,6 +185,25 @@ export default function TenantLayout() {
     : null
   const pushEligible = user?.role === 'CUSTOMER' || user?.role === 'SALON_OWNER'
 
+  // Scroll to the top when navigating between routed pages (About/Team/Contact),
+  // so they don't open scrolled down to the previous page's footer position.
+  useEffect(() => {
+    if (!location.hash) window.scrollTo(0, 0)
+  }, [location.pathname, location.hash])
+
+  // In-page section jump for Services/Book/Reviews without a full reload:
+  // scroll on the home page, or route home first then scroll.
+  const goToSection = (id) => (e) => {
+    e.preventDefault()
+    closeMenu()
+    if (isHome) {
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+    } else {
+      navigate('/')
+      setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' }), 100)
+    }
+  }
+
   async function handleLogout() {
     setLoggingOut(true)
     setLogoutError('')
@@ -244,9 +263,9 @@ export default function TenantLayout() {
               <NavLink to="/about" className={navLinkClass}>About Us</NavLink>
               <NavLink to="/team" className={navLinkClass}>Our Team</NavLink>
               <NavLink to="/contact" className={navLinkClass}>Contact Us</NavLink>
-              <a href="/#services" className="font-body text-label-md text-on-surface-variant hover:text-secondary-fixed transition-colors">Services</a>
-              <a href="/#book-slot" className="font-body text-label-md text-on-surface-variant hover:text-secondary-fixed transition-colors">Book</a>
-              <a href="/#reviews" className="font-body text-label-md text-on-surface-variant hover:text-secondary-fixed transition-colors">Reviews</a>
+              <a href="/#services" onClick={goToSection('services')} className="font-body text-label-md text-on-surface-variant hover:text-secondary-fixed transition-colors">Services</a>
+              <a href="/#book-slot" onClick={goToSection('book-slot')} className="font-body text-label-md text-on-surface-variant hover:text-secondary-fixed transition-colors">Book</a>
+              <a href="/#reviews" onClick={goToSection('reviews')} className="font-body text-label-md text-on-surface-variant hover:text-secondary-fixed transition-colors">Reviews</a>
             </div>
           )}
 
@@ -303,9 +322,9 @@ export default function TenantLayout() {
             <NavLink to="/about" onClick={closeMenu} className="font-body text-label-md text-on-surface-variant">About Us</NavLink>
             <NavLink to="/team" onClick={closeMenu} className="font-body text-label-md text-on-surface-variant">Our Team</NavLink>
             <NavLink to="/contact" onClick={closeMenu} className="font-body text-label-md text-on-surface-variant">Contact Us</NavLink>
-            <a href="/#services" onClick={closeMenu} className="font-body text-label-md text-on-surface-variant">Services</a>
-            <a href="/#book-slot" onClick={closeMenu} className="font-body text-label-md text-on-surface-variant">Book</a>
-            <a href="/#reviews" onClick={closeMenu} className="font-body text-label-md text-on-surface-variant">Reviews</a>
+            <a href="/#services" onClick={goToSection('services')} className="font-body text-label-md text-on-surface-variant">Services</a>
+            <a href="/#book-slot" onClick={goToSection('book-slot')} className="font-body text-label-md text-on-surface-variant">Book</a>
+            <a href="/#reviews" onClick={goToSection('reviews')} className="font-body text-label-md text-on-surface-variant">Reviews</a>
             {logoutError && <span className="font-body text-label-sm text-error" role="alert">{logoutError}</span>}
             {loading ? <span className="font-body text-label-sm text-on-surface-variant">...</span> : user ? (
               <>
