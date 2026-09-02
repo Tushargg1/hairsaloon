@@ -107,6 +107,17 @@
     @apply font-body text-sm uppercase tracking-[0.3em];
     color: rgb(var(--c-on-surface-variant));
   }
+  .site-loader-dots::after {
+    content: '';
+    animation: site-loader-dots 1.4s steps(4, end) infinite;
+  }
+  @keyframes site-loader-dots {
+    0% { content: ''; }
+    25% { content: '.'; }
+    50% { content: '..'; }
+    75% { content: '...'; }
+    100% { content: ''; }
+  }
   .loader {
     width: 35px;
     height: 80px;
@@ -292,11 +303,18 @@
     100% { color: transparent; }
   }
 
+  /* Same translucent tint in both themes so the nav looks identical. */
   .site-nav { background-color: rgb(35 15 8 / 0.22); }
-  .theme-light .site-nav { background-color: rgb(255 251 244 / 0.25); }
-  /* Mobile dropdown: light tint + light blur so the hero clearly shows through. */
+  .theme-light .site-nav { background-color: rgb(35 15 8 / 0.22); }
+  /* Mobile dropdown: matching tint so the hero shows through the same way. */
   .site-menu { background-color: rgb(20 16 8 / 0.18); }
-  .theme-light .site-menu { background-color: rgb(255 251 244 / 0.15); }
+  .theme-light .site-menu { background-color: rgb(20 16 8 / 0.18); }
+  /* The tint is dark in both themes, so keep nav text/icons light in light mode too. */
+  .theme-light .site-nav .text-on-surface-variant,
+  .theme-light .site-menu .text-on-surface-variant { color: rgb(216 194 189); }
+  .theme-light .site-nav .text-secondary,
+  .theme-light .site-menu .text-secondary,
+  .theme-light .site-nav .text-secondary-fixed { color: rgb(243 187 144); }
 
   /* Hero text gets a soft shadow so it stays legible over the footage. */
   .hero-content h1,

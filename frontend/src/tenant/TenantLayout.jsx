@@ -221,7 +221,7 @@ export default function TenantLayout() {
     return (
       <div className={`site-loader ${siteLight ? 'theme-light' : ''}`} aria-live="polite">
         <div className="loader" />
-        <p className="site-loader-text">Loading</p>
+        <p className="site-loader-text">Loading<span className="site-loader-dots" /></p>
       </div>
     )
   }
