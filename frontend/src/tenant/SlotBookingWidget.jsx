@@ -6,6 +6,7 @@ import { characterVideo } from '../shared/characters.js'
 import {
   createBooking, errorMessage, getAvailability, getPublicServices, getPublicStaff, tenantKeys,
 } from './tenant-api.js'
+import BookingTicket from './BookingTicket.jsx'
 
 // Local calendar date. toISOString() would shift the day for anyone east or
 // west of UTC, which broke the arrows entirely in IST.
@@ -194,13 +195,16 @@ export default function SlotBookingWidget({ selectedIds, onToggleService, salonN
         </header>
 
         {booked ? (
-          <div className="booking-body items-center text-center">
-            <p className="booking-title gold-gradient-text text-sm">Reserved</p>
-            <p className="booking-note">
-              {chosenServices.map((item) => item.name).join(' + ')} with{' '}
-              {booked.staffName || chosen?.staffName} on {dayLabel(day)} at{' '}
-              {clockLabel(booked.startDatetime || startAt)}.
-            </p>
+          <div className="booking-body items-center">
+            <BookingTicket
+              salonName={salonName}
+              services={chosenServices.map((item) => item.name).join(' + ')}
+              staffName={booked.staffName || chosen?.staffName}
+              dateLabel={dayLabel(day)}
+              timeLabel={clockLabel(booked.startDatetime || startAt)}
+              price={totalPrice ? new Intl.NumberFormat(undefined, { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(totalPrice) : null}
+              minutes={totalMinutes || null}
+            />
           </div>
         ) : (
           <>
