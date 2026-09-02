@@ -228,6 +228,10 @@ export default function TenantLayout() {
           </NavLink>
 
           {!notOnboarded && !isDashboard && (
+            <ThemeSwitch checked={!siteLight} onChange={toggleSiteTheme} className="hidden md:inline-flex mr-auto ml-4" />
+          )}
+
+          {!notOnboarded && !isDashboard && (
             <div className="hidden md:flex items-center gap-6">
               <NavLink to="/about" className={navLinkClass}>About Us</NavLink>
               <NavLink to="/team" className={navLinkClass}>Our Team</NavLink>
@@ -259,7 +263,6 @@ export default function TenantLayout() {
               {logoutError && (
                 <span className="font-body text-label-sm text-error" role="alert">{logoutError}</span>
               )}
-              <ThemeSwitch checked={!siteLight} onChange={toggleSiteTheme} />
               {loading ? <span className="font-body text-label-sm text-on-surface-variant">...</span> : user ? (
                 <>
                   {user.role === 'SALON_OWNER' && <NavLink to="/dashboard" className="font-body text-label-md text-secondary hover:text-secondary-fixed transition-colors">Dashboard</NavLink>}
@@ -269,7 +272,7 @@ export default function TenantLayout() {
                   </button>
                 </>
               ) : (
-                <NavLink to="/login" className="brass-gradient text-espresso font-body text-label-md font-semibold px-5 py-1.5 rounded shadow-amber-glow transition-all hover:shadow-amber-glow-lg">
+                <NavLink to="/login" className="font-body text-label-md font-semibold px-5 py-1.5 rounded-full border border-secondary/60 text-secondary hover:bg-secondary hover:text-on-secondary transition-colors">
                   Login
                 </NavLink>
               )}
@@ -288,13 +291,13 @@ export default function TenantLayout() {
         {menuOpen && !notOnboarded && (
           <div id="tenant-mobile-menu"
             className="site-menu md:hidden border-t border-outline-variant/10 backdrop-blur-sm px-4 py-4 flex flex-col items-end gap-4 text-right">
+            <ThemeSwitch checked={!siteLight} onChange={toggleSiteTheme} className="self-start" />
             <NavLink to="/about" onClick={closeMenu} className="font-body text-label-md text-on-surface-variant">About Us</NavLink>
             <NavLink to="/team" onClick={closeMenu} className="font-body text-label-md text-on-surface-variant">Our Team</NavLink>
             <NavLink to="/contact" onClick={closeMenu} className="font-body text-label-md text-on-surface-variant">Contact Us</NavLink>
             <a href="/#services" onClick={closeMenu} className="font-body text-label-md text-on-surface-variant">Services</a>
             <a href="/#book-slot" onClick={closeMenu} className="font-body text-label-md text-on-surface-variant">Book</a>
             <a href="/#reviews" onClick={closeMenu} className="font-body text-label-md text-on-surface-variant">Reviews</a>
-            <ThemeSwitch checked={!siteLight} onChange={toggleSiteTheme} />
             {logoutError && <span className="font-body text-label-sm text-error" role="alert">{logoutError}</span>}
             {loading ? <span className="font-body text-label-sm text-on-surface-variant">...</span> : user ? (
               <>
@@ -310,7 +313,7 @@ export default function TenantLayout() {
                 </button>
               </>
             ) : (
-              <NavLink to="/login" onClick={closeMenu} className="brass-gradient text-espresso font-body text-label-md px-5 py-2 rounded self-end shadow-amber-glow-lg font-semibold">Login</NavLink>
+              <NavLink to="/login" onClick={closeMenu} className="font-body text-label-md font-semibold px-5 py-2 rounded-full border border-secondary/60 text-secondary hover:bg-secondary hover:text-on-secondary transition-colors self-end">Login</NavLink>
             )}
           </div>
         )}
