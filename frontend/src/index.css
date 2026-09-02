@@ -1476,14 +1476,59 @@
   }
   .salon-footer-line a { @apply transition-colors; }
   .salon-footer-line a:hover { color: #C8B084; }
-  .salon-footer-social { @apply grid grid-cols-2 gap-2 mt-4; }
-  .salon-footer-social a {
+  .salon-footer-social { @apply grid grid-cols-2 gap-3 mt-4; }
+  .salon-footer-social a:not(.social-btn) {
     @apply inline-flex items-center justify-center gap-2 px-3 py-2 rounded transition-colors font-body text-xs;
     border: 1px solid rgba(200, 176, 132, 0.4);
     color: #8A857D;
     min-height: 2.5rem;
   }
-  .salon-footer-social a:hover { color: #C8B084; background-color: rgba(200, 176, 132, 0.1); }
+  .salon-footer-social a:not(.social-btn):hover { color: #C8B084; background-color: rgba(200, 176, 132, 0.1); }
+
+  /* Animated brand social buttons */
+  .social-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    width: 100%;
+    max-width: 150px;
+    height: 40px;
+    border-radius: 30px;
+    background-color: #fff;
+    border: 1px solid var(--social-border);
+    overflow: hidden;
+    justify-self: center;
+  }
+  .social-btn-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-left: 30%;
+    white-space: nowrap;
+  }
+  .social-btn-icon {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    height: 100%;
+    padding-left: 5px;
+    transition: transform 0.5s;
+  }
+  .social-btn-icon::before {
+    position: absolute;
+    left: -120px;
+    top: 0;
+    z-index: -1;
+    content: '';
+    width: 150px;
+    height: 40px;
+    border-radius: 30px;
+    background: var(--social-before);
+  }
+  .social-btn:hover .social-btn-icon { transform: translateX(110px); }
+  .social-btn:active { transform: scale(1.03); }
   .salon-footer-cta {
     @apply inline-block font-display text-[11px] uppercase px-6 py-3 mt-2 transition-colors;
     border: 1px solid rgba(200, 176, 132, 0.5);

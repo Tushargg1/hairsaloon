@@ -98,6 +98,7 @@ export default function SalonPublicPage() {
   // toggle the same chain, in the order the customer picked them.
   const [selectedIds, setSelectedIds] = useState([])
   const [serviceSearch, setServiceSearch] = useState('')
+  const [searchHint, setSearchHint] = useState(0)
   const toggleService = (id) => setSelectedIds((current) => (
     current.includes(String(id))
       ? current.filter((value) => value !== String(id))
@@ -107,6 +108,14 @@ export default function SalonPublicPage() {
   const profileQuery = useQuery({ queryKey: tenantKeys.profile, queryFn: getSalonProfile })
   const servicesQuery = useQuery({ queryKey: tenantKeys.publicServices, queryFn: getPublicServices })
   const promotionsQuery = useQuery({ queryKey: tenantKeys.publicPromotions, queryFn: getPublicPromotions })
+
+  // Placeholder cycles through the salon's actual service names.
+  const searchHints = (servicesQuery.data || []).map((s) => s.name)
+  useEffect(() => {
+    if (searchHints.length < 2) return
+    const timer = setInterval(() => setSearchHint((i) => (i + 1) % searchHints.length), 2000)
+    return () => clearInterval(timer)
+  }, [searchHints.length])
 
   // Progressive load for a snappy first paint:
   //  1: Groomit backdrop + salon name + Book/Contact button (needs the profile only)
@@ -226,7 +235,7 @@ export default function SalonPublicPage() {
           <div className="price-search relative z-10">
             <input
               type="text"
-              placeholder="Search services..."
+              placeholder={searchHints.length ? `Search for ${searchHints[searchHint % searchHints.length]}...` : 'Search services...'}
               value={serviceSearch}
               onChange={(e) => setServiceSearch(e.target.value)}
               className="price-search-input"

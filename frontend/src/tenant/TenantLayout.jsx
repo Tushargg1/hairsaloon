@@ -4,6 +4,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import useAuth from '../shared/auth/useAuth.js'
 import PushOptIn from '../shared/components/PushOptIn.jsx'
 import Icon from '../shared/components/Icon.jsx'
+import SocialButton from '../shared/components/SocialButton.jsx'
 import ThemeSwitch from '../shared/components/ThemeSwitch.jsx'
 import VideoHero from '../shared/components/VideoHero.jsx'
 import { getSalonProfile, mapsUrl, tenantKeys } from './tenant-api.js'
@@ -115,10 +116,10 @@ function QuickNavPill() {
 
 // Material Symbols has no brand glyphs, so these reuse the closest generic icon.
 const SOCIALS = [
-  { key: 'instagramUrl', label: 'Instagram', icon: 'photo_camera' },
-  { key: 'facebookUrl', label: 'Facebook', icon: 'thumb_up' },
+  { key: 'instagramUrl', label: 'Instagram', icon: 'photo_camera', brand: 'instagram' },
+  { key: 'facebookUrl', label: 'Facebook', icon: 'thumb_up', brand: 'facebook' },
   { key: 'whatsappUrl', label: 'WhatsApp', icon: 'chat' },
-  { key: 'youtubeUrl', label: 'YouTube', icon: 'play_circle' },
+  { key: 'youtubeUrl', label: 'YouTube', icon: 'play_circle', brand: 'youtube' },
   { key: 'mapsUrl', label: 'Google Maps', icon: 'map' },
 ]
 const socialLinks = (profile) => SOCIALS
@@ -395,12 +396,16 @@ export default function TenantLayout() {
 
             {socialLinks(profileQuery.data).length > 0 && (
               <div className="salon-footer-social">
-                {socialLinks(profileQuery.data).map(({ key, label, url, icon }) => (
-                  <a key={key} href={url} target="_blank" rel="noreferrer" aria-label={label}
-                    title={label}>
-                    <Icon name={icon} className="text-[16px]" />
-                    <span>{label}</span>
-                  </a>
+                {socialLinks(profileQuery.data).map(({ key, label, url, icon, brand }) => (
+                  brand ? (
+                    <SocialButton key={key} brand={brand} label={label} url={url} />
+                  ) : (
+                    <a key={key} href={url} target="_blank" rel="noreferrer" aria-label={label}
+                      title={label}>
+                      <Icon name={icon} className="text-[16px]" />
+                      <span>{label}</span>
+                    </a>
+                  )
                 ))}
               </div>
             )}
