@@ -993,9 +993,17 @@
   .price-state { @apply relative z-10 font-body text-sm text-center py-6; color: #8A8276; }
 
   .price-mark {
-    @apply relative z-10 font-display text-xs uppercase text-center;
+    @apply relative z-10 font-display uppercase text-center;
     color: #5a4a35;
     letter-spacing: 0.1em;
+    /* Keep the salon-name mark on a single line, shrinking on narrow screens. */
+    white-space: nowrap;
+    font-size: clamp(0.5rem, 2.6vw, 0.75rem);
+  }
+
+  .price-search-note {
+    @apply relative z-10 font-body text-[10px] text-center mt-1.5;
+    color: #8A8276;
   }
 }
 
@@ -1315,10 +1323,12 @@
   }
   .salon-footer-cta:hover { background-color: rgba(200, 176, 132, 0.1); }
   .salon-footer-mark {
-    @apply font-display text-[10px] uppercase text-center py-5;
+    @apply font-display uppercase text-center py-5;
     border-top: 1px solid #2A251D;
     color: #5a4a35;
-    letter-spacing: 0.4em;
+    letter-spacing: 0.3em;
+    white-space: nowrap;
+    font-size: clamp(0.5rem, 2.4vw, 0.625rem);
   }
   .salon-footer-site {
     @apply font-body text-xs text-center py-3 flex items-center justify-center gap-2;

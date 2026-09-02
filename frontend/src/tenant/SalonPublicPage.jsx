@@ -48,11 +48,11 @@ function offerTerms(promotion) {
 function ScissorsMark() {
   return (
     <svg className="booking-scissors" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M14.348 5.656a4.5 4.5 0 015.656 5.656l-9.9 9.9a4.5 4.5 0 01-5.656-5.656l9.9-9.9z" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M14.348 5.656L9.656 10.348M19.004 10.348l-4.692 4.692" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="6" cy="18" r="2" />
-      <circle cx="18" cy="6" r="2" />
-      <path d="M7.5 16.5L16.5 7.5" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="6" cy="6" r="3" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="6" cy="18" r="3" strokeLinecap="round" strokeLinejoin="round" />
+      <line x1="20" y1="4" x2="8.12" y2="15.88" strokeLinecap="round" strokeLinejoin="round" />
+      <line x1="14.47" y1="14.48" x2="20" y2="20" strokeLinecap="round" strokeLinejoin="round" />
+      <line x1="8.12" y1="8.12" x2="12" y2="12" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }
@@ -202,6 +202,7 @@ export default function SalonPublicPage() {
               onChange={(e) => setServiceSearch(e.target.value)}
               className="price-search-input"
             />
+            <p className="price-search-note">Tap a service to add it to your booking.</p>
           </div>
 
           {servicesQuery.isLoading ? (
