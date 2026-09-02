@@ -139,6 +139,7 @@ export default function SalonPublicPage() {
         </div>
       </section>
 
+      <div className="site-content-top flex flex-col">
       {/* Offers */}
       {promotionsQuery.data?.length > 0 && (
         <section className="pt-12 px-4 lg:px-6 w-full md:max-w-2xl md:mx-auto" id="offers">
@@ -305,6 +306,7 @@ export default function SalonPublicPage() {
       <section className="pt-4 pb-12 px-4 lg:px-6 w-full md:max-w-2xl md:mx-auto" id="reviews">
         <VintageReviews salonName={salonName} />
       </section>
+      </div>
 
     </main>
   )
