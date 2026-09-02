@@ -98,7 +98,7 @@ export default function SalonPublicPage() {
   // toggle the same chain, in the order the customer picked them.
   const [selectedIds, setSelectedIds] = useState([])
   const [serviceSearch, setServiceSearch] = useState('')
-  const [searchHint, setSearchHint] = useState(0)
+  const [typedHint, setTypedHint] = useState('')
   const toggleService = (id) => setSelectedIds((current) => (
     current.includes(String(id))
       ? current.filter((value) => value !== String(id))
@@ -109,13 +109,33 @@ export default function SalonPublicPage() {
   const servicesQuery = useQuery({ queryKey: tenantKeys.publicServices, queryFn: getPublicServices })
   const promotionsQuery = useQuery({ queryKey: tenantKeys.publicPromotions, queryFn: getPublicPromotions })
 
-  // Placeholder cycles through the salon's actual service names.
+  // Typewriter placeholder: types then deletes each of the salon's service names.
   const searchHints = (servicesQuery.data || []).map((s) => s.name)
+  const searchHintsKey = searchHints.join('|')
   useEffect(() => {
-    if (searchHints.length < 2) return
-    const timer = setInterval(() => setSearchHint((i) => (i + 1) % searchHints.length), 2000)
-    return () => clearInterval(timer)
-  }, [searchHints.length])
+    const words = searchHintsKey ? searchHintsKey.split('|') : []
+    if (!words.length) return
+    let word = 0
+    let char = 0
+    let deleting = false
+    let timer
+    const tick = () => {
+      const current = words[word]
+      if (!deleting) {
+        char++
+        setTypedHint(current.slice(0, char))
+        if (char === current.length) { deleting = true; timer = setTimeout(tick, 1500); return }
+        timer = setTimeout(tick, 45)
+      } else {
+        char--
+        setTypedHint(current.slice(0, char))
+        if (char === 0) { deleting = false; word = (word + 1) % words.length }
+        timer = setTimeout(tick, 25)
+      }
+    }
+    timer = setTimeout(tick, 45)
+    return () => clearTimeout(timer)
+  }, [searchHintsKey])
 
   // Progressive load for a snappy first paint:
   //  1: Groomit backdrop + salon name + Book/Contact button (needs the profile only)
@@ -235,7 +255,7 @@ export default function SalonPublicPage() {
           <div className="price-search relative z-10">
             <input
               type="text"
-              placeholder={searchHints.length ? `Search for ${searchHints[searchHint % searchHints.length]}...` : 'Search services...'}
+              placeholder={searchHints.length ? `Search for ${typedHint}` : 'Search services...'}
               value={serviceSearch}
               onChange={(e) => setServiceSearch(e.target.value)}
               className="price-search-input"
