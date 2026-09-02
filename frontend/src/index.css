@@ -309,8 +309,8 @@
   }
 
   /* Same translucent tint in both themes so the nav looks identical. */
-  .site-nav { background-color: rgb(35 15 8 / 0.22); }
-  .theme-light .site-nav { background-color: rgb(35 15 8 / 0.22); }
+  .site-nav { background-color: rgb(35 15 8 / 0.12); }
+  .theme-light .site-nav { background-color: rgb(35 15 8 / 0.12); }
   /* Mobile dropdown: matching tint so the hero shows through the same way. */
   .site-menu { background-color: rgb(20 16 8 / 0.18); }
   .theme-light .site-menu { background-color: rgb(20 16 8 / 0.18); }
