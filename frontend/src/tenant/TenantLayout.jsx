@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import useAuth from '../shared/auth/useAuth.js'
 import PushOptIn from '../shared/components/PushOptIn.jsx'
@@ -348,9 +349,12 @@ export default function TenantLayout() {
 
       {pushEligible && <PushOptIn role={user.role} />}
 
-      {isHome && !notOnboarded && (
-        <ThemeSwitch checked={!siteLight} onChange={toggleSiteTheme}
-          className="fixed top-14 right-4 lg:right-[80px] z-[95] drop-shadow-lg" style={{ '--toggle-size': '8px' }} />
+      {isHome && !notOnboarded && createPortal(
+        <div className={siteLight ? 'theme-light' : ''}>
+          <ThemeSwitch checked={!siteLight} onChange={toggleSiteTheme}
+            className="fixed top-14 right-4 lg:right-[80px] z-[95] drop-shadow-lg" style={{ '--toggle-size': '8px' }} />
+        </div>,
+        document.body,
       )}
 
       <QuickNavPill />
