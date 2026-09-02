@@ -1386,6 +1386,23 @@
     border-color: #d8c9ad;
   }
   .theme-light .price-board-frame { border-color: #d8c9ad; }
+  /* Match the booking slot's readable gilded tones on the cream plate. */
+  .theme-light .price-title { color: #9B7D46; }
+  .theme-light .price-category > h3 { color: #8a6a2f; }
+  .theme-light .price-category-line { background-color: #cbb98f; }
+  .theme-light .price-service-name,
+  .theme-light .price-amount { color: #6b5320; }
+  .theme-light .price-duration,
+  .theme-light .price-state { color: #8a7f6d; }
+  .theme-light .price-row:hover .price-service-name,
+  .theme-light .price-row[aria-pressed="true"] .price-service-name { color: #9B7D46; }
+  .theme-light .price-search-input {
+    background-color: #fbf6ec;
+    border-color: #d8c9ad;
+    color: #6b5320;
+  }
+  .theme-light .price-search-input::placeholder { color: #a4967f; }
+  .theme-light .price-mark { color: #8a7f6d; }
   .theme-light .booking-frame {
     background-color: #f3ece0;
     box-shadow: 0 0 0 4px #e8dfce, 0 0 0 6px #d8c9ad, 0 10px 30px rgba(120, 95, 45, 0.15);
