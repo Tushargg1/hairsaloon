@@ -15,7 +15,7 @@ export default function Navbar() {
   const close = () => setMenuOpen(false)
 
   return (
-    <nav className="fixed top-0 w-full z-50 bg-[#230F08]/30 backdrop-blur-md border-b border-outline-variant/15 shadow-sm transition-all duration-300">
+    <nav className="site-nav fixed top-0 w-full z-50 backdrop-blur-md border-b border-outline-variant/15 shadow-sm transition-all duration-300">
       <div className="flex justify-between items-center w-full px-4 lg:px-[80px] py-1 max-w-[1280px] mx-auto h-12">
         {/* Brand */}
         <Link to="/" className="flex items-center gap-2" aria-label="Groomit home">
@@ -68,7 +68,7 @@ export default function Navbar() {
 
       {/* Mobile Menu */}
       {menuOpen && (
-        <div className="md:hidden border-t border-outline-variant/20 bg-[#230F08]/30 backdrop-blur-md px-4 py-4 flex flex-col gap-4">
+        <div className="site-menu md:hidden border-t border-outline-variant/20 backdrop-blur-md px-4 py-4 flex flex-col gap-4">
           <NavLink to="/salons" onClick={close} className="font-body text-label-md text-on-surface-variant">Find a Salon</NavLink>
           <NavLink to="/pricing" onClick={close} className="font-body text-label-md text-on-surface-variant">Pricing</NavLink>
           <NavLink to="/about" onClick={close} className="font-body text-label-md text-on-surface-variant">About</NavLink>

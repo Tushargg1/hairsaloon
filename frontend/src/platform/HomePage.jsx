@@ -44,9 +44,9 @@ export default function HomePage() {
             <div key={stat.label}
               className="vintage-panel p-3 sm:p-6 text-center items-center transition-transform hover:-translate-y-1 duration-300">
               <div className="booking-texture" />
-              <Icon name={stat.icon} filled className="relative z-10 text-2xl sm:text-4xl mb-2" style={{ color: '#C8B084' }} />
+              <Icon name={stat.icon} filled className="relative z-10 text-2xl sm:text-4xl mb-2 text-secondary" />
               <h3 className="relative z-10 font-display text-headline-sm sm:text-headline-md gold-gradient-text mb-1">{stat.value}</h3>
-              <p className="relative z-10 font-body text-[9px] sm:text-label-sm uppercase leading-tight" style={{ color: '#8A857D', letterSpacing: '0.1em' }}>
+              <p className="relative z-10 font-body text-[9px] sm:text-label-sm uppercase leading-tight text-on-surface-variant" style={{ letterSpacing: '0.1em' }}>
                 {stat.label}
               </p>
             </div>
@@ -66,12 +66,12 @@ export default function HomePage() {
             <div key={item.step}
               className="vintage-panel p-8 text-center items-center hover:-translate-y-1 transition-transform duration-300">
               <div className="booking-texture" />
-              <span className="relative z-10 font-display text-xs mb-4" style={{ color: '#8A857D', letterSpacing: '0.3em' }}>
+              <span className="relative z-10 font-display text-xs mb-4 text-on-surface-variant" style={{ letterSpacing: '0.3em' }}>
                 {item.step}
               </span>
-              <Icon name={item.icon} filled className="relative z-10 text-4xl mb-4" style={{ color: '#C8B084' }} />
+              <Icon name={item.icon} filled className="relative z-10 text-4xl mb-4 text-secondary" />
               <h3 className="relative z-10 font-display text-headline-sm gold-gradient-text mb-2">{item.title}</h3>
-              <p className="relative z-10 font-body text-body-md" style={{ color: '#B8A074' }}>{item.desc}</p>
+              <p className="relative z-10 font-body text-body-md text-on-surface-variant">{item.desc}</p>
             </div>
           ))}
         </div>
@@ -83,7 +83,7 @@ export default function HomePage() {
           <div className="booking-texture" />
           <div className="relative z-10 w-full">
             <VintageHeading>Own a Salon?</VintageHeading>
-            <p className="font-body text-body-lg mb-8 max-w-xl mx-auto" style={{ color: '#B8A074' }}>
+            <p className="font-body text-body-lg mb-8 max-w-xl mx-auto text-on-surface-variant">
               List your business on Groomit and reach customers looking for premium grooming
               services. Free to start, and we never take commission.
             </p>
