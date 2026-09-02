@@ -80,6 +80,8 @@ export default function VideoHero({ poster, alt = '', loadVideo = true }) {
         />
       )}
 
+      {/* Subtle dark fade on the video's lower edge to meet the blend below it. */}
+      <div className="hero-bottom-fade absolute inset-x-0 bottom-0" />
     </div>
   )
 }
