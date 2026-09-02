@@ -347,6 +347,9 @@
   .site-content-top {
     position: relative;
     isolation: isolate;
+    /* Sit above the pinned hero and stay opaque so sections scroll up over it. */
+    z-index: 10;
+    background-color: var(--c-page);
   }
   .site-content-top::before {
     content: '';

@@ -177,8 +177,8 @@ export default function SalonPublicPage() {
 
   return (
     <main className="flex flex-col">
-      {/* Hero: branded Groomit backdrop + name + action paint first; video waits for stage 2. */}
-      <section className="relative w-full -mt-16 min-h-[85vh] md:min-h-[92vh] flex items-end overflow-hidden">
+      {/* Hero stays pinned; the sections below scroll up and over it. */}
+      <section className="sticky top-0 w-full -mt-16 h-[85vh] md:h-[92vh] flex items-end overflow-hidden z-0">
         <VideoHero alt={salonName} loadVideo={stage >= 2} />
         {toggleSiteTheme && (
           <ThemeSwitch checked={!siteLight} onChange={toggleSiteTheme}
