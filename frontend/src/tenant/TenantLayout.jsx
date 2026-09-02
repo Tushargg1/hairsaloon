@@ -4,6 +4,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import useAuth from '../shared/auth/useAuth.js'
 import PushOptIn from '../shared/components/PushOptIn.jsx'
 import Icon from '../shared/components/Icon.jsx'
+import ThemeSwitch from '../shared/components/ThemeSwitch.jsx'
 import VideoHero from '../shared/components/VideoHero.jsx'
 import { getSalonProfile, mapsUrl, tenantKeys } from './tenant-api.js'
 import { tenantNameFallback } from './tenant-host.js'
@@ -134,9 +135,9 @@ export default function TenantLayout() {
   const [loggingOut, setLoggingOut] = useState(false)
   const [logoutError, setLogoutError] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
-  // Public salon site theme (dark by default), toggled from the navbar and persisted.
+  // Public salon site theme (light by default), toggled from the navbar and persisted.
   const [siteTheme, setSiteTheme] = useState(
-    () => localStorage.getItem('groomit-site-theme') || 'dark')
+    () => localStorage.getItem('groomit-site-theme') || 'light')
   const siteLight = siteTheme === 'light'
   const toggleSiteTheme = () => {
     const next = siteLight ? 'dark' : 'light'
@@ -257,10 +258,7 @@ export default function TenantLayout() {
               {logoutError && (
                 <span className="font-body text-label-sm text-error" role="alert">{logoutError}</span>
               )}
-              <button onClick={toggleSiteTheme} aria-label="Toggle light or dark theme"
-                className="font-body text-secondary hover:text-secondary-fixed transition-colors flex items-center">
-                <Icon name={siteLight ? 'dark_mode' : 'light_mode'} className="text-[20px]" />
-              </button>
+              <ThemeSwitch checked={!siteLight} onChange={toggleSiteTheme} />
               {loading ? <span className="font-body text-label-sm text-on-surface-variant">...</span> : user ? (
                 <>
                   {user.role === 'SALON_OWNER' && <NavLink to="/dashboard" className="font-body text-label-md text-secondary hover:text-secondary-fixed transition-colors">Dashboard</NavLink>}
@@ -288,18 +286,14 @@ export default function TenantLayout() {
 
         {menuOpen && !notOnboarded && (
           <div id="tenant-mobile-menu"
-            className="site-menu md:hidden border-t border-outline-variant/10 backdrop-blur-sm px-4 py-4 flex flex-col gap-4">
+            className="site-menu md:hidden border-t border-outline-variant/10 backdrop-blur-sm px-4 py-4 flex flex-col items-end gap-4 text-right">
             <NavLink to="/about" onClick={closeMenu} className="font-body text-label-md text-on-surface-variant">About Us</NavLink>
             <NavLink to="/team" onClick={closeMenu} className="font-body text-label-md text-on-surface-variant">Our Team</NavLink>
             <NavLink to="/contact" onClick={closeMenu} className="font-body text-label-md text-on-surface-variant">Contact Us</NavLink>
             <a href="/#services" onClick={closeMenu} className="font-body text-label-md text-on-surface-variant">Services</a>
             <a href="/#book-slot" onClick={closeMenu} className="font-body text-label-md text-on-surface-variant">Book</a>
             <a href="/#reviews" onClick={closeMenu} className="font-body text-label-md text-on-surface-variant">Reviews</a>
-            <button onClick={toggleSiteTheme}
-              className="font-body text-label-md text-secondary text-left flex items-center gap-2">
-              <Icon name={siteLight ? 'dark_mode' : 'light_mode'} className="text-[18px]" />
-              {siteLight ? 'Dark theme' : 'Light theme'}
-            </button>
+            <ThemeSwitch checked={!siteLight} onChange={toggleSiteTheme} />
             {logoutError && <span className="font-body text-label-sm text-error" role="alert">{logoutError}</span>}
             {loading ? <span className="font-body text-label-sm text-on-surface-variant">...</span> : user ? (
               <>
@@ -310,12 +304,12 @@ export default function TenantLayout() {
                   <NavLink to="/bookings" onClick={closeMenu} className="font-body text-label-md text-on-surface-variant">My bookings</NavLink>
                 )}
                 <button onClick={() => { closeMenu(); handleLogout() }} disabled={loggingOut}
-                  className="font-body text-label-sm text-on-surface-variant text-left">
+                  className="font-body text-label-sm text-on-surface-variant text-right">
                   {loggingOut ? '...' : 'Logout'}
                 </button>
               </>
             ) : (
-              <NavLink to="/login" onClick={closeMenu} className="brass-gradient text-espresso font-body text-label-md px-5 py-2 rounded self-start shadow-amber-glow-lg font-semibold">Login</NavLink>
+              <NavLink to="/login" onClick={closeMenu} className="brass-gradient text-espresso font-body text-label-md px-5 py-2 rounded self-end shadow-amber-glow-lg font-semibold">Login</NavLink>
             )}
           </div>
         )}
