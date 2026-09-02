@@ -28,18 +28,26 @@ const ICONS = {
       </g>
     </svg>
   ),
+  maps: (
+    <svg xmlns="http://www.w3.org/2000/svg" width={24} height={24} viewBox="0 0 24 24">
+      <path fill="#1a73e8" d="M12 2C7.6 2 4 5.6 4 10c0 5.4 7 11.5 7.3 11.8.2.2.5.2.7 0C12.3 21.5 20 15.4 20 10c0-4.4-3.6-8-8-8z" />
+      <circle cx="12" cy="10" r="3.2" fill="#fff" />
+    </svg>
+  ),
 }
 
 const BEFORE_BG = {
   instagram: 'radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%)',
   youtube: '#cd201f',
   facebook: '#3a5ba2',
+  maps: 'linear-gradient(135deg, #1a73e8, #34a853)',
 }
 
 const BORDER = {
   instagram: '#FFB700',
   youtube: '#cd201f',
   facebook: '#3a5ba2',
+  maps: '#1a73e8',
 }
 
 export default function SocialButton({ brand, label, url }) {

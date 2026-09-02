@@ -120,7 +120,7 @@ const SOCIALS = [
   { key: 'facebookUrl', label: 'Facebook', icon: 'thumb_up', brand: 'facebook' },
   { key: 'whatsappUrl', label: 'WhatsApp', icon: 'chat' },
   { key: 'youtubeUrl', label: 'YouTube', icon: 'play_circle', brand: 'youtube' },
-  { key: 'mapsUrl', label: 'Google Maps', icon: 'map' },
+  { key: 'mapsUrl', label: 'Google Maps', icon: 'map', brand: 'maps' },
 ]
 const socialLinks = (profile) => SOCIALS
   .filter(({ key }) => profile?.[key])
