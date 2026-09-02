@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { createPortal } from 'react-dom'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import useAuth from '../shared/auth/useAuth.js'
 import PushOptIn from '../shared/components/PushOptIn.jsx'
@@ -295,7 +294,8 @@ export default function TenantLayout() {
                 <>
                   {user.role === 'SALON_OWNER' && <NavLink to="/dashboard" className="font-body text-label-md text-secondary hover:text-secondary-fixed transition-colors">Dashboard</NavLink>}
                   {user.role === 'CUSTOMER' && <NavLink to="/bookings" className="font-body text-label-md text-on-surface-variant hover:text-secondary-fixed transition-colors">My bookings</NavLink>}
-                  <button onClick={handleLogout} disabled={loggingOut} className="font-body text-label-sm text-on-surface-variant hover:text-error transition-colors">
+                  {user.role === 'CUSTOMER' && <NavLink to="/bookings" className="font-body text-label-md text-on-surface-variant hover:text-secondary-fixed transition-colors">My account</NavLink>}
+                  <button onClick={handleLogout} disabled={loggingOut} className="font-body text-label-md font-semibold px-5 py-1.5 rounded-full border border-secondary/60 text-secondary hover:bg-secondary hover:text-on-secondary transition-colors">
                     {loggingOut ? '...' : 'Logout'}
                   </button>
                 </>
@@ -334,8 +334,11 @@ export default function TenantLayout() {
                 {user.role === 'CUSTOMER' && (
                   <NavLink to="/bookings" onClick={closeMenu} className="font-body text-label-md text-on-surface-variant">My bookings</NavLink>
                 )}
+                {user.role === 'CUSTOMER' && (
+                  <NavLink to="/bookings" onClick={closeMenu} className="font-body text-label-md text-on-surface-variant">My account</NavLink>
+                )}
                 <button onClick={() => { closeMenu(); handleLogout() }} disabled={loggingOut}
-                  className="font-body text-label-sm text-on-surface-variant text-right">
+                  className="font-body text-label-md font-semibold px-5 py-2 rounded-full border border-secondary/60 text-secondary hover:bg-secondary hover:text-on-secondary transition-colors self-end">
                   {loggingOut ? '...' : 'Logout'}
                 </button>
               </>
@@ -348,12 +351,9 @@ export default function TenantLayout() {
 
       {pushEligible && <PushOptIn role={user.role} />}
 
-      {isHome && !notOnboarded && createPortal(
-        <div className={siteLight ? 'theme-light' : ''}>
-          <ThemeSwitch checked={!siteLight} onChange={toggleSiteTheme}
-            className="fixed top-14 right-4 lg:right-[80px] z-[95] drop-shadow-lg" style={{ '--toggle-size': '8px' }} />
-        </div>,
-        document.body,
+      {isHome && !notOnboarded && (
+        <ThemeSwitch checked={!siteLight} onChange={toggleSiteTheme}
+          className="fixed top-14 right-4 lg:right-[80px] z-[95] drop-shadow-lg" style={{ '--toggle-size': '8px' }} />
       )}
 
       <QuickNavPill />
