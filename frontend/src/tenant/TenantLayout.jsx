@@ -260,7 +260,7 @@ export default function TenantLayout() {
                   </button>
                 </>
               ) : (
-                <NavLink to="/login" className="brass-gradient text-espresso font-body text-label-md px-4 py-1.5 rounded transition-all hover:shadow-amber-glow-lg">
+                <NavLink to="/login" className="brass-gradient text-espresso font-body text-label-md font-semibold px-5 py-1.5 rounded shadow-amber-glow transition-all hover:shadow-amber-glow-lg">
                   Login
                 </NavLink>
               )}
@@ -305,7 +305,7 @@ export default function TenantLayout() {
                 </button>
               </>
             ) : (
-              <NavLink to="/login" onClick={closeMenu} className="vintage-cta self-start">Login</NavLink>
+              <NavLink to="/login" onClick={closeMenu} className="brass-gradient text-espresso font-body text-label-md px-5 py-2 rounded self-start shadow-amber-glow-lg font-semibold">Login</NavLink>
             )}
           </div>
         )}

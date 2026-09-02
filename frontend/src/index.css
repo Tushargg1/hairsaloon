@@ -98,11 +98,11 @@
   .site-root.theme-light {
     background-image: radial-gradient(circle at top right, #fbf6ee, #f2e9da);
   }
-  .site-nav { background-color: rgb(35 15 8 / 0.35); }
-  .theme-light .site-nav { background-color: rgb(255 251 244 / 0.4); }
+  .site-nav { background-color: rgb(35 15 8 / 0.22); }
+  .theme-light .site-nav { background-color: rgb(255 251 244 / 0.25); }
   /* Mobile dropdown: light tint + light blur so the hero clearly shows through. */
-  .site-menu { background-color: rgb(20 16 8 / 0.2); }
-  .theme-light .site-menu { background-color: rgb(255 251 244 / 0.18); }
+  .site-menu { background-color: rgb(20 16 8 / 0.18); }
+  .theme-light .site-menu { background-color: rgb(255 251 244 / 0.15); }
 
   /* Hero text gets a soft shadow so it stays legible over the footage. */
   .hero-content h1,

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import SlotBookingWidget from './SlotBookingWidget.jsx'
 import VintageReviews from './VintageReviews.jsx'
 import Icon from '../shared/components/Icon.jsx'
@@ -65,6 +65,34 @@ function ClockMark() {
   )
 }
 
+// Shrinks the hero heading until it fits on (at most) two lines, so a long salon
+// name never spills to three. Re-runs on resize and when the name changes.
+function useFitToTwoLines(text) {
+  const ref = useRef(null)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return undefined
+    const fit = () => {
+      const style = window.getComputedStyle(el)
+      const lineHeight = parseFloat(style.lineHeight) || 1
+      let size = parseFloat(el.dataset.baseSize || style.fontSize)
+      if (!el.dataset.baseSize) el.dataset.baseSize = String(size)
+      size = parseFloat(el.dataset.baseSize)
+      el.style.fontSize = `${size}px`
+      // Reduce until the text occupies two lines or fewer (min 20px).
+      let guard = 40
+      while (el.scrollHeight > lineHeight * 2.2 && size > 20 && guard-- > 0) {
+        size -= 2
+        el.style.fontSize = `${size}px`
+      }
+    }
+    fit()
+    window.addEventListener('resize', fit)
+    return () => window.removeEventListener('resize', fit)
+  }, [text])
+  return ref
+}
+
 export default function SalonPublicPage() {
   // Service selection is shared: the price list and the booking widget both
   // toggle the same chain, in the order the customer picked them.
@@ -105,6 +133,7 @@ export default function SalonPublicPage() {
     })
     .filter(Boolean)
   const salonName = profile.name || profile.salonName || tenantNameFallback()
+  const heroTitleRef = useFitToTwoLines(salonName)
   const isActive = profile.status ? profile.status === 'ACTIVE' : true
   const contactPhone = (() => {
     const raw = String(profile.phone || '').replace(/[^\d]/g, '')
@@ -122,7 +151,7 @@ export default function SalonPublicPage() {
         <div className="hero-content relative z-10 w-full max-w-[1280px] mx-auto px-4 lg:px-6 pb-[5vh]">
           {profileQuery.isLoading ? <p className="text-on-surface-variant">Loading...</p> : (
             <>
-              <h1 className="font-display text-display-lg-mobile md:text-display-lg text-white mb-6">{salonName}</h1>
+              <h1 ref={heroTitleRef} className="font-display text-display-lg-mobile md:text-display-lg text-white mb-6">{salonName}</h1>
               {isActive ? (
                 <a href="#book-slot" className="vintage-cta">
                   <Icon name="event_available" className="text-[18px]" />
