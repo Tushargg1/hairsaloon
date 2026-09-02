@@ -134,6 +134,15 @@ export default function TenantLayout() {
   const [loggingOut, setLoggingOut] = useState(false)
   const [logoutError, setLogoutError] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
+  // Public salon site theme (dark by default), toggled from the navbar and persisted.
+  const [siteTheme, setSiteTheme] = useState(
+    () => localStorage.getItem('groomit-site-theme') || 'dark')
+  const siteLight = siteTheme === 'light'
+  const toggleSiteTheme = () => {
+    const next = siteLight ? 'dark' : 'light'
+    localStorage.setItem('groomit-site-theme', next)
+    setSiteTheme(next)
+  }
   // Shares the dashboard theme so the nav's Dark toggle and DashboardLayout stay in sync.
   const [dashTheme, setDashTheme] = useState(
     () => localStorage.getItem('groomit-dashboard-theme') || 'dark')
@@ -186,9 +195,9 @@ export default function TenantLayout() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#161005]">
+    <div className={`site-root min-h-screen flex flex-col ${siteLight ? 'theme-light' : ''}`}>
       {/* Tenant Nav */}
-      <nav className="fixed top-0 z-[100] w-full bg-[#230F08]/70 backdrop-blur-md border-b border-outline-variant/20 shadow-md">
+      <nav className="site-nav fixed top-0 z-[100] w-full backdrop-blur-md border-b border-outline-variant/20 shadow-md">
         <div className="flex justify-between items-center w-full px-4 lg:px-[80px] py-1 max-w-[1280px] mx-auto h-12">
           <NavLink to="/" className="flex items-center gap-3 min-w-0 flex-shrink" aria-label={`${salonName} home`}>
             {profileQuery.data?.logoUrl ? (
@@ -238,6 +247,10 @@ export default function TenantLayout() {
               {logoutError && (
                 <span className="font-body text-label-sm text-error" role="alert">{logoutError}</span>
               )}
+              <button onClick={toggleSiteTheme} aria-label="Toggle light or dark theme"
+                className="font-body text-secondary hover:text-secondary-fixed transition-colors flex items-center">
+                <Icon name={siteLight ? 'dark_mode' : 'light_mode'} className="text-[20px]" />
+              </button>
               {loading ? <span className="font-body text-label-sm text-on-surface-variant">...</span> : user ? (
                 <>
                   {user.role === 'SALON_OWNER' && <NavLink to="/dashboard" className="font-body text-label-md text-secondary hover:text-secondary-fixed transition-colors">Dashboard</NavLink>}
@@ -265,13 +278,18 @@ export default function TenantLayout() {
 
         {menuOpen && !notOnboarded && (
           <div id="tenant-mobile-menu"
-            className="md:hidden border-t border-outline-variant/20 bg-[#230F08]/20 backdrop-blur-lg px-4 py-4 flex flex-col gap-4">
+            className="site-nav md:hidden border-t border-outline-variant/20 backdrop-blur-lg px-4 py-4 flex flex-col gap-4">
             <NavLink to="/about" onClick={closeMenu} className="font-body text-label-md text-on-surface-variant">About Us</NavLink>
             <NavLink to="/team" onClick={closeMenu} className="font-body text-label-md text-on-surface-variant">Our Team</NavLink>
             <NavLink to="/contact" onClick={closeMenu} className="font-body text-label-md text-on-surface-variant">Contact Us</NavLink>
             <a href="/#services" onClick={closeMenu} className="font-body text-label-md text-on-surface-variant">Services</a>
             <a href="/#book-slot" onClick={closeMenu} className="font-body text-label-md text-on-surface-variant">Book</a>
             <a href="/#reviews" onClick={closeMenu} className="font-body text-label-md text-on-surface-variant">Reviews</a>
+            <button onClick={toggleSiteTheme}
+              className="font-body text-label-md text-secondary text-left flex items-center gap-2">
+              <Icon name={siteLight ? 'dark_mode' : 'light_mode'} className="text-[18px]" />
+              {siteLight ? 'Dark theme' : 'Light theme'}
+            </button>
             {logoutError && <span className="font-body text-label-sm text-error" role="alert">{logoutError}</span>}
             {loading ? <span className="font-body text-label-sm text-on-surface-variant">...</span> : user ? (
               <>

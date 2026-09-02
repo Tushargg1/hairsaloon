@@ -89,6 +89,17 @@
   section[id] {
     scroll-margin-top: 5rem;
   }
+
+  /* Public salon site background + nav, theme-aware via the tokens above. */
+  .site-root {
+    background-color: var(--c-page);
+    background-image: radial-gradient(circle at top right, #31291b, #191206);
+  }
+  .site-root.theme-light {
+    background-image: radial-gradient(circle at top right, #fbf6ee, #f2e9da);
+  }
+  .site-nav { background-color: rgb(35 15 8 / 0.7); }
+  .theme-light .site-nav { background-color: rgb(255 251 244 / 0.85); }
 }
 
 @layer components {
@@ -1313,5 +1324,39 @@
     background-color: #0D0C0A;
     border: 1px solid #2A251D;
     box-shadow: 0 0 0 3px #000, 0 10px 30px rgba(0, 0, 0, 0.6);
+  }
+
+  /* --- Light theme: repaint the salon page's hardcoded-dark surfaces --- */
+  .theme-light .price-board {
+    background-color: #fffdf8;
+    background-image: linear-gradient(to bottom, rgba(255, 253, 248, 0.9), rgba(247, 242, 233, 0.95));
+    border-color: #d8c9ad;
+  }
+  .theme-light .price-board-frame { border-color: #d8c9ad; }
+  .theme-light .booking-frame {
+    background-color: #f3ece0;
+    box-shadow: 0 0 0 4px #e8dfce, 0 0 0 6px #d8c9ad, 0 10px 30px rgba(120, 95, 45, 0.15);
+  }
+  .theme-light .booking-plate {
+    background-color: #fffdf8;
+    border-color: #e0d4bd;
+  }
+  .theme-light .booking-texture { opacity: 0.04; }
+  .theme-light .review-plate-item,
+  .theme-light .offer-row,
+  .theme-light .review-marquee-card { border-color: #e0d4bd; }
+  .theme-light .review-marquee-card { background-color: rgba(247, 242, 233, 0.7); }
+  .theme-light .review-marquee::before { background: linear-gradient(to right, #fffdf8, transparent); }
+  .theme-light .review-marquee::after { background: linear-gradient(to left, #fffdf8, transparent); }
+  .theme-light .salon-footer {
+    background-color: #f0e7d8;
+    border-top-color: #d8c9ad;
+  }
+  .theme-light .salon-footer-mark,
+  .theme-light .salon-footer-site { border-top-color: #d8c9ad; color: #8a7f6d; }
+  .theme-light .vintage-panel {
+    background-color: #fffdf8;
+    border-color: #e0d4bd;
+    box-shadow: 0 0 0 3px #e8dfce, 0 10px 30px rgba(120, 95, 45, 0.12);
   }
 }
