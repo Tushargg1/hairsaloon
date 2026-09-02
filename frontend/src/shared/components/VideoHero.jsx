@@ -80,7 +80,7 @@ export default function VideoHero({ poster, alt = '', loadVideo = true }) {
         />
       )}
 
-      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 via-40% to-transparent" />
+      <div className="hero-fade absolute inset-0" />
     </div>
   )
 }
