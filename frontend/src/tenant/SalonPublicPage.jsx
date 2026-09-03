@@ -249,7 +249,7 @@ export default function SalonPublicPage() {
       {/* Price list + Booking side by side on desktop */}
       <div className="w-full md:grid md:grid-cols-2 md:gap-6 md:items-start md:max-w-[1280px] md:mx-auto md:px-6">
       {/* Price list — same plate/frame/heading as the booking slot */}
-      <section className="py-12 px-4 lg:px-0 w-full" id="services">
+      <section className="pb-12 px-4 lg:px-0 w-full md:pt-12" id="services">
         <div className="booking-frame">
           <div className="booking-plate">
             <div className="booking-texture" />
