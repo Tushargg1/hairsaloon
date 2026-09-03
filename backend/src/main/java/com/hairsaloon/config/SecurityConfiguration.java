@@ -45,6 +45,7 @@ public class SecurityConfiguration {
                     "/api/platform/auth/referrer-signup", "/api/platform/auth/referrer-login",
                     "/api/platform/privileged-auth/login").permitAll()
                 .requestMatchers("/api/platform/auth/me").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/api/platform/auth/account").authenticated()
                 .requestMatchers("/api/platform/profile", "/api/platform/profile/**")
                     .hasRole("CUSTOMER")
                 .requestMatchers("/api/platform/favorites", "/api/platform/favorites/**")

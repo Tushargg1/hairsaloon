@@ -158,15 +158,28 @@ export function AuthProvider({ children }) {
     }
   }, [])
 
+  const deleteAccount = useCallback(async () => {
+    try {
+      await apiClient.delete('/api/platform/auth/account')
+      setBackendStatus('online')
+    } catch (error) {
+      if (isConnectivityError(error)) setBackendStatus('offline')
+      throw error
+    } finally {
+      setUser(null)
+    }
+  }, [])
+
   const value = useMemo(
     () => ({
       user, signup, businessSignup, login, privilegedLogin, referrerSignup, referrerLogin,
-      requestOtp, verifyOtp, resetPassword, logout, loading, backendStatus, refreshSession,
-      retryBackend: refreshSession,
+      requestOtp, verifyOtp, resetPassword, logout, deleteAccount, loading, backendStatus,
+      refreshSession, retryBackend: refreshSession,
     }),
     [
       user, signup, businessSignup, login, privilegedLogin, referrerSignup, referrerLogin,
-      requestOtp, verifyOtp, resetPassword, logout, loading, backendStatus, refreshSession,
+      requestOtp, verifyOtp, resetPassword, logout, deleteAccount, loading, backendStatus,
+      refreshSession,
     ],
   )
 

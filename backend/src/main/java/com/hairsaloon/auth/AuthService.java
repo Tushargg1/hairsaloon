@@ -15,14 +15,41 @@ class AuthService {
     private final JwtService jwtService;
     private final OtpService otpService;
     private final AuthProperties properties;
+    private final com.hairsaloon.tenant.SalonRepository salons;
 
     AuthService(UserRepository users, PasswordEncoder passwordEncoder, JwtService jwtService,
-                OtpService otpService, AuthProperties properties) {
+                OtpService otpService, AuthProperties properties,
+                com.hairsaloon.tenant.SalonRepository salons) {
         this.users = users;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.otpService = otpService;
         this.properties = properties;
+        this.salons = salons;
+    }
+
+    /**
+     * Permanently closes the caller's own account by anonymizing it. Personal data
+     * is wiped and login is disabled, but history (bookings, reviews, referrals)
+     * stays. A salon owner's salon is suspended (owner_id cannot dangle).
+     */
+    @Transactional
+    void deleteAccount(long userId) {
+        User user = users.findById(userId).orElseThrow(AuthService::userNotFound);
+        if (user.getRole() == UserRole.DELETED) return;
+        if (user.getRole() == UserRole.SALON_OWNER) {
+            salons.findByOwnerId(userId).ifPresent(salon -> {
+                salon.suspend();
+                salons.save(salon);
+            });
+        }
+        // Phone is NOT NULL + UNIQUE, so replace it with a short unique sentinel.
+        String scrambledPhone = ("del_" + userId + "_"
+            + Long.toString(System.nanoTime(), 36));
+        if (scrambledPhone.length() > 32) scrambledPhone = scrambledPhone.substring(0, 32);
+        String unusable = passwordEncoder.encode(java.util.UUID.randomUUID().toString());
+        user.anonymize(scrambledPhone, unusable);
+        users.saveAndFlush(user);
     }
 
     @Transactional

@@ -9,6 +9,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -97,6 +98,14 @@ class AuthController {
     @GetMapping("/me")
     UserResponse me(@AuthenticationPrincipal AuthenticatedUser user) {
         return UserResponse.from(user);
+    }
+
+    /** Permanently deletes (anonymizes) the caller's own account and ends the session. */
+    @DeleteMapping("/account")
+    ResponseEntity<Void> deleteAccount(@AuthenticationPrincipal AuthenticatedUser user) {
+        authService.deleteAccount(user.id());
+        return ResponseEntity.noContent()
+            .header(HttpHeaders.SET_COOKIE, cookies.cleared().toString()).build();
     }
 
     private void enforceRateLimit(String scope, String ip, String principal) {

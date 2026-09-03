@@ -6,6 +6,7 @@ import BrassButton from '../shared/components/BrassButton.jsx'
 import InputField from '../shared/components/InputField.jsx'
 import Icon from '../shared/components/Icon.jsx'
 import StatusChip from '../shared/components/StatusChip.jsx'
+import DeleteAccount from '../shared/components/DeleteAccount.jsx'
 
 function ProfileForm() {
   const { refreshSession } = useAuth()
@@ -176,6 +177,12 @@ export default function ProfilePage() {
         {tab === 'bookings' && <BookingHistory />}
         {tab === 'favorites' && <FavoritesList />}
       </GlassPanel>
+
+      {tab === 'profile' && (
+        <div className="max-w-xl mt-6">
+          <DeleteAccount note="This permanently closes your account. Your past bookings stay in the salon's records but no longer show your details, and you won't be able to sign in again." />
+        </div>
+      )}
     </main>
   )
 }

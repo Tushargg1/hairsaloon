@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import MediaManager from './MediaManager.jsx'
 import GoogleProfileConnect from './GoogleProfileConnect.jsx'
+import DeleteAccount from '../../shared/components/DeleteAccount.jsx'
 import {
   errorMessage, getDashboardMedia, getDashboardProfile, tenantKeys, updateDashboardProfile,
   uploadSalonImage,
@@ -196,5 +197,7 @@ export default function SalonSettings() {
     <GoogleProfileConnect />
 
     <MediaManager />
+
+    <DeleteAccount note="This permanently closes your owner account and suspends your salon. Booking history is retained, but the salon goes offline and you won't be able to sign in again." />
   </section>
 }

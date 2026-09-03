@@ -38,6 +38,9 @@ public class User {
     @Column(name = "phone_verified_at")
     private Instant phoneVerifiedAt;
 
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -102,5 +105,28 @@ public class User {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public Instant getDeletedAt() {
+        return deletedAt;
+    }
+
+    public boolean isDeleted() {
+        return role == UserRole.DELETED;
+    }
+
+    /**
+     * Anonymizes the account: wipes personal data, disables login (unusable
+     * password hash), and flips the role to DELETED so existing tokens are rejected.
+     * Historical rows (bookings, reviews, referrals) keep referencing this row.
+     */
+    void anonymize(String scrambledPhone, String unusablePasswordHash) {
+        this.name = null;
+        this.email = null;
+        this.phone = scrambledPhone;
+        this.passwordHash = unusablePasswordHash;
+        this.phoneVerifiedAt = null;
+        this.role = UserRole.DELETED;
+        this.deletedAt = Instant.now();
     }
 }

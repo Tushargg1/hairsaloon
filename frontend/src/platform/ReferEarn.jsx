@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import useAuth from '../shared/auth/useAuth.js'
+import DeleteAccount from '../shared/components/DeleteAccount.jsx'
 import {
   errorMessage, getReferralOverview, referralKeys, submitReferral,
 } from './referral-api.js'
@@ -193,6 +194,8 @@ function ReferrerDashboard() {
           </div>
         )}
       </div>
+
+      <DeleteAccount note="This permanently closes your referrer account. Your referral history stays on record but you won't be able to sign in again." />
     </div>
   )
 }
