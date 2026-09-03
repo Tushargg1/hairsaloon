@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { to: '/dashboard/staff', label: 'Staff', icon: 'group' },
   { to: '/dashboard/reviews', label: 'Reviews', icon: 'rate_review' },
   { to: '/dashboard/promotions', label: 'Promotions', icon: 'local_offer' },
+  { to: '/dashboard/whatsapp', label: 'WhatsApp', icon: 'chat' },
   { to: '/dashboard/settings', label: 'Salon details', icon: 'storefront' },
 ]
 

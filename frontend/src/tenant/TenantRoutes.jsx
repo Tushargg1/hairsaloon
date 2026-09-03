@@ -11,6 +11,7 @@ import ReviewsManager from './dashboard/ReviewsManager.jsx'
 import SalonSettings from './dashboard/SalonSettings.jsx'
 import ServicesManager from './dashboard/ServicesManager.jsx'
 import StaffManager from './dashboard/StaffManager.jsx'
+import WhatsappConnect from './dashboard/WhatsappConnect.jsx'
 import SalonAbout from './SalonAbout.jsx'
 import SalonContact from './SalonContact.jsx'
 import SalonPublicPage from './SalonPublicPage.jsx'
@@ -41,6 +42,7 @@ export default function TenantRoutes() {
             <Route path="staff" element={<StaffManager />} />
             <Route path="reviews" element={<ReviewsManager />} />
             <Route path="promotions" element={<PromotionsManager />} />
+            <Route path="whatsapp" element={<WhatsappConnect />} />
             <Route path="settings" element={<SalonSettings />} />
           </Route>
         </Route>
