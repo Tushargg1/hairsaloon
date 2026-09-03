@@ -77,6 +77,30 @@ export function AuthProvider({ children }) {
     }
   }, [])
 
+  const referrerSignup = useCallback(async (credentials) => {
+    try {
+      const { data } = await apiClient.post('/api/platform/auth/referrer-signup', credentials)
+      setUser(data)
+      setBackendStatus('online')
+      return data
+    } catch (error) {
+      if (isConnectivityError(error)) setBackendStatus('offline')
+      throw error
+    }
+  }, [])
+
+  const referrerLogin = useCallback(async (credentials) => {
+    try {
+      const { data } = await apiClient.post('/api/platform/auth/referrer-login', credentials)
+      setUser(data)
+      setBackendStatus('online')
+      return data
+    } catch (error) {
+      if (isConnectivityError(error)) setBackendStatus('offline')
+      throw error
+    }
+  }, [])
+
   const privilegedLogin = useCallback(async (credentials) => {
     try {
       const { data } = await apiClient.post('/api/platform/privileged-auth/login', credentials)
@@ -136,13 +160,13 @@ export function AuthProvider({ children }) {
 
   const value = useMemo(
     () => ({
-      user, signup, businessSignup, login, privilegedLogin, requestOtp, verifyOtp,
-      resetPassword, logout, loading, backendStatus, refreshSession,
+      user, signup, businessSignup, login, privilegedLogin, referrerSignup, referrerLogin,
+      requestOtp, verifyOtp, resetPassword, logout, loading, backendStatus, refreshSession,
       retryBackend: refreshSession,
     }),
     [
-      user, signup, businessSignup, login, privilegedLogin, requestOtp, verifyOtp,
-      resetPassword, logout, loading, backendStatus, refreshSession,
+      user, signup, businessSignup, login, privilegedLogin, referrerSignup, referrerLogin,
+      requestOtp, verifyOtp, resetPassword, logout, loading, backendStatus, refreshSession,
     ],
   )
 

@@ -21,6 +21,7 @@ import TermsPage from './platform/legal/TermsPage.jsx'
 import PrivacyPage from './platform/legal/PrivacyPage.jsx'
 import RefundPolicyPage from './platform/legal/RefundPolicyPage.jsx'
 import ReferEarn from './platform/ReferEarn.jsx'
+import AdminReferrals from './platform/AdminReferrals.jsx'
 import TenantRoutes from './tenant/TenantRoutes.jsx'
 
 function PlatformRoutes() {
@@ -49,6 +50,7 @@ function PlatformRoutes() {
           <Route path="admin/add-salon" element={<AdminAddSalon />} />
           <Route path="admin/salons" element={<AdminSalons />} />
           <Route path="admin/customers" element={<AdminCustomers />} />
+          <Route path="admin/referrals" element={<AdminReferrals />} />
         </Route>
         <Route element={<RequireRole roles="CUSTOMER" loadingFallback={loadingFallback} />}>
           <Route path="profile" element={<ProfilePage />} />

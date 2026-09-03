@@ -12,6 +12,7 @@ export default function AdminNav() {
       <NavLink to="/admin/add-salon" className={linkClass}>Add Salon</NavLink>
       <NavLink to="/admin/salons" className={linkClass}>Salons</NavLink>
       <NavLink to="/admin/customers" className={linkClass}>Customers</NavLink>
+      <NavLink to="/admin/referrals" className={linkClass}>Referrals</NavLink>
     </div>
   )
 }

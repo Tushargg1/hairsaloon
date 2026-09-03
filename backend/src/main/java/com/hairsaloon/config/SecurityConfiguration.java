@@ -42,6 +42,7 @@ public class SecurityConfiguration {
                 .requestMatchers("/api/platform/auth/signup",
                     "/api/platform/auth/business-signup", "/api/platform/auth/login",
                     "/api/platform/auth/logout", "/api/platform/auth/otp/**",
+                    "/api/platform/auth/referrer-signup", "/api/platform/auth/referrer-login",
                     "/api/platform/privileged-auth/login").permitAll()
                 .requestMatchers("/api/platform/auth/me").authenticated()
                 .requestMatchers("/api/platform/profile", "/api/platform/profile/**")
@@ -49,6 +50,8 @@ public class SecurityConfiguration {
                 .requestMatchers("/api/platform/favorites", "/api/platform/favorites/**")
                     .hasRole("CUSTOMER")
                 .requestMatchers("/api/platform/my-bookings").hasRole("CUSTOMER")
+                .requestMatchers("/api/platform/referrals", "/api/platform/referrals/**")
+                    .hasRole("REFERRER")
                 .requestMatchers("/api/platform/admin/**").hasRole("PLATFORM_ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/platform/salons/check-subdomain",
                     "/api/platform/salons/mine")

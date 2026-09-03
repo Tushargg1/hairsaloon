@@ -81,6 +81,32 @@ class AuthService {
         }
     }
 
+    /** Self-service registration for a referral-program partner (phone + password). */
+    @Transactional
+    AuthResult referrerSignup(String name, String phone, String password) {
+        String normalizedPhone = normalizePhone(phone);
+        if (users.existsByPhone(normalizedPhone)) throw duplicatePhone();
+        try {
+            User referrer = new User(normalizedPhone, null,
+                passwordEncoder.encode(password), UserRole.REFERRER);
+            if (name != null && !name.isBlank()) referrer.setName(name.trim());
+            return result(users.saveAndFlush(referrer));
+        } catch (DataIntegrityViolationException duplicate) {
+            throw duplicatePhone();
+        }
+    }
+
+    @Transactional(readOnly = true)
+    AuthResult referrerLogin(String phone, String password) {
+        User user = users.findByPhone(normalizePhone(phone))
+            .filter(candidate -> candidate.getRole() == UserRole.REFERRER)
+            .orElseThrow(AuthService::invalidCustomerCredentials);
+        if (!passwordEncoder.matches(password, user.getPasswordHash())) {
+            throw invalidCustomerCredentials();
+        }
+        return result(user);
+    }
+
     @Transactional(readOnly = true)
     AuthResult customerLogin(String phone, String password) {
         User user = users.findByPhone(normalizePhone(phone))
