@@ -356,22 +356,22 @@
     left: 0;
     right: 0;
     top: 0;
-    height: 420px;
+    height: 520px;
     z-index: 0;
     pointer-events: none;
     background: linear-gradient(to bottom,
       #0c0b09 0%,
-      #12110f 30%,
-      rgba(18, 17, 15, 0.8) 55%,
-      rgba(18, 17, 15, 0.4) 75%,
+      #0c0b09 40%,
+      #12110f 55%,
+      rgba(18, 17, 15, 0.7) 75%,
       transparent 100%);
   }
   .theme-light .site-content-top::before {
     background: linear-gradient(to bottom,
       #0c0b09 0%,
-      #0c0b09 45%,
-      rgba(28, 23, 16, 0.85) 70%,
-      rgba(28, 23, 16, 0.4) 88%,
+      #0c0b09 40%,
+      #1c1710 58%,
+      rgba(28, 23, 16, 0.75) 78%,
       transparent 100%);
   }
   /* Sections sit above the fade so their cards stay crisp while the dark shows
