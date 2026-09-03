@@ -1589,7 +1589,7 @@
   }
 
   .salon-footer {
-    @apply w-full mt-auto;
+    @apply w-full mt-auto relative z-10;
     background-color: #0D0C0A;
     border-top: 1px solid #2A251D;
   }
