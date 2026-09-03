@@ -36,40 +36,55 @@ function AuthForm() {
   }
 
   return (
-    <div className="glass-panel rounded-xl p-6 md:p-8 max-w-md mx-auto">
-      <h2 className="font-display text-headline-sm text-on-surface mb-1">
-        {signingUp ? 'Create referrer account' : 'Referrer login'}
-      </h2>
-      <p className="font-body text-label-md text-on-surface-variant mb-5">
-        Sign in to get your referral code and track your earnings.
-      </p>
-      <form onSubmit={submit} className="flex flex-col gap-4">
-        {signingUp && (
-          <label className="flex flex-col gap-1 font-body text-label-md">Name
-            <input name="name" required minLength="2" maxLength="160" value={form.name}
-              onChange={update} className="rounded border border-outline-variant/40 bg-transparent px-3 py-2" />
-          </label>
-        )}
-        <label className="flex flex-col gap-1 font-body text-label-md">Phone number
-          <input name="phone" type="tel" inputMode="tel" required minLength="10" maxLength="15"
-            value={form.phone} onChange={update}
-            className="rounded border border-outline-variant/40 bg-transparent px-3 py-2" />
-        </label>
-        <label className="flex flex-col gap-1 font-body text-label-md">Password
-          <input name="password" type="password" required minLength="8" maxLength="72"
-            value={form.password} onChange={update}
-            className="rounded border border-outline-variant/40 bg-transparent px-3 py-2" />
-        </label>
-        {status.error && <p className="font-body text-label-sm text-error" role="alert">{status.error}</p>}
-        <button type="submit" disabled={status.pending}
-          className="brass-gradient text-espresso font-body font-semibold px-5 py-2.5 rounded">
-          {status.pending ? 'Please wait…' : signingUp ? 'Sign Up' : 'Log In'}
-        </button>
-      </form>
-      <button type="button" onClick={() => { setMode(signingUp ? 'login' : 'signup'); setStatus({ pending: false, error: '' }) }}
-        className="mt-4 font-body text-label-md text-secondary underline">
-        {signingUp ? 'Already have an account? Log in' : 'New here? Create an account'}
-      </button>
+    <div className="booking-frame">
+      <div className="booking-plate">
+        <div className="booking-texture" />
+
+        <header className="booking-head">
+          <div className="booking-title-row">
+            <span className="booking-title-rule" />
+            <h2 className="booking-title gold-gradient-text">
+              {signingUp ? <>Referrer<br />Sign Up</> : <>Referrer<br />Login</>}
+            </h2>
+            <span className="booking-title-rule" />
+          </div>
+        </header>
+
+        <div className="relative z-10 flex flex-col gap-4">
+          <p className="booking-note">Sign in to get your referral code and track your earnings.</p>
+
+          <form onSubmit={submit} className="flex flex-col gap-4">
+            {signingUp && (
+              <label className="flex flex-col gap-1">
+                <span className="font-body text-xs uppercase tracking-[0.15em] text-on-surface-variant">Name</span>
+                <input className="price-search-input" name="name" required minLength="2" maxLength="160"
+                  value={form.name} onChange={update} />
+              </label>
+            )}
+            <label className="flex flex-col gap-1">
+              <span className="font-body text-xs uppercase tracking-[0.15em] text-on-surface-variant">Phone number</span>
+              <input className="price-search-input" name="phone" type="tel" inputMode="tel"
+                required minLength="10" maxLength="15" value={form.phone} onChange={update} />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="font-body text-xs uppercase tracking-[0.15em] text-on-surface-variant">Password</span>
+              <input className="price-search-input" name="password" type="password"
+                autoComplete={signingUp ? 'new-password' : 'current-password'}
+                required minLength="8" maxLength="72" value={form.password} onChange={update} />
+            </label>
+            {status.error && <p className="booking-note is-error" role="alert">{status.error}</p>}
+            <button type="submit" className="booking-confirm !w-full" disabled={status.pending}>
+              {status.pending ? 'Please wait…' : signingUp ? 'Sign Up' : 'Log In'}
+            </button>
+          </form>
+
+          <button type="button"
+            onClick={() => { setMode(signingUp ? 'login' : 'signup'); setStatus({ pending: false, error: '' }) }}
+            className="font-body text-xs text-center underline text-on-surface-variant hover:text-secondary transition-colors">
+            {signingUp ? 'Already have an account? Log in' : 'New here? Create an account'}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
@@ -186,16 +201,30 @@ export default function ReferEarn() {
   const { user } = useAuth()
   const isReferrer = user?.role === 'REFERRER'
 
+  if (isReferrer) {
+    return (
+      <main className="max-w-[900px] mx-auto px-4 py-12">
+        <div className="mb-8">
+          <p className="font-body text-label-md text-secondary tracking-wider uppercase mb-2">Groomit</p>
+          <h1 className="font-display text-headline-md text-on-surface">Refer &amp; Earn</h1>
+          <p className="font-body text-on-surface-variant mt-2">
+            Refer salons to Groomit and earn a reward for every one that joins.
+          </p>
+        </div>
+        <ReferrerDashboard />
+      </main>
+    )
+  }
+
+  // Logged-out: vintage plate on the Groomit backdrop, matching the login pages.
   return (
-    <main className="max-w-[900px] mx-auto px-4 py-12">
-      <div className="mb-8">
-        <p className="font-body text-label-md text-secondary tracking-wider uppercase mb-2">Groomit</p>
-        <h1 className="font-display text-headline-md text-on-surface">Refer &amp; Earn</h1>
-        <p className="font-body text-on-surface-variant mt-2">
-          Refer salons to Groomit and earn a reward for every one that joins.
-        </p>
-      </div>
-      {isReferrer ? <ReferrerDashboard /> : <AuthForm />}
+    <main className="relative flex flex-col min-h-[90vh] justify-center overflow-hidden -mt-12 pt-12">
+      <div className="absolute inset-0 z-0 bg-cover bg-top md:hidden" style={{ backgroundImage: "url('/background-img-mobile.jpg')" }} />
+      <div className="absolute inset-0 z-0 bg-cover bg-top hidden md:block" style={{ backgroundImage: "url('/background-windows-img.png')" }} />
+      <div className="absolute inset-0 z-0 bg-black/60" />
+      <section className="relative z-10 py-12 px-4 lg:px-6 w-full md:max-w-2xl md:mx-auto">
+        <AuthForm />
+      </section>
     </main>
   )
 }
