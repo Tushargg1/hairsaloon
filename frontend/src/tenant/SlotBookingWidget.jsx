@@ -29,18 +29,6 @@ const dayLabel = (day) => {
 const clockLabel = (value) => new Date(value)
   .toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
 
-function ScissorsMark() {
-  return (
-    <svg className="booking-scissors" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M14.348 5.656a4.5 4.5 0 015.656 5.656l-9.9 9.9a4.5 4.5 0 01-5.656-5.656l9.9-9.9z" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M14.348 5.656L9.656 10.348M19.004 10.348l-4.692 4.692" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="6" cy="18" r="2" />
-      <circle cx="18" cy="6" r="2" />
-      <path d="M7.5 16.5L16.5 7.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
-}
-
 function Chevron({ back }) {
   return (
     <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
@@ -186,7 +174,6 @@ export default function SlotBookingWidget({ selectedIds, onToggleService, salonN
         {startAt && <span className="booking-stamp gold-gradient-text">{clockLabel(startAt)}</span>}
 
         <header className="booking-head">
-          <ScissorsMark />
           <div className="booking-title-row">
             <span className="booking-title-rule" />
             <h2 className="booking-title gold-gradient-text">Book An<br />Appointment</h2>
