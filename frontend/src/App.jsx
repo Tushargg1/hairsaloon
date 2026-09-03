@@ -20,6 +20,7 @@ import ContactPage from './platform/ContactPage.jsx'
 import TermsPage from './platform/legal/TermsPage.jsx'
 import PrivacyPage from './platform/legal/PrivacyPage.jsx'
 import RefundPolicyPage from './platform/legal/RefundPolicyPage.jsx'
+import ReferEarn from './platform/ReferEarn.jsx'
 import TenantRoutes from './tenant/TenantRoutes.jsx'
 
 function PlatformRoutes() {
@@ -35,6 +36,7 @@ function PlatformRoutes() {
         <Route path="terms" element={<TermsPage />} />
         <Route path="privacy" element={<PrivacyPage />} />
         <Route path="refund-policy" element={<RefundPolicyPage />} />
+        <Route path="refer" element={<ReferEarn />} />
         <Route path="login" element={<AuthPage mode="login" />} />
         <Route path="signup" element={<AuthPage mode="signup" />} />
         <Route path="for-business" element={<BusinessSignup />} />

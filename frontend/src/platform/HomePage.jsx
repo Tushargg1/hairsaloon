@@ -2,7 +2,6 @@ import { Link, useOutletContext } from 'react-router-dom'
 import { useEffect, useRef, useState } from 'react'
 import Icon from '../shared/components/Icon.jsx'
 import VideoHero from '../shared/components/VideoHero.jsx'
-import DepthCarousel from '../shared/components/DepthCarousel.jsx'
 import ThemeSwitch from '../shared/components/ThemeSwitch.jsx'
 
 const STATS = [
@@ -10,40 +9,6 @@ const STATS = [
   { icon: 'event_available', value: '50k+', label: 'Bookings Made' },
   { icon: 'star', value: '4.9/5', label: 'Client Reviews' },
 ]
-
-const STEPS = [
-  { step: '01', icon: 'search', title: 'Discover', desc: 'Browse curated premium salons in your city.' },
-  { step: '02', icon: 'compare_arrows', title: 'Compare', desc: 'View services, prices, reviews, and availability.' },
-  { step: '03', icon: 'event_available', title: 'Book', desc: 'Reserve your slot in seconds. No calls needed.' },
-]
-
-// Showcase images for the gallery carousel (branded barbershop stills bundled in /public).
-const GALLERY = [
-  { image: '/background-windows-img.png', alt: 'Vintage barbershop interior' },
-  { image: '/background-img-mobile.jpg', alt: 'Classic barber chair' },
-]
-
-function VintageHeading({ children }) {
-  return (
-    <div className="vintage-heading-row">
-      <span className="vintage-heading-rule" />
-      <h2 className="vintage-heading gold-gradient-text">{children}</h2>
-      <span className="vintage-heading-rule" />
-    </div>
-  )
-}
-
-function ScissorsMark() {
-  return (
-    <svg className="booking-scissors" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M14.348 5.656a4.5 4.5 0 015.656 5.656l-9.9 9.9a4.5 4.5 0 01-5.656-5.656l9.9-9.9z" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M14.348 5.656L9.656 10.348M19.004 10.348l-4.692 4.692" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="6" cy="18" r="2" />
-      <circle cx="18" cy="6" r="2" />
-      <path d="M7.5 16.5L16.5 7.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
-}
 
 export default function HomePage() {
   const { siteLight, toggleSiteTheme } = useOutletContext() || {}
@@ -130,67 +95,6 @@ export default function HomePage() {
               </div>
               <p className="price-mark mt-auto pt-6">&mdash; Groomit &mdash;</p>
             </div>
-          </div>
-        </section>
-
-        {/* How It Works */}
-        <section className="pt-12 px-4 lg:px-6 w-full md:max-w-2xl md:mx-auto" id="how-it-works">
-          <div className="booking-frame">
-            <div className="booking-plate">
-              <div className="booking-texture" />
-              <header className="booking-head">
-                <ScissorsMark />
-                <div className="booking-title-row">
-                  <span className="booking-title-rule" />
-                  <h2 className="booking-title gold-gradient-text">How It Works</h2>
-                  <span className="booking-title-rule" />
-                </div>
-              </header>
-              <div className="relative z-10 flex flex-col gap-6">
-                {STEPS.map((item) => (
-                  <div key={item.step} className="flex items-start gap-4">
-                    <Icon name={item.icon} filled className="text-3xl text-secondary flex-shrink-0 mt-1" />
-                    <div>
-                      <h3 className="font-display text-title-lg gold-gradient-text mb-1">{item.title}</h3>
-                      <p className="font-body text-body-md text-on-surface-variant">{item.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <p className="price-mark relative z-10 mt-6">&mdash; Groomit &mdash;</p>
-            </div>
-          </div>
-        </section>
-
-        {/* Gallery */}
-        <section className="pt-8 pb-4 px-4 lg:px-6 w-full" id="gallery">
-          <div className="vintage-heading-row mb-2">
-            <span className="vintage-heading-rule" />
-            <h2 className="vintage-heading gold-gradient-text">Featured Salons</h2>
-            <span className="vintage-heading-rule" />
-          </div>
-          <div className="relative w-full h-[260px] sm:h-[320px]">
-            <DepthCarousel
-              items={GALLERY}
-              depth={160}
-              spread={125}
-              tilt={6}
-              tiltDirection="right"
-              perspective={1500}
-              visibleCards={4}
-              falloff={0.11}
-              autoplay
-              loop
-              cardWidth={280}
-              cardHeight={260}
-              radius={16}
-              tint="#1a1206"
-              duration={1150}
-              ease="back.out(1.4)"
-              autoplayDelay={4000}
-              showControls
-              showIndicators
-            />
           </div>
         </section>
 
