@@ -10,6 +10,33 @@ const STATS = [
   { icon: 'star', value: '4.9/5', label: 'Client Reviews' },
 ]
 
+// Estimated gains a salon can expect after joining Groomit.
+const GROWTH = [
+  { icon: 'trending_up', value: '+40%', label: 'More bookings on average' },
+  { icon: 'schedule', value: '10 hrs', label: 'Saved on calls each week' },
+  { icon: 'group_add', value: '3x', label: 'Faster new-customer reach' },
+  { icon: 'payments', value: '0%', label: 'Commission on every booking' },
+]
+
+// Owner testimonials.
+const STORIES = [
+  {
+    quote: 'Groomit filled my quiet weekday slots. I stopped answering the phone for bookings and my chair is busy all day now.',
+    name: 'Rakesh Sharma',
+    salon: 'The Gentlemen\u2019s Chair, Bengaluru',
+  },
+  {
+    quote: 'Setting up took ten minutes. Within a month new customers were finding us online and booking hot-towel shaves themselves.',
+    name: 'Aditi Verma',
+    salon: 'Verve Studio, Pune',
+  },
+  {
+    quote: 'No commission means every rupee stays with us. The reminders alone cut our no-shows almost in half.',
+    name: 'Imran Khan',
+    salon: 'Fade & Co, Hyderabad',
+  },
+]
+
 export default function HomePage() {
   const { siteLight, toggleSiteTheme } = useOutletContext() || {}
   const spacerRef = useRef(null)
@@ -98,8 +125,64 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* Grow Your Business — figures & estimates */}
+        <section className="pt-12 px-4 lg:px-6 w-full md:max-w-2xl md:mx-auto">
+          <div className="booking-frame">
+            <div className="booking-plate !min-h-0">
+              <div className="booking-texture" />
+              <div className="vintage-heading-row relative z-10">
+                <span className="vintage-heading-rule" />
+                <h2 className="vintage-heading gold-gradient-text">Grow Your Business</h2>
+                <span className="vintage-heading-rule" />
+              </div>
+              <p className="relative z-10 font-body text-body-md text-center mb-6 max-w-xl mx-auto text-on-surface-variant">
+                Salons on Groomit fill more chairs, spend less time on the phone, and keep every rupee they earn.
+              </p>
+              <div className="relative z-10 grid grid-cols-2 gap-4 sm:gap-6">
+                {GROWTH.map((item) => (
+                  <div key={item.label} className="flex flex-col items-center text-center">
+                    <Icon name={item.icon} filled className="text-2xl sm:text-3xl mb-2 text-secondary" />
+                    <h3 className="font-display text-headline-sm sm:text-headline-md gold-gradient-text mb-1">{item.value}</h3>
+                    <p className="font-body text-[10px] sm:text-label-sm uppercase leading-tight text-on-surface-variant" style={{ letterSpacing: '0.08em' }}>
+                      {item.label}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              <p className="relative z-10 font-body text-[10px] text-center mt-6 text-on-surface-variant/70">
+                Figures are estimates based on typical salon activity after joining.
+              </p>
+              <p className="price-mark relative z-10 mt-4">&mdash; Groomit &mdash;</p>
+            </div>
+          </div>
+        </section>
+
+        {/* Success Stories */}
+        <section className="pt-12 px-4 lg:px-6 w-full md:max-w-2xl md:mx-auto">
+          <div className="booking-frame">
+            <div className="booking-plate !min-h-0">
+              <div className="booking-texture" />
+              <div className="vintage-heading-row relative z-10">
+                <span className="vintage-heading-rule" />
+                <h2 className="vintage-heading gold-gradient-text">Success Stories</h2>
+                <span className="vintage-heading-rule" />
+              </div>
+              <div className="relative z-10 flex flex-col">
+                {STORIES.map((story) => (
+                  <article key={story.name} className="review-plate-item">
+                    <span className="review-plate-item-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+                    <p className="review-plate-item-body">&ldquo;{story.quote}&rdquo;</p>
+                    <p className="review-plate-item-date">{story.name} &middot; {story.salon}</p>
+                  </article>
+                ))}
+              </div>
+              <p className="price-mark relative z-10 mt-6">&mdash; Groomit &mdash;</p>
+            </div>
+          </div>
+        </section>
+
         {/* Own a Salon CTA */}
-        <section className="pt-4 pb-12 px-4 lg:px-6 w-full md:max-w-2xl md:mx-auto" id="for-owners">
+        <section className="pt-12 pb-12 px-4 lg:px-6 w-full md:max-w-2xl md:mx-auto" id="for-owners">
           <div className="booking-frame">
             <div className="booking-plate !min-h-0 text-center">
               <div className="booking-texture" />
