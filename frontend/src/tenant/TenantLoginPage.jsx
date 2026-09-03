@@ -64,7 +64,7 @@ export default function TenantLoginPage() {
 
   return (
     <main className="relative flex flex-col min-h-screen justify-center overflow-hidden">
-      <div className="absolute inset-0 z-0 bg-cover bg-center" style={{ backgroundImage: "url('/background-windows-img.png')" }} />
+      <div className="absolute inset-0 z-0 bg-contain bg-no-repeat bg-top" style={{ backgroundImage: "url('/background-windows-img.png')" }} />
       <div className="absolute inset-0 z-0 bg-black/60" />
       <section className="relative z-10 py-12 px-4 lg:px-6 w-full md:max-w-2xl md:mx-auto">
         <div className="booking-frame">
