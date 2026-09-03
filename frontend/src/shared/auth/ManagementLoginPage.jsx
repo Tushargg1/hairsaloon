@@ -87,9 +87,9 @@ export default function ManagementLoginPage() {
   }
 
   return (
-    <main className="relative flex flex-col min-h-screen justify-center overflow-hidden">
-      <div className="absolute inset-0 z-0 bg-contain bg-no-repeat bg-top md:hidden" style={{ backgroundImage: "url('/background-img-mobile.jpg')" }} />
-      <div className="absolute inset-0 z-0 bg-contain bg-no-repeat bg-top hidden md:block" style={{ backgroundImage: "url('/background-windows-img.png')" }} />
+    <main className="relative flex flex-col min-h-[90vh] justify-center overflow-hidden -mt-12 pt-12">
+      <div className="absolute inset-0 z-0 bg-cover bg-top md:hidden" style={{ backgroundImage: "url('/background-img-mobile.jpg')" }} />
+      <div className="absolute inset-0 z-0 bg-cover bg-top hidden md:block" style={{ backgroundImage: "url('/background-windows-img.png')" }} />
       <div className="absolute inset-0 z-0 bg-black/60" />
       <section className="relative z-10 py-12 px-4 lg:px-6 w-full md:max-w-2xl md:mx-auto">
         <div className="booking-frame">
