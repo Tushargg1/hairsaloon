@@ -1,133 +1,149 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
-import { errorMessage, getDashboardProfile, tenantKeys, updateDashboardProfile } from '../tenant-api.js'
+import { useEffect, useRef, useState } from 'react'
+import {
+  connectWhatsapp, disconnectWhatsapp, errorMessage, getWhatsappStatus,
+  setWhatsappBot, tenantKeys, tenantWhatsappKey,
+} from '../tenant-api.js'
 
-// The WhatsApp number is stored for real on the salon profile (whatsappUrl as a
-// wa.me link). The AI reply bot itself needs the Meta Cloud API + webhook backend,
-// which is not built yet; the on/off preference is kept locally until then.
-const BOT_KEY = 'groomit-wa-bot-enabled'
-
-// Keep only digits; a bare 10-digit Indian number gets the 91 country code.
-function toDigits(value) {
-  const digits = String(value || '').replace(/\D/g, '')
-  return digits.length === 10 ? `91${digits}` : digits
-}
-function numberFromUrl(url) {
-  const match = String(url || '').match(/wa\.me\/(\d+)/)
-  return match ? match[1] : ''
+// Loads the Facebook JS SDK once (needed for Meta Embedded Signup).
+function loadFacebookSdk(appId) {
+  return new Promise((resolve, reject) => {
+    if (window.FB) return resolve(window.FB)
+    window.fbAsyncInit = () => {
+      window.FB.init({ appId, autoLogAppEvents: true, xfbml: false, version: 'v21.0' })
+      resolve(window.FB)
+    }
+    const existing = document.getElementById('facebook-jssdk')
+    if (existing) return
+    const script = document.createElement('script')
+    script.id = 'facebook-jssdk'
+    script.async = true
+    script.defer = true
+    script.crossOrigin = 'anonymous'
+    script.src = 'https://connect.facebook.net/en_US/sdk.js'
+    script.onerror = () => reject(new Error('Could not load the Facebook SDK.'))
+    document.body.appendChild(script)
+  })
 }
 
 export default function WhatsappConnect() {
   const client = useQueryClient()
-  const profile = useQuery({ queryKey: tenantKeys.dashboardProfile, queryFn: getDashboardProfile })
-  const salonId = profile.data?.id ?? 'x'
-  const botKey = `${BOT_KEY}:${salonId}`
+  const status = useQuery({ queryKey: tenantWhatsappKey, queryFn: getWhatsappStatus })
+  const [error, setError] = useState('')
+  const wabaRef = useRef(null)
 
-  const savedNumber = numberFromUrl(profile.data?.whatsappUrl)
-  const connected = Boolean(savedNumber)
+  const data = status.data || {}
+  const { connected, displayNumber, botEnabled, available, appId, configId } = data
 
-  const [number, setNumber] = useState('')
-  const [editing, setEditing] = useState(false)
-  const [botOn, setBotOn] = useState(true)
+  const invalidate = () => {
+    client.invalidateQueries({ queryKey: tenantWhatsappKey })
+    client.invalidateQueries({ queryKey: tenantKeys.dashboardProfile })
+    client.invalidateQueries({ queryKey: tenantKeys.profile })
+  }
 
-  useEffect(() => { setBotOn(localStorage.getItem(botKey) !== 'false') }, [botKey])
-  useEffect(() => { setNumber(savedNumber) }, [savedNumber])
-
-  const save = useMutation({
-    mutationFn: (waUrl) => updateDashboardProfile({ ...profile.data, whatsappUrl: waUrl }),
-    onSuccess: () => {
-      setEditing(false)
-      client.invalidateQueries({ queryKey: tenantKeys.dashboardProfile })
-      client.invalidateQueries({ queryKey: tenantKeys.profile })
-    },
+  const connect = useMutation({
+    mutationFn: ({ code, wabaId }) => connectWhatsapp({ code, wabaId }),
+    onSuccess: invalidate,
+    onError: (e) => setError(errorMessage(e, 'Could not connect WhatsApp.')),
   })
+  const disconnect = useMutation({ mutationFn: disconnectWhatsapp, onSuccess: invalidate })
+  const bot = useMutation({ mutationFn: setWhatsappBot, onSuccess: invalidate })
 
-  function connect(event) {
-    event.preventDefault()
-    const digits = toDigits(number)
-    if (digits.length < 10) return
-    save.mutate(`https://wa.me/${digits}`)
+  // Embedded Signup returns the WABA/phone ids via a postMessage; capture them so
+  // they can be paired with the auth code from FB.login.
+  useEffect(() => {
+    function onMessage(event) {
+      if (!/^https:\/\/www\.facebook\.com$/.test(event.origin)
+        && !/^https:\/\/web\.facebook\.com$/.test(event.origin)) return
+      try {
+        const payload = typeof event.data === 'string' ? JSON.parse(event.data) : event.data
+        if (payload?.type === 'WA_EMBEDDED_SIGNUP' && payload?.data?.waba_id) {
+          wabaRef.current = payload.data.waba_id
+        }
+      } catch { /* non-JSON messages are ignored */ }
+    }
+    window.addEventListener('message', onMessage)
+    return () => window.removeEventListener('message', onMessage)
+  }, [])
+
+  async function startSignup() {
+    setError('')
+    if (!available || !appId || !configId) {
+      setError('WhatsApp is not configured yet. Please try again later.')
+      return
+    }
+    try {
+      const FB = await loadFacebookSdk(appId)
+      FB.login((response) => {
+        const code = response?.authResponse?.code
+        if (!code) { setError('WhatsApp connection was cancelled.'); return }
+        connect.mutate({ code, wabaId: wabaRef.current })
+      }, {
+        config_id: configId,
+        response_type: 'code',
+        override_default_response_type: true,
+        extras: { setup: {}, featureType: 'whatsapp_business_app_onboarding' },
+      })
+    } catch (e) {
+      setError(e.message || 'Could not start WhatsApp connection.')
+    }
   }
-
-  function disconnect() {
-    save.mutate('')
-    setNumber('')
-  }
-
-  function toggleBot() {
-    const next = !botOn
-    setBotOn(next)
-    localStorage.setItem(botKey, String(next))
-  }
-
-  const showForm = !connected || editing
 
   return (
     <div className="flex flex-col gap-6">
       <section className="manager-create-card" aria-labelledby="wa-heading">
         <h3 id="wa-heading">Connect WhatsApp</h3>
         <p className="muted">
-          Add the WhatsApp number customers should reach you on. It is saved to your salon and
-          used for the &quot;Contact on WhatsApp&quot; buttons on your public page.
+          Connect your salon&apos;s WhatsApp Business number through Meta so the Groomit AI can
+          reply to customers automatically. You keep using WhatsApp on your phone; the bot works
+          on the same number and you can turn it off any time to reply yourself.
         </p>
 
-        {connected && !editing && (
+        {status.isLoading ? (
+          <p className="muted">Loading…</p>
+        ) : connected ? (
           <div className="flex flex-col gap-3">
             <p className="wa-status">
               <span className="wa-dot is-on" aria-hidden="true" />
-              WhatsApp connected — +{savedNumber}
+              WhatsApp connected{displayNumber ? ` — ${displayNumber}` : ''}
             </p>
-            <div className="flex gap-3">
-              <button className="button button-secondary" type="button" onClick={() => setEditing(true)}>
-                Change number
-              </button>
-              <button className="button button-secondary" type="button"
-                onClick={disconnect} disabled={save.isPending}>
-                Disconnect
-              </button>
-            </div>
+            <button className="button button-secondary self-start" type="button"
+              onClick={() => disconnect.mutate()} disabled={disconnect.isPending}>
+              {disconnect.isPending ? 'Disconnecting…' : 'Disconnect'}
+            </button>
           </div>
+        ) : (
+          <>
+            <button className="button" type="button" onClick={startSignup}
+              disabled={connect.isPending || !available}>
+              {connect.isPending ? 'Connecting…' : 'Connect WhatsApp'}
+            </button>
+            {!available && (
+              <p className="muted">WhatsApp connection isn&apos;t enabled on the server yet.</p>
+            )}
+          </>
         )}
 
-        {showForm && (
-          <form onSubmit={connect} className="manager-form-grid">
-            <label className="span-2" htmlFor="wa-number">WhatsApp number
-              <input id="wa-number" name="whatsappNumber" type="tel" inputMode="tel"
-                placeholder="e.g. 9876543210" maxLength="15"
-                value={number} onChange={(e) => setNumber(e.target.value)} />
-            </label>
-            <div className="google-preview-actions span-2">
-              <button className="button" type="submit" disabled={save.isPending || toDigits(number).length < 10}>
-                {save.isPending ? 'Saving…' : connected ? 'Save number' : 'Connect'}
-              </button>
-              {connected && (
-                <button className="button button-secondary" type="button" onClick={() => { setEditing(false); setNumber(savedNumber) }}>
-                  Cancel
-                </button>
-              )}
-            </div>
-          </form>
+        {(error || connect.isError) && (
+          <p className="form-status error" role="alert">{error || errorMessage(connect.error, 'Could not connect WhatsApp.')}</p>
         )}
-
-        {save.isError && <p className="form-status error" role="alert">{errorMessage(save.error, 'Could not save the number.')}</p>}
       </section>
 
       {connected && (
         <section className="manager-create-card" aria-labelledby="wa-bot-heading">
           <h3 id="wa-bot-heading">AI assistant</h3>
           <p className="muted">
-            When live, the bot replies to customer WhatsApp messages automatically; turn it off
-            to reply yourself. Automated replies require the WhatsApp Cloud API setup and are not
-            active yet — this switch saves your preference for when it goes live.
+            When the bot is online it replies to customer WhatsApp messages automatically. Turn it
+            off to handle conversations yourself from your WhatsApp Business app.
           </p>
-
           <div className="wa-bot-row">
             <p className="wa-status">
-              <span className={`wa-dot ${botOn ? 'is-on' : 'is-off'}`} aria-hidden="true" />
-              Bot is {botOn ? 'ONLINE' : 'OFFLINE'}
+              <span className={`wa-dot ${botEnabled ? 'is-on' : 'is-off'}`} aria-hidden="true" />
+              Bot is {botEnabled ? 'ONLINE' : 'OFFLINE'}
             </p>
-            <button className={`button ${botOn ? 'button-secondary' : ''}`} type="button" onClick={toggleBot}>
-              {botOn ? 'Turn Bot OFF' : 'Turn Bot ON'}
+            <button className={`button ${botEnabled ? 'button-secondary' : ''}`} type="button"
+              onClick={() => bot.mutate(!botEnabled)} disabled={bot.isPending}>
+              {botEnabled ? 'Turn Bot OFF' : 'Turn Bot ON'}
             </button>
           </div>
         </section>

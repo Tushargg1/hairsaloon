@@ -123,3 +123,12 @@ app:
     api-key: "${GOOGLE_PLACES_API_KEY:}"
     # Stay ~10% under Google's ~10k/month free tier for the reviews/photos SKU.
     monthly-cap: "${GOOGLE_PLACES_MONTHLY_CAP:9000}"
+
+  whatsapp:
+    # Meta app used for Embedded Signup + Cloud API. Empty = feature disabled.
+    app-id: "${WHATSAPP_APP_ID:}"
+    app-secret: "${WHATSAPP_APP_SECRET:}"
+    config-id: "${WHATSAPP_CONFIG_ID:}"
+    # Token Meta sends back when verifying the webhook subscription (GET challenge).
+    verify-token: "${WHATSAPP_VERIFY_TOKEN:}"
+    graph-base-url: "${WHATSAPP_GRAPH_BASE_URL:https://graph.facebook.com/v21.0}"

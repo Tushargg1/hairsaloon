@@ -106,6 +106,28 @@ export async function updateDashboardProfile(payload) {
   return data
 }
 
+export async function getWhatsappStatus() {
+  const { data } = await apiClient.get('/api/salon/dashboard/whatsapp')
+  return data
+}
+
+export async function connectWhatsapp({ code, wabaId }) {
+  const { data } = await apiClient.post('/api/salon/dashboard/whatsapp/connect', { code, wabaId })
+  return data
+}
+
+export async function disconnectWhatsapp() {
+  const { data } = await apiClient.post('/api/salon/dashboard/whatsapp/disconnect')
+  return data
+}
+
+export async function setWhatsappBot(enabled) {
+  const { data } = await apiClient.post('/api/salon/dashboard/whatsapp/bot', { enabled })
+  return data
+}
+
+export const tenantWhatsappKey = ['tenant', 'dashboard-whatsapp']
+
 export async function previewGoogleProfile(googleUrl) {
   const { data } = await apiClient.post('/api/salon/dashboard/google/preview', { googleUrl })
   return data

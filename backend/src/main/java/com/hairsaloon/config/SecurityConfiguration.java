@@ -36,6 +36,9 @@ public class SecurityConfiguration {
             .authorizeHttpRequests(requests -> requests
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
+                // Meta calls the WhatsApp webhook unauthenticated; GET verifies the
+                // subscription, POST delivers inbound messages.
+                .requestMatchers("/api/whatsapp/webhook").permitAll()
                 .requestMatchers("/api/platform/auth/signup",
                     "/api/platform/auth/business-signup", "/api/platform/auth/login",
                     "/api/platform/auth/logout", "/api/platform/auth/otp/**",

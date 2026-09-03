@@ -21,4 +21,7 @@ public interface SalonRepository extends JpaRepository<Salon, Long> {
     boolean existsByOwnerId(Long ownerId);
 
     Optional<Salon> findByOwnerId(Long ownerId);
+
+    // Inbound WhatsApp webhooks are keyed by phone_number_id; this maps one to its salon.
+    Optional<Salon> findByWhatsappPhoneNumberId(String whatsappPhoneNumberId);
 }

@@ -100,6 +100,24 @@ public class Salon {
     @Column(name = "google_synced_at")
     private Instant googleSyncedAt;
 
+    @Column(name = "whatsapp_phone_number_id", length = 64)
+    private String whatsappPhoneNumberId;
+
+    @Column(name = "whatsapp_waba_id", length = 64)
+    private String whatsappWabaId;
+
+    @Column(name = "whatsapp_display_number", length = 32)
+    private String whatsappDisplayNumber;
+
+    @Column(name = "whatsapp_access_token", columnDefinition = "TEXT")
+    private String whatsappAccessToken;
+
+    @Column(name = "whatsapp_bot_enabled", nullable = false)
+    private boolean whatsappBotEnabled = true;
+
+    @Column(name = "whatsapp_connected_at")
+    private Instant whatsappConnectedAt;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -224,5 +242,40 @@ public class Salon {
         if (address != null && !address.isBlank()) this.address = address;
         if (phone != null && !phone.isBlank()) this.phone = phone;
     }
+
+    // --- WhatsApp Cloud API connection (Meta Embedded Signup) ---
+
+    public void connectWhatsapp(String phoneNumberId, String wabaId, String displayNumber,
+                                String accessToken, Instant connectedAt) {
+        this.whatsappPhoneNumberId = phoneNumberId;
+        this.whatsappWabaId = wabaId;
+        this.whatsappDisplayNumber = displayNumber;
+        this.whatsappAccessToken = accessToken;
+        this.whatsappConnectedAt = connectedAt;
+        this.whatsappBotEnabled = true;
+    }
+
+    public void disconnectWhatsapp() {
+        this.whatsappPhoneNumberId = null;
+        this.whatsappWabaId = null;
+        this.whatsappDisplayNumber = null;
+        this.whatsappAccessToken = null;
+        this.whatsappConnectedAt = null;
+    }
+
+    public void setWhatsappBotEnabled(boolean enabled) {
+        this.whatsappBotEnabled = enabled;
+    }
+
+    public boolean isWhatsappConnected() {
+        return whatsappPhoneNumberId != null && whatsappAccessToken != null;
+    }
+
+    public String getWhatsappPhoneNumberId() { return whatsappPhoneNumberId; }
+    public String getWhatsappWabaId() { return whatsappWabaId; }
+    public String getWhatsappDisplayNumber() { return whatsappDisplayNumber; }
+    public String getWhatsappAccessToken() { return whatsappAccessToken; }
+    public boolean isWhatsappBotEnabled() { return whatsappBotEnabled; }
+    public Instant getWhatsappConnectedAt() { return whatsappConnectedAt; }
 
 }
