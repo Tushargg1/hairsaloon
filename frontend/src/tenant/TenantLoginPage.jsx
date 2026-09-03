@@ -114,16 +114,16 @@ export default function TenantLoginPage() {
 
                 {status.error && <p className="booking-note is-error" role="alert">{status.error}</p>}
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-4">
                   <button type={signingUp ? 'button' : 'submit'}
                     onClick={signingUp ? () => switchMode('login') : undefined}
-                    className={`booking-confirm ${signingUp ? 'opacity-60' : ''}`}
+                    className={`booking-confirm !w-full ${signingUp ? 'opacity-60' : ''}`}
                     disabled={status.pending && !signingUp}>
                     {status.pending && !signingUp ? 'Signing in...' : 'Log In'}
                   </button>
                   <button type={signingUp ? 'submit' : 'button'}
                     onClick={signingUp ? undefined : () => switchMode('signup')}
-                    className={`booking-confirm ${signingUp ? '' : 'opacity-60'}`}
+                    className={`booking-confirm !w-full ${signingUp ? '' : 'opacity-60'}`}
                     disabled={status.pending && signingUp}>
                     {status.pending && signingUp ? 'Creating...' : 'Sign Up'}
                   </button>
