@@ -333,12 +333,11 @@
   }
   /* Light dark gradient only on the bottom of the video, so it meets the blend below. */
   .hero-bottom-fade {
-    height: 45%;
+    height: 42%;
     pointer-events: none;
     background: linear-gradient(to top,
-      #000 0%,
-      #0c0b09 12%,
-      rgba(12, 11, 9, 0.85) 40%,
+      rgba(12, 11, 9, 0.9) 0%,
+      rgba(12, 11, 9, 0.6) 40%,
       transparent 100%);
   }
 
@@ -348,36 +347,9 @@
   .site-content-top {
     position: relative;
     isolation: isolate;
-    /* Opaque so sections scroll up and cover the fixed hero behind them.
-       Dark at the very top (hero seam) then into the page colour, so no cream
-       band shows in the padding above the first section. */
+    /* Plain page colour: sections start directly, no dark seam, and stay opaque
+       so they scroll up and cover the fixed hero behind them. */
     background-color: var(--c-page);
-    background-image: linear-gradient(to bottom, #000 0, #0c0b09 80px, #0c0b09 340px, transparent 640px);
-    background-repeat: no-repeat;
-  }
-  .site-content-top::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 0;
-    height: 520px;
-    z-index: 0;
-    pointer-events: none;
-    background: linear-gradient(to bottom,
-      #0c0b09 0%,
-      #0c0b09 40%,
-      #12110f 55%,
-      rgba(18, 17, 15, 0.7) 75%,
-      transparent 100%);
-  }
-  .theme-light .site-content-top::before {
-    background: linear-gradient(to bottom,
-      #0c0b09 0%,
-      #0c0b09 40%,
-      #1c1710 58%,
-      rgba(28, 23, 16, 0.75) 78%,
-      transparent 100%);
   }
   /* Sections sit above the fade so their cards stay crisp while the dark shows
      through the gaps and dissolves into the page. */
