@@ -1204,10 +1204,10 @@
        span the full card, and cap the size so it never overflows. */
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: clip;
+    text-overflow: ellipsis;
     margin-inline: -1.25rem;
     max-width: calc(100% + 2.5rem);
-    font-size: clamp(0.5rem, 2.75vw, 0.85rem);
+    font-size: clamp(0.5rem, 2.3vw, 0.8rem);
   }
 
   .price-search-note {
