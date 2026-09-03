@@ -36,7 +36,7 @@ const COLUMNS = [
 
 export default function Footer() {
   return (
-    <footer className="bg-surface-container-highest border-t border-outline-variant/50 w-full mt-auto">
+    <footer className="relative z-10 bg-surface-container-highest border-t border-outline-variant/50 w-full mt-auto">
       <div className="max-w-[1280px] mx-auto px-4 lg:px-[80px] py-12">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-10">
           {/* Brand */}
