@@ -1198,10 +1198,15 @@
     color: #5a4a35;
     /* Trailing letter-spacing adds space after the last char, so centring shifts
        the glyphs left by half that gap; indent by half to read truly centred. */
-    letter-spacing: 0.1em;
-    text-indent: 0.05em;
+    letter-spacing: 0.08em;
+    text-indent: 0.04em;
+    /* Keep it on one line but always inside the plate's padding, so centring is
+       exact instead of the text overflowing and reading off-centre. */
     white-space: nowrap;
-    font-size: clamp(0.5rem, 2.6vw, 0.75rem);
+    overflow: hidden;
+    text-overflow: clip;
+    max-width: 100%;
+    font-size: clamp(0.375rem, 2vw, 0.75rem);
   }
 
   .price-search-note {
