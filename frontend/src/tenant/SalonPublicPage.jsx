@@ -97,6 +97,7 @@ function useFitToTwoLines(text) {
 
 export default function SalonPublicPage() {
   const { siteLight, toggleSiteTheme } = useOutletContext() || {}
+  const spacerRef = useRef(null)
   // Service selection is shared: the price list and the booking widget both
   // toggle the same chain, in the order the customer picked them.
   const [selectedIds, setSelectedIds] = useState([])
@@ -139,6 +140,27 @@ export default function SalonPublicPage() {
     timer = setTimeout(tick, 45)
     return () => clearTimeout(timer)
   }, [searchHintsKey])
+
+  // Hero snap: when scrolling stops part-way over the hero, settle either back on
+  // the hero (risen less than half) or fully onto the content (past half).
+  useEffect(() => {
+    let timer
+    let snapping = false
+    const onScroll = () => {
+      if (snapping) return
+      clearTimeout(timer)
+      timer = setTimeout(() => {
+        const limit = spacerRef.current?.offsetHeight || 0
+        const y = window.scrollY
+        if (!limit || y <= 0 || y >= limit) return
+        snapping = true
+        window.scrollTo({ top: y < limit / 2 ? 0 : limit, behavior: 'smooth' })
+        setTimeout(() => { snapping = false }, 700)
+      }, 140)
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => { window.removeEventListener('scroll', onScroll); clearTimeout(timer) }
+  }, [])
 
   // Progressive load for a snappy first paint:
   //  1: Groomit backdrop + salon name + Book/Contact button (needs the profile only)
@@ -206,7 +228,7 @@ export default function SalonPublicPage() {
 
       {/* Transparent spacer the height of the fixed hero, so the hero shows through
           at the top and the content below scrolls up over it. */}
-      <div className="h-[calc(85vh-3rem)] md:h-[calc(92vh-3rem)] pointer-events-none bg-transparent" aria-hidden="true" />
+      <div ref={spacerRef} className="h-[calc(85vh-3rem)] md:h-[calc(92vh-3rem)] pointer-events-none bg-transparent" aria-hidden="true" />
 
       <div className="site-content-top flex flex-col relative z-10">
       {/* Offers */}
