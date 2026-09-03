@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate, useOutletContext } from 'react-router-dom'
 import useAuth from '../shared/auth/useAuth.js'
 import { errorMessage } from './tenant-api.js'
 import { tenantNameFallback } from './tenant-host.js'
@@ -8,10 +8,11 @@ export default function TenantLoginPage() {
   const { user, login, signup } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+  const { profile, salonName: ctxName } = useOutletContext() || {}
   const [mode, setMode] = useState('login')
   const [form, setForm] = useState({ phone: '', password: '', email: '' })
   const [status, setStatus] = useState({ pending: false, error: '' })
-  const salonName = tenantNameFallback()
+  const salonName = profile?.name || profile?.salonName || ctxName || tenantNameFallback()
   const signingUp = mode === 'signup'
 
   if (user) return <Navigate to={user.role === 'SALON_OWNER' ? '/dashboard' : '/'} replace />
@@ -111,17 +112,21 @@ export default function TenantLoginPage() {
 
                 {status.error && <p className="booking-note is-error" role="alert">{status.error}</p>}
 
-                <button type="submit" className="booking-confirm" disabled={status.pending}>
-                  {status.pending
-                    ? (signingUp ? 'Creating...' : 'Signing in...')
-                    : (signingUp ? 'Sign Up' : 'Log In')}
-                </button>
+                <div className="grid grid-cols-2 gap-3">
+                  <button type={signingUp ? 'button' : 'submit'}
+                    onClick={signingUp ? () => switchMode('login') : undefined}
+                    className={`booking-confirm ${signingUp ? 'opacity-60' : ''}`}
+                    disabled={status.pending && !signingUp}>
+                    {status.pending && !signingUp ? 'Signing in...' : 'Log In'}
+                  </button>
+                  <button type={signingUp ? 'submit' : 'button'}
+                    onClick={signingUp ? undefined : () => switchMode('signup')}
+                    className={`booking-confirm ${signingUp ? '' : 'opacity-60'}`}
+                    disabled={status.pending && signingUp}>
+                    {status.pending && signingUp ? 'Creating...' : 'Sign Up'}
+                  </button>
+                </div>
               </form>
-
-              <button type="button" onClick={() => switchMode(signingUp ? 'login' : 'signup')}
-                className="font-body text-xs text-center underline text-on-surface-variant hover:text-secondary transition-colors">
-                {signingUp ? 'Already have an account? Log in' : 'New here? Create an account'}
-              </button>
 
               <p className="font-body text-xs text-center">
                 <Link to="/manage/login" className="text-on-surface-variant hover:text-secondary transition-colors">
