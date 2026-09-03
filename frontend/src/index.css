@@ -333,11 +333,12 @@
   }
   /* Light dark gradient only on the bottom of the video, so it meets the blend below. */
   .hero-bottom-fade {
-    height: 42%;
+    height: 45%;
     pointer-events: none;
     background: linear-gradient(to top,
-      #0c0b09 0%,
-      rgba(12, 11, 9, 0.85) 35%,
+      #000 0%,
+      #0c0b09 12%,
+      rgba(12, 11, 9, 0.85) 40%,
       transparent 100%);
   }
 
@@ -351,7 +352,7 @@
        Dark at the very top (hero seam) then into the page colour, so no cream
        band shows in the padding above the first section. */
     background-color: var(--c-page);
-    background-image: linear-gradient(to bottom, #0c0b09 0, #0c0b09 340px, transparent 640px);
+    background-image: linear-gradient(to bottom, #000 0, #0c0b09 80px, #0c0b09 340px, transparent 640px);
     background-repeat: no-repeat;
   }
   .site-content-top::before {

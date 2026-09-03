@@ -206,7 +206,7 @@ export default function SalonPublicPage() {
 
       {/* Transparent spacer the height of the fixed hero, so the hero shows through
           at the top and the content below scrolls up over it. */}
-      <div className="h-[85vh] md:h-[92vh] pointer-events-none bg-transparent" aria-hidden="true" />
+      <div className="h-[calc(85vh-3rem)] md:h-[calc(92vh-3rem)] pointer-events-none bg-transparent" aria-hidden="true" />
 
       <div className="site-content-top flex flex-col relative z-10">
       {/* Offers */}
