@@ -1200,13 +1200,11 @@
        the glyphs left by half that gap; indent by half to read truly centred. */
     letter-spacing: 0.06em;
     text-indent: 0.03em;
-    /* One line, filling the plate width: reclaim the side padding so the mark can
-       span the full card, and cap the size so it never overflows. */
+    /* Stays on one line inside the plate; an unusually long name ellipsises
+       rather than clipping mid-letter. */
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    margin-inline: -1.25rem;
-    max-width: calc(100% + 2.5rem);
     font-size: clamp(0.5rem, 2.3vw, 0.8rem);
   }
 
