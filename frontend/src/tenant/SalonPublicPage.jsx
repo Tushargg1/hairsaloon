@@ -177,8 +177,8 @@ export default function SalonPublicPage() {
 
   return (
     <main className="flex flex-col">
-      {/* Hero: branded Groomit backdrop + name + action paint first; video waits for stage 2. */}
-      <section className="relative w-full -mt-16 min-h-[85vh] md:min-h-[92vh] flex items-end overflow-hidden">
+      {/* Hero is fixed to the viewport; the sections below scroll up and over it. */}
+      <section className="fixed top-0 left-0 right-0 w-full h-[85vh] md:h-[92vh] flex items-end overflow-hidden z-0">
         <VideoHero alt={salonName} loadVideo={stage >= 2} />
         {toggleSiteTheme && (
           <ThemeSwitch checked={!siteLight} onChange={toggleSiteTheme}
@@ -204,7 +204,11 @@ export default function SalonPublicPage() {
         </div>
       </section>
 
-      <div className="site-content-top flex flex-col">
+      {/* Transparent spacer the height of the fixed hero, so the hero shows through
+          at the top and the content below scrolls up over it. */}
+      <div className="h-[85vh] md:h-[92vh] pointer-events-none" aria-hidden="true" />
+
+      <div className="site-content-top flex flex-col relative z-10">
       {/* Offers */}
       {promotionsQuery.data?.length > 0 && (
         <section className="pt-12 px-4 lg:px-6 w-full md:max-w-2xl md:mx-auto" id="offers">

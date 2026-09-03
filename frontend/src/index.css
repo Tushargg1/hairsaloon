@@ -347,6 +347,8 @@
   .site-content-top {
     position: relative;
     isolation: isolate;
+    /* Opaque so sections scroll up and cover the fixed hero behind them. */
+    background-color: var(--c-page);
   }
   .site-content-top::before {
     content: '';
