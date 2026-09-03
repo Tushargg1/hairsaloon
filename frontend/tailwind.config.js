@@ -49,9 +49,9 @@ export default {
         'espresso': '#2C1810',
       },
       fontFamily: {
-        display: ['Inter', 'system-ui', 'sans-serif'],
+        display: ['Fraunces', 'Georgia', 'serif'],
         body: ['Inter', 'system-ui', 'sans-serif'],
-        engraved: ['Inter', 'system-ui', 'sans-serif'],
+        engraved: ['Cinzel', 'Georgia', 'serif'],
       },
       fontSize: {
         'display-lg': ['48px', { lineHeight: '56px', fontWeight: '700', letterSpacing: '-0.02em' }],
