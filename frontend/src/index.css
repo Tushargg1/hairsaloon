@@ -1196,10 +1196,10 @@
   .price-mark {
     @apply relative z-10 block w-full font-display uppercase text-center;
     color: #5a4a35;
-    /* Trailing letter-spacing adds space after the last char, nudging the text
-       left of centre; the negative text-indent compensates so it reads centred. */
+    /* Trailing letter-spacing adds space after the last char, so centring shifts
+       the glyphs left by half that gap; indent by half to read truly centred. */
     letter-spacing: 0.1em;
-    text-indent: 0.1em;
+    text-indent: 0.05em;
     white-space: nowrap;
     font-size: clamp(0.5rem, 2.6vw, 0.75rem);
   }
