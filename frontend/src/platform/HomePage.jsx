@@ -1,8 +1,9 @@
-import { Link } from 'react-router-dom'
+import { Link, useOutletContext } from 'react-router-dom'
 import { useEffect, useRef, useState } from 'react'
 import Icon from '../shared/components/Icon.jsx'
 import VideoHero from '../shared/components/VideoHero.jsx'
 import DepthCarousel from '../shared/components/DepthCarousel.jsx'
+import ThemeSwitch from '../shared/components/ThemeSwitch.jsx'
 
 const STATS = [
   { icon: 'storefront', value: '500+', label: 'Premium Salons' },
@@ -45,6 +46,7 @@ function ScissorsMark() {
 }
 
 export default function HomePage() {
+  const { siteLight, toggleSiteTheme } = useOutletContext() || {}
   const spacerRef = useRef(null)
   const [loadVideo, setLoadVideo] = useState(false)
 
@@ -80,6 +82,10 @@ export default function HomePage() {
       {/* Fixed hero; content below scrolls up and over it. */}
       <section className="fixed top-0 left-0 right-0 w-full h-[85vh] md:h-[92vh] flex items-end overflow-hidden z-0">
         <VideoHero alt="Groomit" loadVideo={loadVideo} />
+        {toggleSiteTheme && (
+          <ThemeSwitch checked={!siteLight} onChange={toggleSiteTheme}
+            className="absolute top-[67px] right-4 lg:right-6 z-20 drop-shadow-lg" style={{ '--toggle-size': '8px' }} />
+        )}
         <div className="hero-content relative z-10 w-full max-w-[1280px] mx-auto px-4 lg:px-6 pb-[5vh] flex flex-col items-center text-center">
           <h1 className="font-display text-display-lg-mobile md:text-display-lg text-white mb-6 max-w-4xl leading-tight">
             Book Your Next Look

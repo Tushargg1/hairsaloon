@@ -1,88 +1,61 @@
 import { Link } from 'react-router-dom'
+import Icon from './Icon.jsx'
+import SocialButton from './SocialButton.jsx'
 
-const COLUMNS = [
-  {
-    heading: 'Customers',
-    links: [
-      { to: '/salons', label: 'Find a Salon' },
-      { to: '/signup', label: 'Create Account' },
-      { to: '/login', label: 'Sign In' },
-    ],
-  },
-  {
-    heading: 'Salon Owners',
-    links: [
-      { to: '/for-business', label: 'List Your Salon' },
-      { to: '/pricing', label: 'Pricing' },
-      { to: '/manage/login', label: 'Management Login' },
-    ],
-  },
-  {
-    heading: 'Company',
-    links: [
-      { to: '/about', label: 'About Us' },
-      { to: '/contact', label: 'Contact' },
-    ],
-  },
-  {
-    heading: 'Legal',
-    links: [
-      { to: '/terms', label: 'Terms of Service' },
-      { to: '/privacy', label: 'Privacy Policy' },
-      { to: '/refund-policy', label: 'Refund Policy' },
-    ],
-  },
+// Groomit's own social presence, rendered with the same branded buttons as salons.
+const SOCIALS = [
+  { key: 'instagram', label: 'Instagram', url: 'https://instagram.com/groomit', brand: 'instagram' },
+  { key: 'facebook', label: 'Facebook', url: 'https://facebook.com/groomit', brand: 'facebook' },
+  { key: 'youtube', label: 'YouTube', url: 'https://youtube.com/@groomit', brand: 'youtube' },
 ]
 
 export default function Footer() {
   return (
-    <footer className="relative z-10 bg-surface-container-highest border-t border-outline-variant/50 w-full mt-auto">
-      <div className="max-w-[1280px] mx-auto px-4 lg:px-[80px] py-12">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-10">
-          {/* Brand */}
-          <div className="col-span-2 md:col-span-1">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center border border-outline-variant/50">
-                <span className="font-display font-bold text-secondary text-sm">G</span>
-              </div>
-              <span className="font-display text-title-lg text-secondary-fixed">Groomit</span>
-            </div>
-            <p className="font-body text-label-sm text-on-surface-variant">
-              Premium salon booking for the modern individual.
-            </p>
-          </div>
-
-          {/* Link columns */}
-          {COLUMNS.map((col) => (
-            <nav key={col.heading} aria-label={col.heading}>
-              <h3 className="font-body text-label-md text-on-surface mb-3 tracking-wider uppercase">
-                {col.heading}
-              </h3>
-              <ul className="flex flex-col gap-2">
-                {col.links.map((link) => (
-                  <li key={link.to}>
-                    <Link
-                      to={link.to}
-                      className="font-body text-label-sm text-on-surface-variant hover:text-secondary transition-colors"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-          ))}
+    <footer className="salon-footer">
+      <div className="salon-footer-grid">
+        <div>
+          <p className="salon-footer-name">Groomit</p>
+          <p className="salon-footer-line">Premium salon booking for the modern individual.</p>
+          <Link to="/salons" className="salon-footer-cta">Find a Salon</Link>
         </div>
 
-        <div className="border-t border-outline-variant/30 pt-6 flex flex-col md:flex-row justify-between items-center gap-3">
-          <p className="font-body text-label-sm text-on-surface-variant">
-            © {new Date().getFullYear()} Groomit. All rights reserved.
+        <div>
+          <h2 className="salon-footer-title">Company</h2>
+          <p className="salon-footer-line"><Link to="/about">About Us</Link></p>
+          <p className="salon-footer-line"><Link to="/contact">Contact</Link></p>
+          <p className="salon-footer-line"><Link to="/pricing">Pricing</Link></p>
+          <p className="salon-footer-line"><Link to="/for-business">List Your Salon</Link></p>
+          <p className="salon-footer-line"><Link to="/terms">Terms of Service</Link></p>
+          <p className="salon-footer-line"><Link to="/privacy">Privacy Policy</Link></p>
+        </div>
+
+        <div>
+          <h2 className="salon-footer-title">Get Started</h2>
+          <p className="salon-footer-line">
+            <Icon name="person_add" className="text-[15px]" />
+            <Link to="/signup">Create Account</Link>
           </p>
-          <p className="font-body text-label-sm text-on-surface-variant">
-            groomit.in
+          <p className="salon-footer-line">
+            <Icon name="login" className="text-[15px]" />
+            <Link to="/login">Sign In</Link>
           </p>
+          <p className="salon-footer-line">
+            <Icon name="storefront" className="text-[15px]" />
+            <Link to="/manage/login">Management Login</Link>
+          </p>
+
+          <div className="salon-footer-social">
+            {SOCIALS.map(({ key, label, url, brand }) => (
+              <SocialButton key={key} brand={brand} label={label} url={url} />
+            ))}
+          </div>
         </div>
       </div>
+      <p className="salon-footer-site">
+        <Icon name="language" className="text-[14px]" />
+        groomit.in
+      </p>
+      <p className="salon-footer-mark">Groomit</p>
     </footer>
   )
 }
