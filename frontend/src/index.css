@@ -347,8 +347,12 @@
   .site-content-top {
     position: relative;
     isolation: isolate;
-    /* Opaque so sections scroll up and cover the fixed hero behind them. */
+    /* Opaque so sections scroll up and cover the fixed hero behind them.
+       Dark at the very top (hero seam) then into the page colour, so no cream
+       band shows in the padding above the first section. */
     background-color: var(--c-page);
+    background-image: linear-gradient(to bottom, #0c0b09 0, #0c0b09 340px, transparent 640px);
+    background-repeat: no-repeat;
   }
   .site-content-top::before {
     content: '';
