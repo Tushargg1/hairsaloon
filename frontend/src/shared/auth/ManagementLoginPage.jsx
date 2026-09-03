@@ -122,7 +122,7 @@ export default function ManagementLoginPage() {
 
                 {status.error && <p className="booking-note is-error" role="alert">{status.error}</p>}
 
-                <button type="submit" className="booking-confirm" disabled={status.pending || retryIn > 0}>
+                <button type="submit" className="booking-confirm self-center px-10" disabled={status.pending || retryIn > 0}>
                   {status.pending ? 'Signing in...' : retryIn > 0 ? `Try again in ${retryIn}s` : 'Sign In'}
                 </button>
               </form>
