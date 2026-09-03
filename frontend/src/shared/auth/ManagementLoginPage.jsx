@@ -87,32 +87,59 @@ export default function ManagementLoginPage() {
   }
 
   return (
-    <main className="auth-page page-width relative overflow-hidden" style={{ backgroundImage: "url('/background-windows-img.png')", backgroundSize: 'cover', backgroundPosition: 'center' }}>
-      <div className="absolute inset-0 bg-background/80 z-0" />
-      <section className="auth-intro relative z-10">
-        <p className="eyebrow">Management access</p>
-        <h1>Run your salon securely.</h1>
-        <p>Staff and platform administrators sign in here with their work email.</p>
-      </section>
-      <section className="form-card relative z-10" aria-labelledby="management-login-heading">
-        <h2 id="management-login-heading">Staff and admin login</h2>
-        {user && !destinationFor(user.role, platformHost, user.subdomain) && (
-          <p className="form-status error" role="alert">Your current account does not have management access. Sign in with an authorised staff or administrator account.</p>
-        )}
-        <form onSubmit={submit}>
-          <label>Email address<input name="email" type="email" autoComplete="email" required maxLength="320" value={form.email} onChange={update} /></label>
-          <label>Password<input name="password" type="password" autoComplete="current-password" required minLength="8" maxLength="72" value={form.password} onChange={update} /></label>
-          {status.error && <p className="form-status error" role="alert">{status.error}</p>}
-          <button className="button button-full" disabled={status.pending || retryIn > 0} type="submit">
-            {status.pending ? 'Signing in…' : retryIn > 0 ? `Try again in ${retryIn}s` : 'Sign in to management'}
-          </button>
-        </form>
-        {platformHost && (
-          <p className="form-switch">
-            New salon owner? <Link to="/for-business">Register your salon</Link>
-          </p>
-        )}
-        <p className="form-switch"><Link to={platformHost ? '/login' : '/'}>{platformHost ? 'Customer login' : 'Back to salon home'}</Link></p>
+    <main className="flex flex-col">
+      <section className="py-12 px-4 lg:px-6 w-full md:max-w-2xl md:mx-auto">
+        <div className="booking-frame">
+          <div className="booking-plate">
+            <div className="booking-texture" />
+
+            <header className="booking-head">
+              <div className="booking-title-row">
+                <span className="booking-title-rule" />
+                <h2 className="booking-title gold-gradient-text">Management<br />Login</h2>
+                <span className="booking-title-rule" />
+              </div>
+            </header>
+
+            <div className="relative z-10 flex flex-col gap-4">
+              <p className="booking-note">Staff and platform administrators sign in here with their work email.</p>
+
+              {user && !destinationFor(user.role, platformHost, user.subdomain) && (
+                <p className="booking-note is-error" role="alert">Your current account does not have management access. Sign in with an authorised staff or administrator account.</p>
+              )}
+
+              <form onSubmit={submit} className="flex flex-col gap-4">
+                <label className="flex flex-col gap-1">
+                  <span className="font-body text-xs uppercase tracking-[0.15em] text-on-surface-variant">Email address</span>
+                  <input className="price-search-input" name="email" type="email" autoComplete="email"
+                    required maxLength="320" value={form.email} onChange={update} />
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className="font-body text-xs uppercase tracking-[0.15em] text-on-surface-variant">Password</span>
+                  <input className="price-search-input" name="password" type="password" autoComplete="current-password"
+                    required minLength="8" maxLength="72" value={form.password} onChange={update} />
+                </label>
+
+                {status.error && <p className="booking-note is-error" role="alert">{status.error}</p>}
+
+                <button type="submit" className="booking-confirm" disabled={status.pending || retryIn > 0}>
+                  {status.pending ? 'Signing in...' : retryIn > 0 ? `Try again in ${retryIn}s` : 'Sign In'}
+                </button>
+              </form>
+
+              {platformHost && (
+                <p className="font-body text-xs text-center text-on-surface-variant">
+                  New salon owner? <Link to="/for-business" className="underline hover:text-secondary transition-colors">Register your salon</Link>
+                </p>
+              )}
+              <p className="font-body text-xs text-center">
+                <Link to={platformHost ? '/login' : '/'} className="text-on-surface-variant hover:text-secondary transition-colors">
+                  {platformHost ? 'Customer login' : 'Back to salon home'}
+                </Link>
+              </p>
+            </div>
+          </div>
+        </div>
       </section>
     </main>
   )
