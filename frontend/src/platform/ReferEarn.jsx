@@ -3,7 +3,7 @@ import { useState } from 'react'
 import useAuth from '../shared/auth/useAuth.js'
 import DeleteAccount from '../shared/components/DeleteAccount.jsx'
 import {
-  errorMessage, getReferralOverview, previewReferral, referralKeys, submitReferral,
+  errorMessage, getReferralLeads, getReferralOverview, previewReferral, referralKeys, submitReferral,
 } from './referral-api.js'
 
 function money(value) {
@@ -133,6 +133,18 @@ function ReferrerDashboard() {
     onError: (e) => setError(errorMessage(e, 'Could not submit this referral.')),
   })
 
+  const [leadBatch, setLeadBatch] = useState(null)
+  const [leadMsg, setLeadMsg] = useState('')
+  const getLeads = useMutation({
+    mutationFn: getReferralLeads,
+    onSuccess: (d) => {
+      setLeadBatch(d)
+      setLeadMsg(`Got ${d.leads.length} leads. ${d.takenToday}/${d.dailyAllowance} today · ${d.onboardedToday}/${d.onboardTarget} onboarded.`)
+      client.invalidateQueries({ queryKey: referralKeys.me })
+    },
+    onError: (e) => { setLeadBatch(null); setLeadMsg(errorMessage(e, 'Could not get leads.')) },
+  })
+
   if (isLoading) return <p className="font-body text-on-surface-variant">Loading…</p>
 
   const { referralCode, approved, perReferralAmount, totalPaid, totalPending, history = [] } = data || {}
@@ -157,6 +169,37 @@ function ReferrerDashboard() {
         <Stat label="Pending / processing" value={processing} />
         <Stat label="Declined" value={declined} accent="text-error" />
       </div>
+
+      {approved && (
+        <div className="glass-panel rounded-xl p-6">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div>
+              <h2 className="font-display text-headline-sm text-on-surface">Get salon leads</h2>
+              <p className="font-body text-label-md text-on-surface-variant">
+                Pull a batch of salons to contact. Onboard 3 of each day&apos;s leads to unlock more.
+              </p>
+            </div>
+            <button type="button" onClick={() => getLeads.mutate()} disabled={getLeads.isPending}
+              className="brass-gradient text-espresso font-body font-semibold px-6 py-2.5 rounded">
+              {getLeads.isPending ? 'Fetching…' : 'Get 10 leads'}
+            </button>
+          </div>
+          {leadMsg && <p className="font-body text-label-md text-on-surface-variant mt-3">{leadMsg}</p>}
+          {leadBatch?.leads?.length > 0 && (
+            <div className="flex flex-col gap-2 mt-4">
+              {leadBatch.leads.map((l) => (
+                <div key={l.referralId} className="rounded-lg border border-outline-variant/20 p-3">
+                  <p className="font-body text-on-surface font-medium">{l.salonName || 'Unknown salon'}</p>
+                  <p className="font-body text-label-sm text-on-surface-variant">{l.salonPhone}</p>
+                  {l.salonAddress && <p className="font-body text-label-sm text-on-surface-variant">{l.salonAddress}</p>}
+                  {l.mapsUrl && <a href={l.mapsUrl} target="_blank" rel="noreferrer"
+                    className="font-body text-label-sm text-secondary underline break-all">Map link</a>}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {!approved ? (
         <div className="glass-panel rounded-xl p-6">

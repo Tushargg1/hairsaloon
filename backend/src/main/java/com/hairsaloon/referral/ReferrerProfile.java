@@ -26,6 +26,12 @@ public class ReferrerProfile {
     @Column(name = "per_referral_amount", nullable = false, precision = 12, scale = 2)
     private BigDecimal perReferralAmount = BigDecimal.ZERO.setScale(2);
 
+    @Column(name = "on_hold", nullable = false)
+    private boolean onHold = false;
+
+    @Column(name = "hold_reason", length = 255)
+    private String holdReason;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -47,9 +53,21 @@ public class ReferrerProfile {
         if (amount != null) this.perReferralAmount = amount;
     }
 
+    public void hold(String reason) {
+        this.onHold = true;
+        this.holdReason = reason;
+    }
+
+    public void reactivate() {
+        this.onHold = false;
+        this.holdReason = null;
+    }
+
     public Long getUserId() { return userId; }
     public String getReferralCode() { return referralCode; }
     public boolean isApproved() { return approved; }
     public BigDecimal getPerReferralAmount() { return perReferralAmount; }
+    public boolean isOnHold() { return onHold; }
+    public String getHoldReason() { return holdReason; }
     public Instant getCreatedAt() { return createdAt; }
 }

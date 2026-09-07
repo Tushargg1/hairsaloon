@@ -24,6 +24,11 @@ export async function previewReferral(googleUrl) {
   return data
 }
 
+export async function getReferralLeads() {
+  const { data } = await apiClient.post('/api/platform/referrals/leads')
+  return data
+}
+
 // Admin
 export async function getAdminReferrals() {
   const { data } = await apiClient.get('/api/platform/admin/referrals')
@@ -53,5 +58,11 @@ export async function markReferralPaid(id) {
 export async function setReferrerApproval(userId, approved, amount) {
   const { data } = await apiClient.post(
     `/api/platform/admin/referrals/referrers/${userId}/approval`, { approved, amount })
+  return data
+}
+
+export async function setReferrerHold(userId, onHold, reason) {
+  const { data } = await apiClient.post(
+    `/api/platform/admin/referrals/referrers/${userId}/hold`, { onHold, reason })
   return data
 }

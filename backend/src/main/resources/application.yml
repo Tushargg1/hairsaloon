@@ -124,6 +124,15 @@ app:
     # Stay ~10% under Google's ~10k/month free tier for the reviews/photos SKU.
     monthly-cap: "${GOOGLE_PLACES_MONTHLY_CAP:9000}"
 
+  referral-leads:
+    # External scraper API that supplies salon leads. Empty = leads feature disabled.
+    api-url: "${REFERRAL_LEADS_API_URL:}"
+    api-key: "${REFERRAL_LEADS_API_KEY:}"
+    daily-limit: "${REFERRAL_LEADS_DAILY_LIMIT:30}"
+    batch-size: "${REFERRAL_LEADS_BATCH_SIZE:10}"
+    daily-onboard-target: "${REFERRAL_LEADS_ONBOARD_TARGET:3}"
+    max-fail-days: "${REFERRAL_LEADS_MAX_FAIL_DAYS:3}"
+
   whatsapp:
     # Meta app used for Embedded Signup + Cloud API. Empty = feature disabled.
     app-id: "${WHATSAPP_APP_ID:}"

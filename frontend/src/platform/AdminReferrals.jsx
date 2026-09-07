@@ -3,7 +3,7 @@ import { useState } from 'react'
 import AdminNav from './AdminNav.jsx'
 import {
   errorMessage, getAdminReferrals, getAdminReferrers, markReferralPaid, referralKeys,
-  rejectReferral, setReferrerApproval, verifyReferral,
+  rejectReferral, setReferrerApproval, setReferrerHold, verifyReferral,
 } from './referral-api.js'
 
 function money(v) { return `₹${Number(v || 0).toFixed(2)}` }
@@ -77,6 +77,9 @@ export default function AdminReferrals() {
   const approve = useMutation({
     mutationFn: ({ userId, approved, amount }) => setReferrerApproval(userId, approved, amount),
     onSuccess: () => { setFeedback('Referrer updated.'); invalidate() }, onError: fail })
+  const hold = useMutation({
+    mutationFn: ({ userId, onHold }) => setReferrerHold(userId, onHold, null),
+    onSuccess: () => { setFeedback('Referrer status updated.'); invalidate() }, onError: fail })
 
   return (
     <main className="max-w-[1280px] mx-auto px-4 py-12">
@@ -124,7 +127,11 @@ export default function AdminReferrals() {
                         ? <span className="text-emerald-400">Approved</span>
                         : <span className="text-amber-400">Not approved</span>}
                       {' · '}Rate {money(ref.perReferralAmount)}
+                      {ref.onHold && <span className="text-error"> · ON HOLD</span>}
                     </p>
+                    {ref.onHold && ref.holdReason && (
+                      <p className="font-body text-label-sm text-error">{ref.holdReason}</p>
+                    )}
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
                     <input type="number" min="0" step="0.01" placeholder="Payout rate"
@@ -134,6 +141,10 @@ export default function AdminReferrals() {
                     <button className="button" disabled={approve.isPending}
                       onClick={() => approve.mutate({ userId: ref.userId, approved: true, amount: Number(rates[ref.userId] ?? ref.perReferralAmount ?? 0) })}>
                       {ref.approved ? 'Update rate' : 'Approve'}
+                    </button>
+                    <button className="button button-secondary" disabled={hold.isPending}
+                      onClick={() => hold.mutate({ userId: ref.userId, onHold: !ref.onHold })}>
+                      {ref.onHold ? 'Reactivate' : 'Hold'}
                     </button>
                   </div>
                 </div>

@@ -53,6 +53,8 @@ public class ReferralService {
                 p != null ? p.getReferralCode() : null,
                 p != null && p.isApproved(),
                 p != null ? p.getPerReferralAmount() : BigDecimal.ZERO.setScale(2),
+                p != null && p.isOnHold(),
+                p != null ? p.getHoldReason() : null,
                 paid, pending, thisMonth, successful, processing, declined,
                 mine.stream().map(AdminSubmissionView::of).toList());
         }).toList();
@@ -192,6 +194,15 @@ public class ReferralService {
         profiles.save(profile);
     }
 
+    @Transactional
+    public void setReferrerHold(long referrerUserId, boolean onHold, String reason) {
+        ReferrerProfile profile = profiles.findById(referrerUserId).orElseThrow(() ->
+            new ResponseStatusException(HttpStatus.NOT_FOUND, "Referrer profile not found"));
+        if (onHold) profile.hold(reason == null || reason.isBlank() ? "Placed on hold by admin." : reason);
+        else profile.reactivate();
+        profiles.save(profile);
+    }
+
     private ReferralSubmission require(long id) {
         return submissions.findById(id).orElseThrow(() ->
             new ResponseStatusException(HttpStatus.NOT_FOUND, "Referral not found"));
@@ -217,6 +228,7 @@ public class ReferralService {
 
     public record ReferrerView(Long userId, String name, String phone, String email,
                                String referralCode, boolean approved, BigDecimal perReferralAmount,
+                               boolean onHold, String holdReason,
                                BigDecimal totalPaid, BigDecimal totalPending, BigDecimal paidThisMonth,
                                long successful, long processing, long declined,
                                List<AdminSubmissionView> referrals) {}

@@ -18,9 +18,17 @@ import org.springframework.web.bind.annotation.RestController;
 class ReferralController {
 
     private final ReferralService service;
+    private final ReferralLeadService leadService;
 
-    ReferralController(ReferralService service) {
+    ReferralController(ReferralService service, ReferralLeadService leadService) {
         this.service = service;
+        this.leadService = leadService;
+    }
+
+    /** Delivers the next batch of scraped salon leads to the referrer. */
+    @PostMapping("/leads")
+    ReferralLeadService.LeadBatch leads(@AuthenticationPrincipal AuthenticatedUser user) {
+        return leadService.nextBatch(user);
     }
 
     @GetMapping("/me")

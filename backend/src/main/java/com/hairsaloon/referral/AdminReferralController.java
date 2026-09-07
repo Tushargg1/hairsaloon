@@ -57,6 +57,11 @@ class AdminReferralController {
         service.setReferrerApproval(userId, Boolean.TRUE.equals(request.approved()), request.amount());
     }
 
+    @PostMapping("/referrers/{userId}/hold")
+    void hold(@PathVariable long userId, @Valid @RequestBody HoldRequest request) {
+        service.setReferrerHold(userId, Boolean.TRUE.equals(request.onHold()), request.reason());
+    }
+
     @JsonIgnoreProperties(ignoreUnknown = false)
     record AmountRequest(@NotNull @DecimalMin("0.00") BigDecimal amount) {}
 
@@ -66,4 +71,7 @@ class AdminReferralController {
     @JsonIgnoreProperties(ignoreUnknown = false)
     record ApprovalRequest(@NotNull Boolean approved,
                            @NotNull @DecimalMin("0.00") BigDecimal amount) {}
+
+    @JsonIgnoreProperties(ignoreUnknown = false)
+    record HoldRequest(@NotNull Boolean onHold, @Size(max = 255) String reason) {}
 }
