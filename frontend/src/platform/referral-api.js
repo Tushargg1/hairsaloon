@@ -19,11 +19,6 @@ export async function submitReferral(payload) {
   return data
 }
 
-export async function previewReferral(googleUrl) {
-  const { data } = await apiClient.post('/api/platform/referrals/preview', { googleUrl })
-  return data
-}
-
 export async function getReferralLeads() {
   const { data } = await apiClient.post('/api/platform/referrals/leads')
   return data

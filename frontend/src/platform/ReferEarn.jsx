@@ -3,7 +3,7 @@ import { useState } from 'react'
 import useAuth from '../shared/auth/useAuth.js'
 import DeleteAccount from '../shared/components/DeleteAccount.jsx'
 import {
-  errorMessage, getReferralLeads, getReferralOverview, previewReferral, referralKeys, submitReferral,
+  errorMessage, getReferralLeads, getReferralOverview, referralKeys, submitReferral,
 } from './referral-api.js'
 
 function money(value) {
@@ -102,31 +102,12 @@ function ReferrerDashboard() {
   const { data, isLoading } = useQuery({ queryKey: referralKeys.me, queryFn: getReferralOverview })
   const [form, setForm] = useState({ salonName: '', salonPhone: '', mapsUrl: '', contactName: '', salonAddress: '' })
   const [error, setError] = useState('')
-  const [lookupUrl, setLookupUrl] = useState('')
-  const [lookupMsg, setLookupMsg] = useState('')
   const update = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
-
-  const lookup = useMutation({
-    mutationFn: () => previewReferral(lookupUrl.trim()),
-    onSuccess: (d) => {
-      setForm((f) => ({
-        ...f,
-        salonName: d.salonName || f.salonName,
-        salonPhone: (d.salonPhone || f.salonPhone || '').replace(/[^\d+]/g, ''),
-        salonAddress: d.salonAddress || f.salonAddress,
-        mapsUrl: d.mapsUrl || lookupUrl.trim(),
-      }))
-      setLookupMsg('Details filled in from Google. Review and submit.')
-    },
-    onError: (e) => setLookupMsg(errorMessage(e, 'Could not read that Google link.')),
-  })
 
   const submit = useMutation({
     mutationFn: () => submitReferral(form),
     onSuccess: () => {
       setForm({ salonName: '', salonPhone: '', mapsUrl: '', contactName: '', salonAddress: '' })
-      setLookupUrl('')
-      setLookupMsg('')
       setError('')
       client.invalidateQueries({ queryKey: referralKeys.me })
     },
@@ -216,22 +197,6 @@ function ReferrerDashboard() {
             once submitted.
           </p>
 
-          {/* Option 1: paste a Google link to auto-fill the details. */}
-          <div className="mb-5 rounded-lg border border-outline-variant/30 p-4">
-            <label className="flex flex-col gap-1 font-body text-label-md mb-2">Paste Google Maps link to auto-fill
-              <input type="url" value={lookupUrl} onChange={(e) => setLookupUrl(e.target.value)}
-                placeholder="https://maps.app.goo.gl/..."
-                className="rounded border border-outline-variant/40 bg-transparent px-3 py-2" />
-            </label>
-            <button type="button" disabled={lookup.isPending || !lookupUrl.trim()}
-              onClick={() => { setLookupMsg(''); lookup.mutate() }}
-              className="font-body text-label-md px-4 py-2 rounded border border-secondary/60 text-secondary hover:bg-secondary hover:text-on-secondary transition-colors disabled:opacity-40">
-              {lookup.isPending ? 'Fetching…' : 'Fetch details'}
-            </button>
-            {lookupMsg && <p className="font-body text-label-sm text-on-surface-variant mt-2">{lookupMsg}</p>}
-          </div>
-
-          {/* Option 2: enter/adjust details manually. */}
           <form onSubmit={(e) => { e.preventDefault(); submit.mutate() }} className="grid gap-4 sm:grid-cols-2">
             <label className="flex flex-col gap-1 font-body text-label-md">Salon name
               <input name="salonName" required maxLength="160" value={form.salonName} onChange={update}

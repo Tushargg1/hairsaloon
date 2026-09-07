@@ -18,16 +18,13 @@ public class ReferralService {
 
     private final ReferrerProfileRepository profiles;
     private final ReferralSubmissionRepository submissions;
-    private final com.hairsaloon.google.GooglePlacesClient places;
     private final com.hairsaloon.auth.UserRepository users;
 
     public ReferralService(ReferrerProfileRepository profiles,
                            ReferralSubmissionRepository submissions,
-                           com.hairsaloon.google.GooglePlacesClient places,
                            com.hairsaloon.auth.UserRepository users) {
         this.profiles = profiles;
         this.submissions = submissions;
-        this.places = places;
         this.users = users;
     }
 
@@ -66,23 +63,7 @@ public class ReferralService {
     }
 
     /** Auto-fills salon details from a pasted Google Maps link (name, phone, address). */
-    public GooglePreview previewFromGoogle(String googleUrl) {
-        if (!places.enabled()) {
-            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
-                "Google lookup is not available right now.");
-        }
-        try {
-            var data = places.fetch(googleUrl);
-            return new GooglePreview(data.name(), data.phone(), data.address(),
-                data.mapsUri() != null ? data.mapsUri() : googleUrl);
-        } catch (IllegalArgumentException notFound) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-                "No Google place found for that link.");
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
-                "Could not read that Google link.");
-        }
-    }
+    // (Google Maps auto-fill removed.)
 
     /** Creates the referrer's profile with a unique code (called at signup). */
     @Transactional
@@ -223,8 +204,6 @@ public class ReferralService {
                            BigDecimal totalPaid, BigDecimal totalPending,
                            List<SubmissionView> history) {}
 
-    public record GooglePreview(String salonName, String salonPhone, String salonAddress,
-                                String mapsUrl) {}
 
     public record ReferrerView(Long userId, String name, String phone, String email,
                                String referralCode, boolean approved, BigDecimal perReferralAmount,

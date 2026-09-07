@@ -90,7 +90,7 @@ public class ReferralLeadService {
                 "Daily limit reached. Onboard " + target + " of today's leads to unlock more.");
         }
 
-        List<ScraperLeadsClient.Lead> fresh = fetchUnclaimed(want);
+        List<ScraperLeadsClient.Lead> fresh = fetchUnclaimed(want, user.name(), user.phone());
         if (fresh.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND,
                 "No new leads are available right now. Please try again later.");
@@ -128,13 +128,13 @@ public class ReferralLeadService {
             onboardedToday, target);
     }
 
-    /** Pulls unclaimed leads from the scraper, paging until it has enough or runs out. */
-    private List<ScraperLeadsClient.Lead> fetchUnclaimed(int want) {
+    /** Pulls unclaimed leads from the scraper (10 at a time), paging until enough. */
+    private List<ScraperLeadsClient.Lead> fetchUnclaimed(int want, String name, String phone) {
         List<ScraperLeadsClient.Lead> picked = new ArrayList<>();
         int offset = 0;
         int pages = 0;
         while (picked.size() < want && pages < 20) {
-            List<ScraperLeadsClient.Lead> page = scraper.fetch(offset, Math.max(want * 2, 20));
+            List<ScraperLeadsClient.Lead> page = scraper.fetch(offset, want, name, phone);
             if (page.isEmpty()) break;
             for (ScraperLeadsClient.Lead lead : page) {
                 if (!leads.existsByExternalId(lead.externalId())) {

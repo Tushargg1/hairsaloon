@@ -3,6 +3,8 @@ package com.hairsaloon.referral;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -37,12 +39,16 @@ public class ScraperLeadsClient {
         return properties.enabled();
     }
 
-    /** Fetches up to {@code limit} leads starting at {@code offset} from the scraper API. */
-    public List<Lead> fetch(int offset, int limit) {
+    /**
+     * Fetches up to {@code limit} leads from the scraper API, identifying the
+     * requesting referrer by name and phone (passed as query params + headers).
+     */
+    public List<Lead> fetch(int offset, int limit, String requesterName, String requesterPhone) {
         if (!properties.enabled()) return List.of();
         String base = properties.apiUrl().trim();
         String sep = base.contains("?") ? "&" : "?";
-        String url = base + sep + "offset=" + offset + "&limit=" + limit;
+        String url = base + sep + "offset=" + offset + "&limit=" + limit
+            + "&name=" + enc(requesterName) + "&phone=" + enc(requesterPhone);
         try {
             HttpRequest.Builder builder = HttpRequest.newBuilder(URI.create(url))
                 .timeout(Duration.ofSeconds(20)).GET();
@@ -50,6 +56,8 @@ public class ScraperLeadsClient {
                 builder.header("Authorization", "Bearer " + properties.apiKey());
                 builder.header("X-Api-Key", properties.apiKey());
             }
+            if (requesterName != null) builder.header("X-Referrer-Name", requesterName);
+            if (requesterPhone != null) builder.header("X-Referrer-Phone", requesterPhone);
             HttpResponse<String> response = client.send(builder.build(),
                 HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() / 100 != 2) {
@@ -98,6 +106,10 @@ public class ScraperLeadsClient {
             if (id.isBlank() || id.equals("|")) return null;
         }
         return new Lead(id.trim(), name, phone, address, maps);
+    }
+
+    private static String enc(String value) {
+        return URLEncoder.encode(value == null ? "" : value, StandardCharsets.UTF_8);
     }
 
     private static String firstText(JsonNode node, String... fields) {
