@@ -3,7 +3,7 @@ import { useState } from 'react'
 import useAuth from '../shared/auth/useAuth.js'
 import DeleteAccount from '../shared/components/DeleteAccount.jsx'
 import {
-  errorMessage, getReferralOverview, referralKeys, submitReferral,
+  errorMessage, getReferralOverview, previewReferral, referralKeys, submitReferral,
 } from './referral-api.js'
 
 function money(value) {
@@ -16,6 +16,13 @@ const STATUS_LABEL = {
   PAID: 'Paid',
   REJECTED: 'Rejected',
 }
+
+// Group the four backend statuses into the three columns the referrer sees.
+const COLUMNS = [
+  { key: 'completed', title: 'Completed', statuses: ['PAID'] },
+  { key: 'processing', title: 'Pending / Processing', statuses: ['VERIFYING', 'PENDING'] },
+  { key: 'denied', title: 'Cancelled / Denied', statuses: ['REJECTED'] },
+]
 
 function AuthForm() {
   const { referrerSignup, referrerLogin } = useAuth()
@@ -93,14 +100,33 @@ function AuthForm() {
 function ReferrerDashboard() {
   const client = useQueryClient()
   const { data, isLoading } = useQuery({ queryKey: referralKeys.me, queryFn: getReferralOverview })
-  const [form, setForm] = useState({ salonName: '', salonPhone: '', mapsUrl: '' })
+  const [form, setForm] = useState({ salonName: '', salonPhone: '', mapsUrl: '', contactName: '', salonAddress: '' })
   const [error, setError] = useState('')
+  const [lookupUrl, setLookupUrl] = useState('')
+  const [lookupMsg, setLookupMsg] = useState('')
   const update = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
+
+  const lookup = useMutation({
+    mutationFn: () => previewReferral(lookupUrl.trim()),
+    onSuccess: (d) => {
+      setForm((f) => ({
+        ...f,
+        salonName: d.salonName || f.salonName,
+        salonPhone: (d.salonPhone || f.salonPhone || '').replace(/[^\d+]/g, ''),
+        salonAddress: d.salonAddress || f.salonAddress,
+        mapsUrl: d.mapsUrl || lookupUrl.trim(),
+      }))
+      setLookupMsg('Details filled in from Google. Review and submit.')
+    },
+    onError: (e) => setLookupMsg(errorMessage(e, 'Could not read that Google link.')),
+  })
 
   const submit = useMutation({
     mutationFn: () => submitReferral(form),
     onSuccess: () => {
-      setForm({ salonName: '', salonPhone: '', mapsUrl: '' })
+      setForm({ salonName: '', salonPhone: '', mapsUrl: '', contactName: '', salonAddress: '' })
+      setLookupUrl('')
+      setLookupMsg('')
       setError('')
       client.invalidateQueries({ queryKey: referralKeys.me })
     },
@@ -142,6 +168,23 @@ function ReferrerDashboard() {
             You earn {money(perReferralAmount)} per approved referral. Details cannot be edited
             once submitted.
           </p>
+
+          {/* Option 1: paste a Google link to auto-fill the details. */}
+          <div className="mb-5 rounded-lg border border-outline-variant/30 p-4">
+            <label className="flex flex-col gap-1 font-body text-label-md mb-2">Paste Google Maps link to auto-fill
+              <input type="url" value={lookupUrl} onChange={(e) => setLookupUrl(e.target.value)}
+                placeholder="https://maps.app.goo.gl/..."
+                className="rounded border border-outline-variant/40 bg-transparent px-3 py-2" />
+            </label>
+            <button type="button" disabled={lookup.isPending || !lookupUrl.trim()}
+              onClick={() => { setLookupMsg(''); lookup.mutate() }}
+              className="font-body text-label-md px-4 py-2 rounded border border-secondary/60 text-secondary hover:bg-secondary hover:text-on-secondary transition-colors disabled:opacity-40">
+              {lookup.isPending ? 'Fetching…' : 'Fetch details'}
+            </button>
+            {lookupMsg && <p className="font-body text-label-sm text-on-surface-variant mt-2">{lookupMsg}</p>}
+          </div>
+
+          {/* Option 2: enter/adjust details manually. */}
           <form onSubmit={(e) => { e.preventDefault(); submit.mutate() }} className="grid gap-4 sm:grid-cols-2">
             <label className="flex flex-col gap-1 font-body text-label-md">Salon name
               <input name="salonName" required maxLength="160" value={form.salonName} onChange={update}
@@ -150,6 +193,14 @@ function ReferrerDashboard() {
             <label className="flex flex-col gap-1 font-body text-label-md">Salon phone
               <input name="salonPhone" type="tel" required minLength="10" maxLength="15"
                 value={form.salonPhone} onChange={update}
+                className="rounded border border-outline-variant/40 bg-transparent px-3 py-2" />
+            </label>
+            <label className="flex flex-col gap-1 font-body text-label-md">Contact person (whose number)
+              <input name="contactName" maxLength="160" value={form.contactName} onChange={update}
+                className="rounded border border-outline-variant/40 bg-transparent px-3 py-2" />
+            </label>
+            <label className="flex flex-col gap-1 font-body text-label-md">Location / address
+              <input name="salonAddress" maxLength="500" value={form.salonAddress} onChange={update}
                 className="rounded border border-outline-variant/40 bg-transparent px-3 py-2" />
             </label>
             <label className="flex flex-col gap-1 font-body text-label-md sm:col-span-2">Google Maps location link
@@ -168,31 +219,44 @@ function ReferrerDashboard() {
         </div>
       )}
 
-      <div className="glass-panel rounded-xl p-6">
-        <h2 className="font-display text-headline-sm text-on-surface mb-4">Referral history</h2>
-        {history.length === 0 ? (
-          <p className="font-body text-on-surface-variant">No referrals submitted yet.</p>
-        ) : (
-          <div className="flex flex-col divide-y divide-outline-variant/20">
-            {history.map((r) => (
-              <div key={r.id} className="py-3 flex items-center justify-between gap-4">
-                <div className="min-w-0">
-                  <p className="font-body text-on-surface truncate">{r.salonName}</p>
-                  <p className="font-body text-label-sm text-on-surface-variant">{r.salonPhone}</p>
-                  {r.status === 'REJECTED' && r.rejectReason && (
-                    <p className="font-body text-label-sm text-error">{r.rejectReason}</p>
-                  )}
-                </div>
-                <div className="text-right flex-shrink-0">
-                  <p className="font-body text-label-sm text-on-surface-variant">{STATUS_LABEL[r.status] || r.status}</p>
-                  {(r.status === 'PAID' || r.status === 'PENDING') && (
-                    <p className="font-body text-on-surface">{money(r.amount)}</p>
-                  )}
-                </div>
+      <div>
+        <h2 className="font-display text-headline-sm text-on-surface mb-4">Your referrals</h2>
+        <div className="grid gap-4 md:grid-cols-3">
+          {COLUMNS.map((col) => {
+            const items = history.filter((r) => col.statuses.includes(r.status))
+            return (
+              <div key={col.key} className="glass-panel rounded-xl p-4">
+                <p className="font-body text-label-md text-secondary uppercase tracking-wider mb-3">
+                  {col.title} ({items.length})
+                </p>
+                {items.length === 0 ? (
+                  <p className="font-body text-label-sm text-on-surface-variant">None yet.</p>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    {items.map((r) => (
+                      <div key={r.id} className="rounded-lg border border-outline-variant/20 p-3">
+                        <p className="font-body text-on-surface font-medium">{r.salonName}</p>
+                        <p className="font-body text-label-sm text-on-surface-variant">{r.salonPhone}{r.contactName ? ` · ${r.contactName}` : ''}</p>
+                        {r.salonAddress && <p className="font-body text-label-sm text-on-surface-variant">{r.salonAddress}</p>}
+                        {r.mapsUrl && (
+                          <a href={r.mapsUrl} target="_blank" rel="noreferrer"
+                            className="font-body text-label-sm text-secondary underline break-all">Map link</a>
+                        )}
+                        <p className="font-body text-label-sm text-on-surface-variant mt-1">{STATUS_LABEL[r.status] || r.status}</p>
+                        {(r.status === 'PAID' || r.status === 'PENDING') && (
+                          <p className="font-body text-on-surface">{money(r.amount)}</p>
+                        )}
+                        {r.status === 'REJECTED' && r.rejectReason && (
+                          <p className="font-body text-label-sm text-error">{r.rejectReason}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
-        )}
+            )
+          })}
+        </div>
       </div>
 
       <DeleteAccount note="This permanently closes your referrer account. Your referral history stays on record but you won't be able to sign in again." />

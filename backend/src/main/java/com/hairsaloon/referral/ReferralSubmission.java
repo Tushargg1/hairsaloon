@@ -39,6 +39,12 @@ public class ReferralSubmission {
     @Column(name = "maps_url", nullable = false, columnDefinition = "TEXT")
     private String mapsUrl;
 
+    @Column(name = "contact_name", length = 160)
+    private String contactName;
+
+    @Column(name = "salon_address", length = 500)
+    private String salonAddress;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 16)
     private ReferralStatus status = ReferralStatus.VERIFYING;
@@ -63,12 +69,15 @@ public class ReferralSubmission {
     }
 
     public ReferralSubmission(Long referrerId, String salonName, String salonPhone,
-                              String salonPhoneNormalized, String mapsUrl) {
+                              String salonPhoneNormalized, String mapsUrl,
+                              String contactName, String salonAddress) {
         this.referrerId = referrerId;
         this.salonName = salonName;
         this.salonPhone = salonPhone;
         this.salonPhoneNormalized = salonPhoneNormalized;
         this.mapsUrl = mapsUrl;
+        this.contactName = contactName;
+        this.salonAddress = salonAddress;
     }
 
     /** Admin verified the referral; it becomes payable at the given amount. */
@@ -95,6 +104,8 @@ public class ReferralSubmission {
     public String getSalonPhone() { return salonPhone; }
     public String getSalonPhoneNormalized() { return salonPhoneNormalized; }
     public String getMapsUrl() { return mapsUrl; }
+    public String getContactName() { return contactName; }
+    public String getSalonAddress() { return salonAddress; }
     public ReferralStatus getStatus() { return status; }
     public BigDecimal getAmount() { return amount; }
     public String getRejectReason() { return rejectReason; }

@@ -72,7 +72,10 @@ export default function AdminReferrals() {
               <div className="flex items-start justify-between gap-4 flex-wrap">
                 <div className="min-w-0">
                   <p className="font-display text-on-surface text-lg">{r.salonName}</p>
-                  <p className="font-body text-label-sm text-on-surface-variant">{r.salonPhone} · referrer #{r.referrerId}</p>
+                  <p className="font-body text-label-sm text-on-surface-variant">
+                    {r.salonPhone}{r.contactName ? ` · ${r.contactName}` : ''} · referrer #{r.referrerId}
+                  </p>
+                  {r.salonAddress && <p className="font-body text-label-sm text-on-surface-variant">{r.salonAddress}</p>}
                   <a href={r.mapsUrl} target="_blank" rel="noreferrer"
                     className="font-body text-label-sm text-secondary underline break-all">{r.mapsUrl}</a>
                 </div>

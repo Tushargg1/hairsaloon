@@ -32,12 +32,24 @@ class ReferralController {
     ReferralService.SubmissionView submit(@AuthenticationPrincipal AuthenticatedUser user,
                                           @Valid @RequestBody SubmitRequest request) {
         return service.submit(user.id(), request.salonName(), request.salonPhone(),
-            request.mapsUrl());
+            request.mapsUrl(), request.contactName(), request.salonAddress());
+    }
+
+    /** Auto-fills salon details from a pasted Google Maps link. */
+    @PostMapping("/preview")
+    ReferralService.GooglePreview preview(@AuthenticationPrincipal AuthenticatedUser user,
+                                          @Valid @RequestBody PreviewRequest request) {
+        return service.previewFromGoogle(request.googleUrl());
     }
 
     @JsonIgnoreProperties(ignoreUnknown = false)
     record SubmitRequest(
         @NotBlank @Size(max = 160) String salonName,
         @NotBlank @Size(min = 10, max = 15) String salonPhone,
-        @NotBlank @Size(max = 2048) String mapsUrl) {}
+        @NotBlank @Size(max = 2048) String mapsUrl,
+        @Size(max = 160) String contactName,
+        @Size(max = 500) String salonAddress) {}
+
+    @JsonIgnoreProperties(ignoreUnknown = false)
+    record PreviewRequest(@NotBlank @Size(max = 2048) String googleUrl) {}
 }

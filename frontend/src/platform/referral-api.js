@@ -18,6 +18,11 @@ export async function submitReferral(payload) {
   return data
 }
 
+export async function previewReferral(googleUrl) {
+  const { data } = await apiClient.post('/api/platform/referrals/preview', { googleUrl })
+  return data
+}
+
 // Admin
 export async function getAdminReferrals() {
   const { data } = await apiClient.get('/api/platform/admin/referrals')

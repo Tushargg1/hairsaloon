@@ -18,11 +18,33 @@ public class ReferralService {
 
     private final ReferrerProfileRepository profiles;
     private final ReferralSubmissionRepository submissions;
+    private final com.hairsaloon.google.GooglePlacesClient places;
 
     public ReferralService(ReferrerProfileRepository profiles,
-                           ReferralSubmissionRepository submissions) {
+                           ReferralSubmissionRepository submissions,
+                           com.hairsaloon.google.GooglePlacesClient places) {
         this.profiles = profiles;
         this.submissions = submissions;
+        this.places = places;
+    }
+
+    /** Auto-fills salon details from a pasted Google Maps link (name, phone, address). */
+    public GooglePreview previewFromGoogle(String googleUrl) {
+        if (!places.enabled()) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
+                "Google lookup is not available right now.");
+        }
+        try {
+            var data = places.fetch(googleUrl);
+            return new GooglePreview(data.name(), data.phone(), data.address(),
+                data.mapsUri() != null ? data.mapsUri() : googleUrl);
+        } catch (IllegalArgumentException notFound) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                "No Google place found for that link.");
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
+                "Could not read that Google link.");
+        }
     }
 
     /** Creates the referrer's profile with a unique code (called at signup). */
@@ -60,7 +82,8 @@ public class ReferralService {
 
     /** Submits a referral. Immutable after creation; blocks already-referred salons. */
     @Transactional
-    public SubmissionView submit(long userId, String salonName, String salonPhone, String mapsUrl) {
+    public SubmissionView submit(long userId, String salonName, String salonPhone, String mapsUrl,
+                                 String contactName, String salonAddress) {
         ReferrerProfile profile = profiles.findById(userId).orElseThrow(() ->
             new ResponseStatusException(HttpStatus.NOT_FOUND, "Referrer profile not found"));
         if (!profile.isApproved()) {
@@ -74,7 +97,9 @@ public class ReferralService {
         }
         try {
             ReferralSubmission saved = submissions.saveAndFlush(new ReferralSubmission(
-                userId, salonName.trim(), salonPhone.trim(), normalized, mapsUrl.trim()));
+                userId, salonName.trim(), salonPhone.trim(), normalized, mapsUrl.trim(),
+                contactName == null || contactName.isBlank() ? null : contactName.trim(),
+                salonAddress == null || salonAddress.isBlank() ? null : salonAddress.trim()));
             return SubmissionView.of(saved);
         } catch (DataIntegrityViolationException duplicate) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
@@ -152,24 +177,29 @@ public class ReferralService {
                            BigDecimal totalPaid, BigDecimal totalPending,
                            List<SubmissionView> history) {}
 
-    public record SubmissionView(Long id, String salonName, String salonPhone, String mapsUrl,
-                                 String status, BigDecimal amount, String rejectReason,
-                                 Instant createdAt, Instant decidedAt, Instant paidAt) {
+    public record GooglePreview(String salonName, String salonPhone, String salonAddress,
+                                String mapsUrl) {}
+
+    public record SubmissionView(Long id, String salonName, String salonPhone, String contactName,
+                                 String salonAddress, String mapsUrl, String status,
+                                 BigDecimal amount, String rejectReason, Instant createdAt,
+                                 Instant decidedAt, Instant paidAt) {
         static SubmissionView of(ReferralSubmission s) {
-            return new SubmissionView(s.getId(), s.getSalonName(), s.getSalonPhone(), s.getMapsUrl(),
-                s.getStatus().name(), s.getAmount(), s.getRejectReason(),
-                s.getCreatedAt(), s.getDecidedAt(), s.getPaidAt());
+            return new SubmissionView(s.getId(), s.getSalonName(), s.getSalonPhone(),
+                s.getContactName(), s.getSalonAddress(), s.getMapsUrl(), s.getStatus().name(),
+                s.getAmount(), s.getRejectReason(), s.getCreatedAt(), s.getDecidedAt(), s.getPaidAt());
         }
     }
 
     public record AdminSubmissionView(Long id, Long referrerId, String salonName, String salonPhone,
-                                      String mapsUrl, String status, BigDecimal amount,
-                                      String rejectReason, Instant createdAt, Instant decidedAt,
-                                      Instant paidAt) {
+                                      String contactName, String salonAddress, String mapsUrl,
+                                      String status, BigDecimal amount, String rejectReason,
+                                      Instant createdAt, Instant decidedAt, Instant paidAt) {
         static AdminSubmissionView of(ReferralSubmission s) {
             return new AdminSubmissionView(s.getId(), s.getReferrerId(), s.getSalonName(),
-                s.getSalonPhone(), s.getMapsUrl(), s.getStatus().name(), s.getAmount(),
-                s.getRejectReason(), s.getCreatedAt(), s.getDecidedAt(), s.getPaidAt());
+                s.getSalonPhone(), s.getContactName(), s.getSalonAddress(), s.getMapsUrl(),
+                s.getStatus().name(), s.getAmount(), s.getRejectReason(), s.getCreatedAt(),
+                s.getDecidedAt(), s.getPaidAt());
         }
     }
 }
