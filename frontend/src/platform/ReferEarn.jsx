@@ -136,22 +136,26 @@ function ReferrerDashboard() {
   if (isLoading) return <p className="font-body text-on-surface-variant">Loading…</p>
 
   const { referralCode, approved, perReferralAmount, totalPaid, totalPending, history = [] } = data || {}
+  const successful = history.filter((r) => r.status === 'PAID').length
+  const processing = history.filter((r) => r.status === 'VERIFYING' || r.status === 'PENDING').length
+  const declined = history.filter((r) => r.status === 'REJECTED').length
+
+  const Stat = ({ label, value, accent }) => (
+    <div className="glass-panel rounded-xl p-5">
+      <p className="font-body text-label-sm uppercase tracking-wider text-on-surface-variant mb-1">{label}</p>
+      <p className={`font-display text-headline-sm ${accent || 'text-on-surface'}`}>{value}</p>
+    </div>
+  )
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div className="glass-panel rounded-xl p-5">
-          <p className="font-body text-label-sm uppercase tracking-wider text-on-surface-variant mb-1">Your code</p>
-          <p className="font-display text-headline-sm text-secondary">{referralCode}</p>
-        </div>
-        <div className="glass-panel rounded-xl p-5">
-          <p className="font-body text-label-sm uppercase tracking-wider text-on-surface-variant mb-1">Total earned</p>
-          <p className="font-display text-headline-sm text-on-surface">{money(totalPaid)}</p>
-        </div>
-        <div className="glass-panel rounded-xl p-5">
-          <p className="font-body text-label-sm uppercase tracking-wider text-on-surface-variant mb-1">Awaiting payment</p>
-          <p className="font-display text-headline-sm text-on-surface">{money(totalPending)}</p>
-        </div>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <Stat label="Your code" value={referralCode} accent="text-secondary" />
+        <Stat label="Total earned" value={money(totalPaid)} />
+        <Stat label="Awaiting payment" value={money(totalPending)} />
+        <Stat label="Successful referrals" value={successful} />
+        <Stat label="Pending / processing" value={processing} />
+        <Stat label="Declined" value={declined} accent="text-error" />
       </div>
 
       {!approved ? (

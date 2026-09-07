@@ -30,6 +30,9 @@ export default function Navbar() {
           <NavLink to="/salons" className={navClass}>Find a Salon</NavLink>
           <NavLink to="/pricing" className={navClass}>Pricing</NavLink>
           <NavLink to="/about" className={navClass}>About</NavLink>
+          <NavLink to="/refer" className={navClass}>
+            {user?.role === 'REFERRER' ? 'My Referrals' : 'Refer & Earn'}
+          </NavLink>
           {user?.role === 'SALON_OWNER' && (
             <NavLink to="/salon-signup" className={navClass}>My Salon</NavLink>
           )}
@@ -42,7 +45,8 @@ export default function Navbar() {
         <div className="hidden md:flex items-center gap-3">
           {user ? (
             <div className="flex items-center gap-3">
-              <NavLink to="/profile" className="font-body text-label-md text-on-surface-variant hover:text-secondary-fixed transition-colors">
+              <NavLink to={user.role === 'REFERRER' ? '/refer' : '/profile'}
+                className="font-body text-label-md text-on-surface-variant hover:text-secondary-fixed transition-colors">
                 {user.name || user.phone}
               </NavLink>
               <button onClick={logout} className="font-body text-label-sm text-on-surface-variant hover:text-error transition-colors">
@@ -72,6 +76,9 @@ export default function Navbar() {
           <NavLink to="/salons" onClick={close} className="font-body text-label-md text-on-surface-variant">Find a Salon</NavLink>
           <NavLink to="/pricing" onClick={close} className="font-body text-label-md text-on-surface-variant">Pricing</NavLink>
           <NavLink to="/about" onClick={close} className="font-body text-label-md text-on-surface-variant">About</NavLink>
+          <NavLink to="/refer" onClick={close} className="font-body text-label-md text-on-surface-variant">
+            {user?.role === 'REFERRER' ? 'My Referrals' : 'Refer & Earn'}
+          </NavLink>
           <NavLink to="/for-business" onClick={close} className="font-body text-label-md text-secondary">List your salon</NavLink>
           {user?.role === 'SALON_OWNER' && (
             <NavLink to="/salon-signup" onClick={close} className="font-body text-label-md text-secondary">My Salon</NavLink>
