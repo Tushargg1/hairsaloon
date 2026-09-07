@@ -30,6 +30,11 @@ class AdminReferralController {
         return service.allSubmissions();
     }
 
+    @GetMapping("/referrers")
+    List<ReferralService.ReferrerView> referrers() {
+        return service.adminReferrers();
+    }
+
     @PostMapping("/{id}/verify")
     ReferralService.AdminSubmissionView verify(@PathVariable long id,
                                                @Valid @RequestBody AmountRequest request) {

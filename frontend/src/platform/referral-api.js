@@ -5,6 +5,7 @@ export const errorMessage = apiErrorMessage
 export const referralKeys = {
   me: ['referrals', 'me'],
   admin: ['referrals', 'admin'],
+  adminReferrers: ['referrals', 'admin', 'referrers'],
 }
 
 // Referrer-facing
@@ -26,6 +27,11 @@ export async function previewReferral(googleUrl) {
 // Admin
 export async function getAdminReferrals() {
   const { data } = await apiClient.get('/api/platform/admin/referrals')
+  return data
+}
+
+export async function getAdminReferrers() {
+  const { data } = await apiClient.get('/api/platform/admin/referrals/referrers')
   return data
 }
 

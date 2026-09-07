@@ -19,13 +19,48 @@ public class ReferralService {
     private final ReferrerProfileRepository profiles;
     private final ReferralSubmissionRepository submissions;
     private final com.hairsaloon.google.GooglePlacesClient places;
+    private final com.hairsaloon.auth.UserRepository users;
 
     public ReferralService(ReferrerProfileRepository profiles,
                            ReferralSubmissionRepository submissions,
-                           com.hairsaloon.google.GooglePlacesClient places) {
+                           com.hairsaloon.google.GooglePlacesClient places,
+                           com.hairsaloon.auth.UserRepository users) {
         this.profiles = profiles;
         this.submissions = submissions;
         this.places = places;
+        this.users = users;
+    }
+
+    /** Admin roster: every referrer with their details, salons and earnings. */
+    @Transactional(readOnly = true)
+    public List<ReferrerView> adminReferrers() {
+        java.time.YearMonth month = java.time.YearMonth.now(java.time.ZoneId.of("Asia/Kolkata"));
+        return users.findAllByRole(com.hairsaloon.auth.UserRole.REFERRER).stream().map(u -> {
+            ReferrerProfile p = profiles.findById(u.getId()).orElse(null);
+            List<ReferralSubmission> mine = submissions.findByReferrerIdOrderByCreatedAtDesc(u.getId());
+            BigDecimal paid = sumByStatus(mine, ReferralStatus.PAID);
+            BigDecimal pending = sumByStatus(mine, ReferralStatus.PENDING);
+            BigDecimal thisMonth = mine.stream()
+                .filter(s -> s.getStatus() == ReferralStatus.PAID && s.getPaidAt() != null
+                    && java.time.YearMonth.from(s.getPaidAt().atZone(java.time.ZoneId.of("Asia/Kolkata")))
+                        .equals(month))
+                .map(ReferralSubmission::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+            long successful = mine.stream().filter(s -> s.getStatus() == ReferralStatus.PAID).count();
+            long processing = mine.stream().filter(s -> s.getStatus() == ReferralStatus.VERIFYING
+                || s.getStatus() == ReferralStatus.PENDING).count();
+            long declined = mine.stream().filter(s -> s.getStatus() == ReferralStatus.REJECTED).count();
+            return new ReferrerView(u.getId(), u.getName(), u.getPhone(), u.getEmail(),
+                p != null ? p.getReferralCode() : null,
+                p != null && p.isApproved(),
+                p != null ? p.getPerReferralAmount() : BigDecimal.ZERO.setScale(2),
+                paid, pending, thisMonth, successful, processing, declined,
+                mine.stream().map(AdminSubmissionView::of).toList());
+        }).toList();
+    }
+
+    private static BigDecimal sumByStatus(List<ReferralSubmission> list, ReferralStatus status) {
+        return list.stream().filter(s -> s.getStatus() == status)
+            .map(ReferralSubmission::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     /** Auto-fills salon details from a pasted Google Maps link (name, phone, address). */
@@ -179,6 +214,12 @@ public class ReferralService {
 
     public record GooglePreview(String salonName, String salonPhone, String salonAddress,
                                 String mapsUrl) {}
+
+    public record ReferrerView(Long userId, String name, String phone, String email,
+                               String referralCode, boolean approved, BigDecimal perReferralAmount,
+                               BigDecimal totalPaid, BigDecimal totalPending, BigDecimal paidThisMonth,
+                               long successful, long processing, long declined,
+                               List<AdminSubmissionView> referrals) {}
 
     public record SubmissionView(Long id, String salonName, String salonPhone, String contactName,
                                  String salonAddress, String mapsUrl, String status,
