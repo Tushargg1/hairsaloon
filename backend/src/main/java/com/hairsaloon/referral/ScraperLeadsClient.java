@@ -43,12 +43,14 @@ public class ScraperLeadsClient {
      * Fetches up to {@code limit} leads from the scraper API, identifying the
      * requesting referrer by name and phone (passed as query params + headers).
      */
-    public List<Lead> fetch(int offset, int limit, String requesterName, String requesterPhone) {
+    public List<Lead> fetch(int offset, int limit, String requesterName, String requesterPhone,
+                            String referralCode) {
         if (!properties.enabled()) return List.of();
         String base = properties.apiUrl().trim();
         String sep = base.contains("?") ? "&" : "?";
         String url = base + sep + "offset=" + offset + "&limit=" + limit
-            + "&name=" + enc(requesterName) + "&phone=" + enc(requesterPhone);
+            + "&name=" + enc(requesterName) + "&phone=" + enc(requesterPhone)
+            + "&code=" + enc(referralCode);
         try {
             HttpRequest.Builder builder = HttpRequest.newBuilder(URI.create(url))
                 .timeout(Duration.ofSeconds(20)).GET();
@@ -58,6 +60,7 @@ public class ScraperLeadsClient {
             }
             if (requesterName != null) builder.header("X-Referrer-Name", requesterName);
             if (requesterPhone != null) builder.header("X-Referrer-Phone", requesterPhone);
+            if (referralCode != null) builder.header("X-Referral-Code", referralCode);
             HttpResponse<String> response = client.send(builder.build(),
                 HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() / 100 != 2) {
