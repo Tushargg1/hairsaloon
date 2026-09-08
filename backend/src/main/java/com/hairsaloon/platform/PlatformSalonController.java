@@ -25,9 +25,13 @@ import org.springframework.web.bind.annotation.RestController;
 class PlatformSalonController {
 
     private final PlatformSalonService service;
+    private final boolean discoveryEnabled;
 
-    PlatformSalonController(PlatformSalonService service) {
+    PlatformSalonController(PlatformSalonService service,
+                            @org.springframework.beans.factory.annotation.Value(
+                                "${app.discovery-enabled:false}") boolean discoveryEnabled) {
         this.service = service;
+        this.discoveryEnabled = discoveryEnabled;
     }
 
     @GetMapping
@@ -41,6 +45,11 @@ class PlatformSalonController {
             @RequestParam(required = false) String latitude,
             @RequestParam(required = false) String longitude,
             @RequestParam(required = false) String radiusKm) {
+        // Discovery is disabled: Groomit is booking software, not a directory.
+        if (!discoveryEnabled) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                HttpStatus.NOT_FOUND, "Salon discovery is not available.");
+        }
         return this.service.directory(city, service, rating, search, page, size,
             latitude, longitude, radiusKm);
     }

@@ -60,6 +60,9 @@ management:
       enabled: true
 
 app:
+  # Salon discovery/directory is off: Groomit operates as booking software, not a
+  # marketplace. Flip to true (and restore the frontend route) to re-enable.
+  discovery-enabled: ${DISCOVERY_ENABLED:false}
   base-domain: ${BASE_DOMAIN:groomit.in}
   platform-hosts: ${PLATFORM_HOSTS:groomit.in,www.groomit.in}
   tenant-cache-ttl: 5m

@@ -6,7 +6,7 @@ import PlatformLayout from './platform/PlatformLayout.jsx'
 import HomePage from './platform/HomePage.jsx'
 import AuthPage from './platform/AuthPage.jsx'
 import ManagementLoginPage from './shared/auth/ManagementLoginPage.jsx'
-import SalonDirectory from './platform/SalonDirectory.jsx'
+// SalonDirectory (discovery) intentionally not imported — feature disabled.
 import SalonSignup from './platform/SalonSignup.jsx'
 import BusinessSignup from './platform/BusinessSignup.jsx'
 import AdminApprovals from './platform/AdminApprovals.jsx'
@@ -32,7 +32,8 @@ function PlatformRoutes() {
     <Routes>
       <Route element={<PlatformLayout />}>
         <Route index element={<HomePage />} />
-        <Route path="salons" element={<SalonDirectory />} />
+        {/* Discovery disabled: /salons and /salons?nearby fall through to home.
+            SalonDirectory.jsx is kept in the repo for possible future use. */}
         <Route path="pricing" element={<PricingPage />} />
         <Route path="about" element={<AboutPage />} />
         <Route path="contact" element={<ContactPage />} />
