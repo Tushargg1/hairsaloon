@@ -91,11 +91,24 @@ export default function TermsPage() {
         may change.
       </p>
 
-      <h2>9. Limitation of liability</h2>
+      <h2>9. Health, safety, and treatment risks</h2>
+      <p>
+        Salon services are performed by independent salons at their own premises. Any injury,
+        allergic reaction, skin sensitivity, or harm arising from a treatment — including
+        chemical, colouring, waxing, or similar services — is the responsibility of the salon,
+        not Groomit. If you have allergies, sensitivities, or a relevant medical condition, tell
+        the salon before your appointment and ask for a patch test where appropriate. Some
+        treatments may be unsuitable for minors or may require a parent or guardian&apos;s consent;
+        the salon decides eligibility for such services.
+      </p>
+
+      <h2>10. Limitation of liability</h2>
       <p>
         Because salons are independent businesses, Groomit is not liable for the quality,
-        safety, timing, or outcome of any service you receive at a salon. Complaints about a
-        service should be raised with the salon first. We will help where we reasonably can.
+        safety, timing, or outcome of any service you receive at a salon, nor for any injury,
+        allergic reaction, or property loss at a salon. Complaints about a service should be
+        raised with the salon first. We will help where we reasonably can, including through
+        our <a href="/grievance">Grievance Redressal</a> process.
       </p>
       <p>
         To the extent permitted by law, our total liability to you for any claim connected to
@@ -107,14 +120,14 @@ export default function TermsPage() {
         including liability for fraud or for death or personal injury caused by negligence.
       </p>
 
-      <h2>10. Suspension and termination</h2>
+      <h2>11. Suspension and termination</h2>
       <p>
         You may stop using Groomit at any time. We may suspend or close an account that
         breaches these terms, is used fraudulently, or creates risk for other users. Where
         practical we will tell you why and give you an opportunity to respond.
       </p>
 
-      <h2>11. Changes to these terms</h2>
+      <h2>12. Changes to these terms</h2>
       <p>
         We may update these terms as the service develops. If a change materially affects
         your rights we will give reasonable notice, for example by posting a notice on the
@@ -122,16 +135,19 @@ export default function TermsPage() {
         means you accept the updated terms.
       </p>
 
-      <h2>12. Governing law</h2>
+      <h2>13. Governing law</h2>
       <p>
         These terms are governed by the laws of India. Courts in India will have jurisdiction
         over any dispute, subject to any right you have to bring proceedings where you live.
       </p>
 
-      <h2>13. Contact</h2>
+      <h2>14. Grievances and contact</h2>
       <p>
-        Questions about these terms? Reach us through our{' '}
-        <a href="/contact">contact page</a>.
+        To raise a complaint about a listing, a booking, content, or your data, see our{' '}
+        <a href="/grievance">Grievance Redressal</a> page, which lists our Grievance Officer and
+        response timelines. For general questions about these terms, reach us through our{' '}
+        <a href="/contact">contact page</a>. Salons should also review the{' '}
+        <a href="/vendor-agreement">Salon (Vendor) Agreement</a>.
       </p>
 
       <hr />

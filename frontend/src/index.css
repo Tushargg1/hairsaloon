@@ -1776,3 +1776,7 @@
 .wa-dot.is-on { background-color: #22c55e; box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2); }
 .wa-dot.is-off { background-color: #9ca3af; box-shadow: 0 0 0 3px rgba(156, 163, 175, 0.2); }
 .wa-bot-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-top: 0.75rem; }
+
+/* Small informational note in dashboard managers (e.g. review reporting). */
+.manager-note { font-size: 0.8rem; color: #8A857D; margin: 0 0 1rem; }
+.manager-note a { color: #C8B084; text-decoration: underline; }

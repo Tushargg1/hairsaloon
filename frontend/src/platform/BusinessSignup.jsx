@@ -31,6 +31,7 @@ export default function BusinessSignup() {
   const [form, setForm] = useState({ name: '', phone: '', email: '', password: '' })
   const [status, setStatus] = useState({ pending: false, error: '', success: '' })
   const [retryIn, setRetryIn] = useState(0)
+  const [agreed, setAgreed] = useState(false)
 
   useCountdown(retryIn, setRetryIn)
 
@@ -48,6 +49,10 @@ export default function BusinessSignup() {
 
   async function submit(e) {
     e.preventDefault()
+    if (!agreed) {
+      setStatus({ pending: false, success: '', error: 'Please accept the Salon Agreement to continue.' })
+      return
+    }
     setStatus({ pending: true, error: '', success: '' })
     try {
       await businessSignup({
@@ -120,10 +125,21 @@ export default function BusinessSignup() {
                 maxLength={72} autoComplete="new-password"
               />
 
+              <label className="flex items-start gap-2 font-body text-label-sm text-on-surface-variant">
+                <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)}
+                  className="mt-0.5" required />
+                <span>
+                  I have read and agree to the{' '}
+                  <Link to="/vendor-agreement" target="_blank" className="text-secondary hover:underline">Salon (Vendor) Agreement</Link>,
+                  and I confirm my salon holds the licences it needs and is responsible for the
+                  services, hygiene, and staff at its premises.
+                </span>
+              </label>
+
               {status.error && <p className="font-body text-body-md text-error bg-error-container/20 rounded px-3 py-2" role="alert">{status.error}</p>}
               {status.success && <p className="font-body text-body-md text-[#A89048] bg-[rgba(168,144,72,0.1)] rounded px-3 py-2" role="status">{status.success}</p>}
 
-              <BrassButton type="submit" disabled={status.pending || retryIn > 0} size="lg" className="w-full">
+              <BrassButton type="submit" disabled={status.pending || retryIn > 0 || !agreed} size="lg" className="w-full">
                 {status.pending ? 'Please wait...'
                   : retryIn > 0 ? `Try again in ${retryIn}s`
                   : 'Create business account'}

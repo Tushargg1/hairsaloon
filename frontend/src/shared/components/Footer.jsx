@@ -40,6 +40,7 @@ export default function Footer() {
           <p className="salon-footer-line"><Link to="/refer">Refer &amp; Earn</Link></p>
           <p className="salon-footer-line"><Link to="/terms">Terms of Service</Link></p>
           <p className="salon-footer-line"><Link to="/privacy">Privacy Policy</Link></p>
+          <p className="salon-footer-line"><Link to="/grievance">Grievance Redressal</Link></p>
 
           <div className="salon-footer-social">
             {SOCIALS.map(({ key, label, url, brand }) => (
@@ -61,6 +62,10 @@ export default function Footer() {
           <p className="salon-footer-line">
             <Icon name="login" className="text-[15px]" />
             <Link to="/manage/login">Management Login</Link>
+          </p>
+          <p className="salon-footer-line">
+            <Icon name="gavel" className="text-[15px]" />
+            <Link to="/vendor-agreement">Salon Agreement</Link>
           </p>
         </div>
       </div>

@@ -92,10 +92,11 @@ export default function PrivacyPage() {
         <li><strong>Deletion:</strong> ask us to close your account and delete your data, subject to records we must keep.</li>
         <li><strong>Notifications:</strong> booking confirmations and reminders are part of the service. Push notifications are opt-in and can be turned off at any time.</li>
         <li><strong>Location:</strong> nearby search is opt-in each time and your browser controls the permission.</li>
-        <li><strong>Complaints:</strong> you may raise a concern with us or with your local data protection authority.</li>
+        <li><strong>Complaints:</strong> you may raise a concern with our Grievance Officer (see our <a href="/grievance">Grievance Redressal</a> page) or with your local data protection authority.</li>
       </ul>
       <p>
-        To exercise any of these, contact us through our <a href="/contact">contact page</a>.
+        To exercise any of these, contact us through our <a href="/contact">contact page</a>,
+        or reach our Grievance Officer via the <a href="/grievance">Grievance Redressal</a> page.
       </p>
 
       <h2>8. Cookies</h2>
