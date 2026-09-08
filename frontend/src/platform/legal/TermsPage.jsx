@@ -11,9 +11,11 @@ export default function TermsPage() {
 
       <h2>1. Who we are and what we do</h2>
       <p>
-        Groomit is a booking platform. We connect customers with independent salons. We are
-        not a salon and we do not provide grooming services ourselves. Each salon listed on
-        Groomit is an independent business responsible for the services it delivers, its
+        Groomit provides salons with website and appointment-booking software. Groomit does not
+        select, recommend, or connect customers with salons — each salon independently shares its
+        own booking page with its own customers (for example on Instagram, WhatsApp, or a QR
+        code). We are not a salon and we do not provide grooming services ourselves. Each salon
+        on Groomit is an independent business responsible for the services it delivers, its
         pricing, its staff, and its premises.
       </p>
 

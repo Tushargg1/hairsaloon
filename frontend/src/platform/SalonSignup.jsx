@@ -260,7 +260,7 @@ export default function SalonSignup() {
                   className="input-glass w-full rounded py-2 px-3 text-body-md" />
               </div>
               <p className="font-body text-label-sm text-outline mt-1">
-                Stand at your salon and tap this so nearby customers can find you.
+                Sets the map pin shown on your salon&apos;s booking page.
               </p>
               {geoStatus.error && (
                 <p className="font-body text-label-sm text-error mt-1">{geoStatus.error}</p>

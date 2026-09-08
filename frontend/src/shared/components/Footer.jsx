@@ -15,13 +15,9 @@ export default function Footer() {
       <div className="salon-footer-grid">
         <div>
           <p className="salon-footer-name">Groomit</p>
-          <p className="salon-footer-line">Premium salon booking for the modern individual.</p>
-          <Link to="/salons" className="salon-footer-cta">Find a Salon</Link>
+          <p className="salon-footer-line">Booking software for salons — your own page, bookings, and reminders.</p>
+          <Link to="/for-business" className="salon-footer-cta">List Your Salon</Link>
           <h2 className="salon-footer-title mt-6">Customers</h2>
-          <p className="salon-footer-line">
-            <Icon name="search" className="text-[15px]" />
-            <Link to="/salons">Find a Salon</Link>
-          </p>
           <p className="salon-footer-line">
             <Icon name="person_add" className="text-[15px]" />
             <Link to="/signup">Create Account</Link>

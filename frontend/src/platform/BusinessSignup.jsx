@@ -37,7 +37,7 @@ export default function BusinessSignup() {
 
   if (user) {
     const destination = user.role === 'SALON_OWNER' ? '/salon-signup'
-      : user.role === 'PLATFORM_ADMIN' ? '/admin/approvals' : '/salons'
+      : user.role === 'PLATFORM_ADMIN' ? '/admin/approvals' : '/profile'
     return <Navigate to={destination} replace />
   }
 

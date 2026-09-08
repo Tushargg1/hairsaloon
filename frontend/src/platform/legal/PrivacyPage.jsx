@@ -24,7 +24,7 @@ export default function PrivacyPage() {
       <ul>
         <li><strong>Session cookie:</strong> an HttpOnly authentication cookie that keeps you signed in.</li>
         <li><strong>Technical data:</strong> IP address and basic request details, used for security and rate limiting.</li>
-        <li><strong>Location:</strong> only if you tap "Use my location" to find nearby salons. We use the coordinates for that search and do not store them against your account.</li>
+        <li><strong>Salon location:</strong> a salon owner may set their salon&apos;s coordinates so a map pin appears on their own booking page. This is business address data, not customer tracking.</li>
       </ul>
 
       <h2>2. Why we use your information</h2>
@@ -91,7 +91,6 @@ export default function PrivacyPage() {
         <li><strong>Access and correction:</strong> view and edit your details on your profile page.</li>
         <li><strong>Deletion:</strong> ask us to close your account and delete your data, subject to records we must keep.</li>
         <li><strong>Notifications:</strong> booking confirmations and reminders are part of the service. Push notifications are opt-in and can be turned off at any time.</li>
-        <li><strong>Location:</strong> nearby search is opt-in each time and your browser controls the permission.</li>
         <li><strong>Complaints:</strong> you may raise a concern with our Grievance Officer (see our <a href="/grievance">Grievance Redressal</a> page) or with your local data protection authority.</li>
       </ul>
       <p>

@@ -10,13 +10,14 @@ export default function VendorAgreementPage() {
         <a href="/privacy">Privacy Policy</a>.
       </p>
 
-      <h2>1. Relationship — marketplace, not reseller</h2>
+      <h2>1. Relationship — software provider</h2>
       <p>
-        Groomit is a booking and discovery platform (an intermediary). The Salon is an
-        independent business. Groomit does not perform, supervise, or control any grooming
-        service, does not employ the Salon&apos;s staff, and is not a party to the service
-        contract between the Salon and the customer. The Salon sets its own services, prices,
-        and availability.
+        Groomit provides the Salon with website and appointment-booking software. Groomit does
+        not run a directory, does not select or recommend salons to customers, and does not
+        connect customers with salons — the Salon shares its own booking page with its own
+        customers. Groomit does not perform, supervise, or control any grooming service, does
+        not employ the Salon&apos;s staff, and is not a party to the service contract between the
+        Salon and the customer. The Salon sets its own services, prices, and availability.
       </p>
 
       <h2>2. The Salon is solely responsible</h2>
@@ -58,13 +59,14 @@ export default function VendorAgreementPage() {
         <li>Payment for services is collected by the Salon directly unless Groomit states otherwise.</li>
       </ul>
 
-      <h2>6. Commission and payouts</h2>
+      <h2>6. Fees</h2>
       <p>
-        Where Groomit charges a commission or fee, the rate, billing, and payout schedule are as
-        communicated to the Salon in writing or on the pricing page, and may be updated on
-        reasonable notice. Where payments are collected through the platform, payout timing and
-        the treatment of refunds and chargebacks will follow the terms provided at that time.
-        Applicable taxes (including GST) are the responsibility of each party for its own share.
+        Groomit is provided as a software service. Any subscription or per-booking fee, its
+        billing cycle, and payment terms are as communicated to the Salon in writing or on the
+        pricing page, and may be updated on reasonable notice. Payment for grooming services is
+        collected by the Salon directly from its customers; Groomit does not process those
+        payments unless expressly stated otherwise. Applicable taxes (including GST) are the
+        responsibility of each party for its own share.
       </p>
 
       <h2>7. Reviews</h2>
@@ -84,11 +86,12 @@ export default function VendorAgreementPage() {
         uploads.
       </p>
 
-      <h2>9. Suspension and delisting</h2>
+      <h2>9. Suspension and termination</h2>
       <p>
-        Groomit may suspend or delist a Salon for repeated bad reviews, hygiene or safety
-        complaints, inaccurate listings, fraud, non-compliance with law, or breach of this
-        agreement. Where practical we will give notice and an opportunity to respond.
+        Groomit may suspend or terminate a Salon&apos;s access for non-payment, fraud, unlawful
+        or infringing content, non-compliance with law, or breach of this agreement. Where
+        practical we will give notice and an opportunity to respond. Either party may end the
+        service on reasonable notice.
       </p>
 
       <h2>10. Data</h2>

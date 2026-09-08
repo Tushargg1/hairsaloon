@@ -27,7 +27,7 @@ export default function Navbar() {
 
         {/* Desktop Nav */}
         <div className="hidden md:flex items-center gap-6">
-          <NavLink to="/salons" className={navClass}>Find a Salon</NavLink>
+          <NavLink to="/for-business" className={navClass}>For Salons</NavLink>
           <NavLink to="/pricing" className={navClass}>Pricing</NavLink>
           <NavLink to="/about" className={navClass}>About</NavLink>
           <NavLink to="/refer" className={navClass}>
@@ -73,7 +73,7 @@ export default function Navbar() {
       {/* Mobile Menu */}
       {menuOpen && (
         <div className="site-menu md:hidden border-t border-outline-variant/20 backdrop-blur-md px-4 py-4 flex flex-col gap-4">
-          <NavLink to="/salons" onClick={close} className="font-body text-label-md text-on-surface-variant">Find a Salon</NavLink>
+          <NavLink to="/for-business" onClick={close} className="font-body text-label-md text-on-surface-variant">For Salons</NavLink>
           <NavLink to="/pricing" onClick={close} className="font-body text-label-md text-on-surface-variant">Pricing</NavLink>
           <NavLink to="/about" onClick={close} className="font-body text-label-md text-on-surface-variant">About</NavLink>
           <NavLink to="/refer" onClick={close} className="font-body text-label-md text-on-surface-variant">

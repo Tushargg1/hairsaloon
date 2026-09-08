@@ -38,7 +38,7 @@ export default function AuthPage({ mode }) {
   if (user) {
     const roleDestination = user.role === 'SALON_OWNER'
       ? '/salon-signup'
-      : user.role === 'PLATFORM_ADMIN' ? '/admin/approvals' : requestedPath || '/salons'
+      : user.role === 'PLATFORM_ADMIN' ? '/admin/approvals' : requestedPath || '/profile'
     return <Navigate to={roleDestination} replace />
   }
 
@@ -65,7 +65,7 @@ export default function AuthPage({ mode }) {
     setStatus({ pending: true, error: '', success: '' })
     try {
       await signup({ phone: form.phone.trim(), email: form.email.trim() || undefined, password: form.password })
-      navigate('/salons', { replace: true })
+      navigate('/profile', { replace: true })
     } catch (error) { fail(error, 'Unable to create account.') }
   }
 
@@ -74,7 +74,7 @@ export default function AuthPage({ mode }) {
     setStatus({ pending: true, error: '', success: '' })
     try {
       await login({ phone: form.phone.trim(), password: form.password })
-      navigate(requestedPath || '/salons', { replace: true })
+      navigate(requestedPath || '/profile', { replace: true })
     } catch (error) { fail(error, 'Unable to log in.') }
   }
 

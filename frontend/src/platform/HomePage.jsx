@@ -80,16 +80,20 @@ export default function HomePage() {
         )}
         <div className="hero-content relative z-10 w-full max-w-[1280px] mx-auto px-4 lg:px-6 pb-[5vh] flex flex-col items-center text-center">
           <h1 className="font-display text-display-lg-mobile md:text-display-lg text-white mb-6 max-w-4xl leading-tight">
-            Book Your Next Look
+            Booking Software for Your Salon
           </h1>
+          <p className="font-body text-body-lg text-white/85 mb-6 max-w-xl">
+            Your own booking page, online appointments, and reminders. Share it with your
+            customers on Instagram, WhatsApp, or a QR code.
+          </p>
           <div className="flex flex-wrap gap-3 justify-center">
-            <Link to="/salons" className="vintage-cta">
-              <Icon name="search" className="text-[18px]" />
-              Explore Salons
+            <Link to="/for-business" className="vintage-cta">
+              <Icon name="storefront" className="text-[18px]" />
+              List Your Salon
             </Link>
-            <Link to="/salons?nearby=1" className="vintage-cta">
-              <Icon name="my_location" className="text-[18px]" />
-              Salons Near Me
+            <Link to="/pricing" className="vintage-cta">
+              <Icon name="sell" className="text-[18px]" />
+              See Pricing
             </Link>
           </div>
         </div>
