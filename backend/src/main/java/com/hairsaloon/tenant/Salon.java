@@ -112,7 +112,8 @@ public class Salon {
     @Column(name = "whatsapp_access_token", columnDefinition = "TEXT")
     private String whatsappAccessToken;
 
-    @Column(name = "whatsapp_bot_enabled", nullable = false)
+    @Column(name = "whatsapp_bot_enabled", nullable = false,
+        columnDefinition = "boolean default true")
     private boolean whatsappBotEnabled = true;
 
     @Column(name = "whatsapp_connected_at")

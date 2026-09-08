@@ -29,8 +29,8 @@ const VALUES = [
 ]
 
 const CUSTOMER_STEPS = [
-  { icon: 'search', title: 'Find', text: 'Browse salons by city, service, or distance from where you are.' },
-  { icon: 'menu_book', title: 'Compare', text: 'See real services, prices, staff, and reviews before you commit.' },
+  { icon: 'link', title: 'Open', text: 'Open your salon\u2019s booking page from the link they share on Instagram, WhatsApp, or a QR code.' },
+  { icon: 'menu_book', title: 'Choose', text: 'See the salon\u2019s services, prices, and staff, and pick what you want.' },
   { icon: 'event_available', title: 'Book', text: 'Pick a slot that is genuinely free and get instant confirmation.' },
 ]
 
@@ -78,8 +78,8 @@ export default function AboutPage() {
           </p>
           <p>
             So Groomit gives every salon its own booking site on a subdomain, a calendar that
-            cannot be double booked, and reminders that reduce no-shows. Customers get one place
-            to find salons nearby and book without a phone call.
+            cannot be double booked, and reminders that reduce no-shows. Salons share their page
+            with their own customers, who book in seconds without a phone call.
           </p>
 
           <h2>What makes it different</h2>
@@ -121,7 +121,7 @@ export default function AboutPage() {
       <section className="px-4 pb-16 max-w-[1280px] mx-auto w-full">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {[
-            { heading: 'For customers', steps: CUSTOMER_STEPS, cta: 'Find a salon', to: '/salons' },
+            { heading: 'For customers', steps: CUSTOMER_STEPS, cta: 'Sign in', to: '/login' },
             { heading: 'For salon owners', steps: OWNER_STEPS, cta: 'List your salon', to: '/for-business' },
           ].map((side) => (
             <GlassPanel key={side.heading} className="flex flex-col">

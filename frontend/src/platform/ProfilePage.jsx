@@ -83,7 +83,7 @@ function BookingHistory() {
 
   if (status.loading) return <p className="text-on-surface-variant">Loading bookings...</p>
   if (status.error) return <div className="text-center py-8"><p className="text-error mb-4">{status.error}</p><BrassButton onClick={load} variant="outline">Try again</BrassButton></div>
-  if (!bookings.length) return <p className="text-on-surface-variant">No bookings yet. Explore salons to make your first appointment!</p>
+  if (!bookings.length) return <p className="text-on-surface-variant">No bookings yet. Open your salon&apos;s booking link to make your first appointment.</p>
 
   return (
     <div className="flex flex-col gap-3">

@@ -30,6 +30,7 @@ import org.springframework.test.web.servlet.MvcResult;
     "spring.data.redis.repositories.enabled=false",
     "app.base-domain=localhost",
     "app.platform-hosts=localhost",
+    "app.discovery-enabled=true",
     "app.auth.jwt.secret=raw:0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-extra-secret",
     "app.auth.jwt.issuer=platform-integration-test",
     "app.auth.jwt.ttl=2h",

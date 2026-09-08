@@ -20,13 +20,13 @@ public class ReferrerProfile {
     @Column(name = "referral_code", nullable = false, unique = true, length = 16)
     private String referralCode;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean approved = false;
 
     @Column(name = "per_referral_amount", nullable = false, precision = 12, scale = 2)
     private BigDecimal perReferralAmount = BigDecimal.ZERO.setScale(2);
 
-    @Column(name = "on_hold", nullable = false)
+    @Column(name = "on_hold", nullable = false, columnDefinition = "boolean default false")
     private boolean onHold = false;
 
     @Column(name = "hold_reason", length = 255)
