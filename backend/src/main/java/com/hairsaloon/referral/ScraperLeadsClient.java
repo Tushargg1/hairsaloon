@@ -147,7 +147,9 @@ public class ScraperLeadsClient {
         String name = firstText(n, "name");
         String phone = firstText(n, "phone");
         if (phone != null && phone.equalsIgnoreCase("N/A")) phone = null;
-        String maps = firstText(n, "maps_url", "website_link");
+        String maps = firstText(n, "maps_url");
+        String website = firstText(n, "website_link");
+        if (website != null && website.equalsIgnoreCase("N/A")) website = null;
         // No address field; build a readable location from state + pincode + niche.
         String niche = firstText(n, "niche");
         String state = firstText(n, "state");
@@ -161,7 +163,7 @@ public class ScraperLeadsClient {
             id = (name == null ? "" : name) + "|" + (phone == null ? "" : phone);
             if (id.isBlank() || id.equals("|")) return null;
         }
-        return new Lead(id.trim(), name, phone, address, maps);
+        return new Lead(id.trim(), name, phone, address, maps, website);
     }
 
     private static String enc(String value) {
@@ -187,5 +189,6 @@ public class ScraperLeadsClient {
     /** Thrown when the scraper says this user code is not APPROVED (401/403). */
     public static class NotApprovedException extends RuntimeException {}
 
-    public record Lead(String externalId, String name, String phone, String address, String mapsUrl) {}
+    public record Lead(String externalId, String name, String phone, String address,
+                       String mapsUrl, String website) {}
 }

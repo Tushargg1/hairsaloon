@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -42,6 +43,22 @@ class ReferralController {
     ReferralLeadService.AccessStatus requestLeadAccess(@AuthenticationPrincipal AuthenticatedUser user) {
         return leadService.requestAccess(user);
     }
+
+    /** All leads delivered to this referrer (persisted), newest first. */
+    @GetMapping("/leads/mine")
+    java.util.List<ReferralLeadService.LeadView> myLeads(@AuthenticationPrincipal AuthenticatedUser user) {
+        return leadService.myLeads(user.id());
+    }
+
+    /** Referrer sets their call-outcome status for a delivered lead. */
+    @PostMapping("/leads/{leadId}/status")
+    void setLeadStatus(@AuthenticationPrincipal AuthenticatedUser user,
+                       @PathVariable long leadId, @Valid @RequestBody LeadStatusRequest request) {
+        leadService.setLeadStatus(user.id(), leadId, request.status());
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = false)
+    record LeadStatusRequest(@NotBlank @Size(max = 24) String status) {}
 
     @GetMapping("/me")
     ReferralService.Overview overview(@AuthenticationPrincipal AuthenticatedUser user) {

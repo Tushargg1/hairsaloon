@@ -34,6 +34,15 @@ export async function requestLeadAccess() {
   return data
 }
 
+export async function getMyLeads() {
+  const { data } = await apiClient.get('/api/platform/referrals/leads/mine')
+  return data
+}
+
+export async function setLeadStatus(leadId, status) {
+  await apiClient.post(`/api/platform/referrals/leads/${leadId}/status`, { status })
+}
+
 // Admin
 export async function getAdminReferrals() {
   const { data } = await apiClient.get('/api/platform/admin/referrals')

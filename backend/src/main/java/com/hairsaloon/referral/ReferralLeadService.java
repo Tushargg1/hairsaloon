@@ -156,13 +156,38 @@ public class ReferralLeadService {
             } catch (RuntimeException duplicate) {
                 continue; // salon got referred concurrently; skip
             }
-            leads.save(new ReferralLead(user.id(), lead.externalId(), saved.getId(), today));
-            delivered.add(new LeadView(saved.getId(), lead.name(), phone, lead.address(), lead.mapsUrl()));
+            ReferralLead leadRow = new ReferralLead(user.id(), lead.externalId(), saved.getId(), today);
+            leadRow.setSalonDetails(lead.name(), phone, lead.website(), lead.mapsUrl(), lead.address());
+            leads.save(leadRow);
+            delivered.add(new LeadView(leadRow.getId(), saved.getId(), lead.name(), phone,
+                lead.address(), lead.mapsUrl(), lead.website(), "NEW"));
         }
 
         long takenAfter = leads.countByReferrerIdAndAssignedOn(user.id(), today);
         return new LeadBatch(delivered, (int) takenAfter, (int) (allowedBlocks * limit),
             onboardedToday, target);
+    }
+
+    /** All leads ever delivered to this referrer, newest first, with contact status. */
+    @Transactional(readOnly = true)
+    public List<LeadView> myLeads(long referrerId) {
+        return leads.findByReferrerIdOrderByAssignedOnDesc(referrerId).stream()
+            .map(l -> new LeadView(l.getId(), l.getSubmissionId(), l.getSalonName(),
+                l.getSalonPhone(), l.getSalonLocation(), l.getSalonMapsUrl(), l.getSalonWebsite(),
+                l.getContactStatus()))
+            .toList();
+    }
+
+    /** Referrer updates their own call-outcome status for a delivered lead. */
+    @Transactional
+    public void setLeadStatus(long referrerId, long leadId, String status) {
+        ReferralLead lead = leads.findById(leadId).orElseThrow(() ->
+            new ResponseStatusException(HttpStatus.NOT_FOUND, "Lead not found"));
+        if (!lead.getReferrerId().equals(referrerId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not your lead");
+        }
+        lead.setContactStatus(status);
+        leads.save(lead);
     }
 
     /** Onboarded = leads assigned on {@code day} whose submission is now PAID. */
@@ -222,8 +247,8 @@ public class ReferralLeadService {
 
     public record AccessStatus(boolean configured, String status, String referralCode) {}
 
-    public record LeadView(Long referralId, String salonName, String salonPhone,
-                           String salonAddress, String mapsUrl) {}
+    public record LeadView(Long leadId, Long referralId, String salonName, String salonPhone,
+                           String salonAddress, String mapsUrl, String website, String contactStatus) {}
 
     public record LeadBatch(List<LeadView> leads, int takenToday, int dailyAllowance,
                             int onboardedToday, int onboardTarget) {}

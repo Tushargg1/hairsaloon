@@ -3,9 +3,55 @@ import { useState } from 'react'
 import useAuth from '../shared/auth/useAuth.js'
 import DeleteAccount from '../shared/components/DeleteAccount.jsx'
 import {
-  errorMessage, getLeadAccess, getReferralLeads, getReferralOverview, referralKeys,
-  requestLeadAccess, submitReferral,
+  errorMessage, getLeadAccess, getMyLeads, getReferralLeads, getReferralOverview, referralKeys,
+  requestLeadAccess, setLeadStatus, submitReferral,
 } from './referral-api.js'
+
+const LEAD_STATUSES = ['NEW', 'CONTACTED', 'INTERESTED', 'NOT_INTERESTED', 'ONBOARDED']
+const LEAD_STATUS_LABEL = {
+  NEW: 'New', CONTACTED: 'Contacted', INTERESTED: 'Interested',
+  NOT_INTERESTED: 'Not interested', ONBOARDED: 'Onboarded',
+}
+
+// Digits only; a bare 10-digit Indian number gets 91 prefixed for wa.me.
+function waNumber(phone) {
+  const d = String(phone || '').replace(/\D/g, '')
+  return d.length === 10 ? `91${d}` : d
+}
+
+function LeadCard({ lead, onStatus }) {
+  const phoneUsable = lead.salonPhone && lead.salonPhone !== 'N/A'
+  const wa = phoneUsable ? waNumber(lead.salonPhone) : ''
+  const waText = encodeURIComponent(`Hi, is this ${lead.salonName || 'your salon'}?`)
+  return (
+    <div className="rounded-lg border border-outline-variant/20 p-4 flex flex-col gap-1.5">
+      <p className="font-body text-on-surface font-semibold">{lead.salonName || 'Unknown salon'}</p>
+      {lead.salonAddress && <p className="font-body text-label-sm text-on-surface-variant">{lead.salonAddress}</p>}
+      <div className="flex flex-wrap gap-x-4 gap-y-1">
+        {lead.mapsUrl && <a href={lead.mapsUrl} target="_blank" rel="noreferrer"
+          className="font-body text-label-sm text-secondary underline">Google Maps</a>}
+        {lead.website && <a href={lead.website} target="_blank" rel="noreferrer"
+          className="font-body text-label-sm text-secondary underline break-all">Website</a>}
+      </div>
+      <p className="font-body text-label-sm text-on-surface-variant">
+        {phoneUsable ? lead.salonPhone : 'No phone listed'}
+      </p>
+      <div className="flex flex-wrap items-center gap-2 mt-1">
+        {phoneUsable && (
+          <a href={`https://wa.me/${wa}?text=${waText}`} target="_blank" rel="noreferrer"
+            className="font-body text-label-sm px-3 py-1.5 rounded bg-[#25D366] text-white font-semibold hover:opacity-90 transition-opacity">
+            WhatsApp
+          </a>
+        )}
+        <select value={lead.contactStatus || 'NEW'}
+          onChange={(e) => onStatus(lead.leadId, e.target.value)}
+          className="font-body text-label-sm rounded border border-outline-variant/40 bg-transparent px-2 py-1.5">
+          {LEAD_STATUSES.map((s) => <option key={s} value={s}>{LEAD_STATUS_LABEL[s]}</option>)}
+        </select>
+      </div>
+    </div>
+  )
+}
 
 function money(value) {
   return `₹${Number(value || 0).toFixed(2)}`
@@ -129,16 +175,23 @@ function ReferrerDashboard() {
     onError: (e) => setAccessMsg(errorMessage(e, 'Could not send the request.')),
   })
 
-  const [leadBatch, setLeadBatch] = useState(null)
   const [leadMsg, setLeadMsg] = useState('')
+  const myLeads = useQuery({ queryKey: ['referrals', 'my-leads'], queryFn: getMyLeads })
   const getLeads = useMutation({
     mutationFn: getReferralLeads,
     onSuccess: (d) => {
-      setLeadBatch(d)
       setLeadMsg(`Got ${d.leads.length} leads. ${d.takenToday}/${d.dailyAllowance} today · ${d.onboardedToday}/${d.onboardTarget} onboarded.`)
       client.invalidateQueries({ queryKey: referralKeys.me })
+      client.invalidateQueries({ queryKey: ['referrals', 'my-leads'] })
     },
-    onError: (e) => { setLeadBatch(null); setLeadMsg(errorMessage(e, 'Could not get leads.')) },
+    onError: (e) => setLeadMsg(errorMessage(e, 'Could not get leads.')),
+  })
+  const leadStatus = useMutation({
+    mutationFn: ({ leadId, status }) => setLeadStatus(leadId, status),
+    onMutate: ({ leadId, status }) => {
+      client.setQueryData(['referrals', 'my-leads'], (old) =>
+        (old || []).map((l) => (l.leadId === leadId ? { ...l, contactStatus: status } : l)))
+    },
   })
 
   if (isLoading) return <p className="font-body text-on-surface-variant">Loading…</p>
@@ -216,16 +269,11 @@ function ReferrerDashboard() {
           )}
 
           {leadMsg && <p className="font-body text-label-md text-on-surface-variant mt-3">{leadMsg}</p>}
-          {leadBatch?.leads?.length > 0 && (
+          {(myLeads.data || []).length > 0 && (
             <div className="flex flex-col gap-2 mt-4">
-              {leadBatch.leads.map((l) => (
-                <div key={l.referralId} className="rounded-lg border border-outline-variant/20 p-3">
-                  <p className="font-body text-on-surface font-medium">{l.salonName || 'Unknown salon'}</p>
-                  <p className="font-body text-label-sm text-on-surface-variant">{l.salonPhone}</p>
-                  {l.salonAddress && <p className="font-body text-label-sm text-on-surface-variant">{l.salonAddress}</p>}
-                  {l.mapsUrl && <a href={l.mapsUrl} target="_blank" rel="noreferrer"
-                    className="font-body text-label-sm text-secondary underline break-all">Map link</a>}
-                </div>
+              {myLeads.data.map((l) => (
+                <LeadCard key={l.leadId} lead={l}
+                  onStatus={(leadId, status) => leadStatus.mutate({ leadId, status })} />
               ))}
             </div>
           )}
