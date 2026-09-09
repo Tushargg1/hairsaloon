@@ -75,7 +75,9 @@ public class ReferralSiteService {
 
         String subdomain = uniqueSubdomain(name);
         String email = uniqueEmail(code);
-        long ownerId = authService.provisionSiteOwner(name, placeholderPhone(code), email, code);
+        // Owners sign in with an 8+ char password; pad short referral codes with zeros.
+        String password = sitePassword(code);
+        long ownerId = authService.provisionSiteOwner(name, placeholderPhone(code), email, password);
 
         Salon salon = Salon.trial(ownerId, subdomain, name, address, firstWord(address),
             phone, lead.getSalonMapsUrl(), DEFAULT_TIMEZONE);
@@ -89,7 +91,15 @@ public class ReferralSiteService {
         leads.save(lead);
         tenantResolver.evict(subdomain);
 
-        return new SiteView(salonId, subdomain, siteUrl(subdomain), email, code, true);
+        return new SiteView(salonId, subdomain, siteUrl(subdomain), email, password, true);
+    }
+
+    /** Owner login passwords must be >= 8 chars; pad short referral codes with zeros. */
+    private static String sitePassword(String code) {
+        String c = code == null ? "" : code;
+        StringBuilder b = new StringBuilder(c);
+        while (b.length() < 8) b.append('0');
+        return b.toString();
     }
 
     private static String firstNonBlank(String... values) {
