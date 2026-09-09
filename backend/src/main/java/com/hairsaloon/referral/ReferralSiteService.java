@@ -33,16 +33,19 @@ public class ReferralSiteService {
     private final AuthService authService;
     private final TenantResolver tenantResolver;
     private final TenantProperties tenantProperties;
+    private final com.hairsaloon.tenantdata.GoogleProfileService googleProfile;
 
     public ReferralSiteService(ReferralLeadRepository leads, ReferrerProfileRepository profiles,
                                SalonRepository salons, AuthService authService,
-                               TenantResolver tenantResolver, TenantProperties tenantProperties) {
+                               TenantResolver tenantResolver, TenantProperties tenantProperties,
+                               com.hairsaloon.tenantdata.GoogleProfileService googleProfile) {
         this.leads = leads;
         this.profiles = profiles;
         this.salons = salons;
         this.authService = authService;
         this.tenantResolver = tenantResolver;
         this.tenantProperties = tenantProperties;
+        this.googleProfile = googleProfile;
     }
 
     @Transactional
@@ -61,23 +64,39 @@ public class ReferralSiteService {
             new ResponseStatusException(HttpStatus.NOT_FOUND, "Referrer profile not found"));
         String code = profile.getReferralCode();
 
-        String subdomain = uniqueSubdomain(lead.getSalonName());
-        String email = uniqueEmail(code);
-        long ownerId = authService.provisionSiteOwner(
-            lead.getSalonName(), placeholderPhone(code), email, code);
+        // Pull the real business details from the lead's Google Maps link first, so the
+        // salon name, address, phone and public URL mirror the actual business. Best
+        // effort: if Google is off or the fetch fails, fall back to the lead snapshot.
+        var place = googleProfile.fetchPlaceQuietly(lead.getSalonMapsUrl());
+        String name = firstNonBlank(place == null ? null : place.name(), lead.getSalonName(), "Salon");
+        String address = firstNonBlank(place == null ? null : place.address(),
+            lead.getSalonLocation(), "Address on file");
+        String phone = firstNonBlank(place == null ? null : place.phone(), lead.getSalonPhone());
 
-        Salon salon = Salon.trial(ownerId, subdomain,
-            blankTo(lead.getSalonName(), "Salon"),
-            blankTo(lead.getSalonLocation(), "Address on file"),
-            firstWord(lead.getSalonLocation()),
-            lead.getSalonPhone(), lead.getSalonMapsUrl(), DEFAULT_TIMEZONE);
+        String subdomain = uniqueSubdomain(name);
+        String email = uniqueEmail(code);
+        long ownerId = authService.provisionSiteOwner(name, placeholderPhone(code), email, code);
+
+        Salon salon = Salon.trial(ownerId, subdomain, name, address, firstWord(address),
+            phone, lead.getSalonMapsUrl(), DEFAULT_TIMEZONE);
         Long salonId = salons.saveAndFlush(salon).getId();
+
+        if (place != null) {
+            googleProfile.importMedia(salonId, place, name);
+        }
 
         lead.setCreatedSalonId(salonId);
         leads.save(lead);
         tenantResolver.evict(subdomain);
 
         return new SiteView(salonId, subdomain, siteUrl(subdomain), email, code, true);
+    }
+
+    private static String firstNonBlank(String... values) {
+        for (String v : values) {
+            if (v != null && !v.isBlank()) return v.trim();
+        }
+        return null;
     }
 
     @Transactional

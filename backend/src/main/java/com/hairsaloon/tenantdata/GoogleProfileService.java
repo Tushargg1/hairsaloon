@@ -21,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
  * builds a before/after diff; {@code apply} persists it. Only 5-star reviews are kept.
  */
 @Service
-class GoogleProfileService {
+public class GoogleProfileService {
 
     private static final String PHOTO_SOURCE = "GOOGLE";
     private static final int MAX_PHOTOS = 8;
@@ -102,6 +102,49 @@ class GoogleProfileService {
                 photoOrder++, PHOTO_SOURCE));
         }
         return salon;
+    }
+
+    /** Whether Google enrichment is available (referral trial sites use this). */
+    public boolean googleEnabled() {
+        return places.enabled();
+    }
+
+    /** Fetches raw Google place data for a URL/name. Returns null if the fetch fails. */
+    public GooglePlaceData fetchPlaceQuietly(String query) {
+        if (query == null || query.isBlank() || !places.enabled()) return null;
+        try {
+            return fetch(query);
+        } catch (RuntimeException failure) {
+            return null;
+        }
+    }
+
+    /**
+     * Applies already-fetched Google data (rating/reviews/photos + Google ids) to a
+     * salon. Name/address/phone are set by the caller at creation, so this only adds
+     * the aggregate profile and media. Used to seed referral trial sites.
+     */
+    @Transactional
+    public void importMedia(long salonId, GooglePlaceData data, String altPrefix) {
+        Salon salon = salons.findById(salonId).orElseThrow(() -> InputPolicy.notFound("salon"));
+        salon.applyGoogleProfile(data.placeId(), data.rating(), data.reviewCount(),
+            data.mapsUri(), Instant.now());
+        salons.save(salon);
+        reviews.deleteAllBySalonId(salonId);
+        int reviewOrder = 0;
+        for (GoogleReviewData review : data.reviews()) {
+            if (review.rating() != 5) continue;
+            reviews.save(new GoogleReview(salonId, review.authorName(), review.authorPhotoUrl(),
+                (short) review.rating(), review.text(), review.relativeTime(),
+                review.publishedAt(), reviewOrder++));
+        }
+        photos.deleteAllBySalonId(salonId);
+        int photoOrder = 0;
+        for (String url : data.photoUrls()) {
+            if (photoOrder >= MAX_PHOTOS) break;
+            photos.save(new SalonPhoto(salonId, url, altPrefix + " on Google",
+                photoOrder++, PHOTO_SOURCE));
+        }
     }
 
     private GooglePlaceData fetch(String query) {
