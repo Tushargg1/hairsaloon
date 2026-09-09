@@ -149,6 +149,7 @@ function AuthForm() {
 function ReferrerDashboard() {
   const client = useQueryClient()
   const { data, isLoading } = useQuery({ queryKey: referralKeys.me, queryFn: getReferralOverview })
+  const [tab, setTab] = useState('overview')
   const [form, setForm] = useState({ salonName: '', salonPhone: '', mapsUrl: '', contactName: '', salonAddress: '' })
   const [error, setError] = useState('')
   const update = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
@@ -210,8 +211,30 @@ function ReferrerDashboard() {
     </div>
   )
 
+  const TABS = [
+    { key: 'overview', label: 'Overview' },
+    { key: 'leads', label: 'Get leads' },
+    { key: 'refer', label: 'Refer a salon' },
+    { key: 'referrals', label: 'My referrals' },
+    { key: 'account', label: 'Account' },
+  ]
+
   return (
     <div className="flex flex-col gap-6">
+      {/* Sub navbar */}
+      <div className="flex gap-1 overflow-x-auto border-b border-outline-variant/20 pb-px">
+        {TABS.map((t) => (
+          <button key={t.key} type="button" onClick={() => setTab(t.key)}
+            className={`font-body text-label-md px-4 py-2 whitespace-nowrap border-b-2 -mb-px transition-colors ${
+              tab === t.key
+                ? 'border-secondary text-secondary'
+                : 'border-transparent text-on-surface-variant hover:text-secondary-fixed'}`}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'overview' && (
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Stat label="Your code" value={referralCode} accent="text-secondary" />
         <Stat label="Total earned" value={money(totalPaid)} />
@@ -220,8 +243,9 @@ function ReferrerDashboard() {
         <Stat label="Pending / processing" value={processing} />
         <Stat label="Declined" value={declined} accent="text-error" />
       </div>
+      )}
 
-      {approved && (
+      {tab === 'leads' && approved && (
         <div className="glass-panel rounded-xl p-6">
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div>
@@ -282,14 +306,25 @@ function ReferrerDashboard() {
         </div>
       )}
 
-      {!approved ? (
+      {tab === 'leads' && !approved && (
+        <div className="glass-panel rounded-xl p-6">
+          <p className="font-body text-on-surface-variant">
+            Your referrer account is awaiting admin approval. Once approved you can pull leads and
+            submit salon referrals.
+          </p>
+        </div>
+      )}
+
+      {tab === 'refer' && !approved && (
         <div className="glass-panel rounded-xl p-6">
           <p className="font-body text-on-surface-variant">
             Your referrer account is awaiting admin approval. Once approved you can submit salon
             referrals and start earning.
           </p>
         </div>
-      ) : (
+      )}
+
+      {tab === 'refer' && approved && (
         <div className="glass-panel rounded-xl p-6">
           <h2 className="font-display text-headline-sm text-on-surface mb-1">Refer a salon</h2>
           <p className="font-body text-label-md text-on-surface-variant mb-4">
@@ -331,6 +366,7 @@ function ReferrerDashboard() {
         </div>
       )}
 
+      {tab === 'referrals' && (
       <div>
         <h2 className="font-display text-headline-sm text-on-surface mb-4">Your referrals</h2>
         <div className="grid gap-4 md:grid-cols-3">
@@ -370,8 +406,11 @@ function ReferrerDashboard() {
           })}
         </div>
       </div>
+      )}
 
-      <DeleteAccount note="This permanently closes your referrer account. Your referral history stays on record but you won't be able to sign in again." />
+      {tab === 'account' && (
+        <DeleteAccount note="This permanently closes your referrer account. Your referral history stays on record but you won't be able to sign in again." />
+      )}
     </div>
   )
 }
