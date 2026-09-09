@@ -24,6 +24,11 @@ export async function getReferralLeads() {
   return data
 }
 
+export async function getLeadAccess() {
+  const { data } = await apiClient.get('/api/platform/referrals/lead-access')
+  return data
+}
+
 // Admin
 export async function getAdminReferrals() {
   const { data } = await apiClient.get('/api/platform/admin/referrals')

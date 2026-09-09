@@ -3,7 +3,7 @@ import { useState } from 'react'
 import useAuth from '../shared/auth/useAuth.js'
 import DeleteAccount from '../shared/components/DeleteAccount.jsx'
 import {
-  errorMessage, getReferralLeads, getReferralOverview, referralKeys, submitReferral,
+  errorMessage, getLeadAccess, getReferralLeads, getReferralOverview, referralKeys, submitReferral,
 } from './referral-api.js'
 
 function money(value) {
@@ -114,6 +114,11 @@ function ReferrerDashboard() {
     onError: (e) => setError(errorMessage(e, 'Could not submit this referral.')),
   })
 
+  const access = useQuery({ queryKey: ['referrals', 'lead-access'], queryFn: getLeadAccess })
+  const scraperStatus = access.data?.status
+  const scraperConfigured = access.data?.configured
+  const leadApproved = scraperStatus === 'APPROVED'
+
   const [leadBatch, setLeadBatch] = useState(null)
   const [leadMsg, setLeadMsg] = useState('')
   const getLeads = useMutation({
@@ -160,11 +165,33 @@ function ReferrerDashboard() {
                 Pull a batch of salons to contact. Onboard 3 of each day&apos;s leads to unlock more.
               </p>
             </div>
-            <button type="button" onClick={() => getLeads.mutate()} disabled={getLeads.isPending}
-              className="brass-gradient text-espresso font-body font-semibold px-6 py-2.5 rounded">
-              {getLeads.isPending ? 'Fetching…' : 'Get 10 leads'}
+            <button type="button" onClick={() => getLeads.mutate()}
+              disabled={getLeads.isPending || !leadApproved}
+              className="brass-gradient text-espresso font-body font-semibold px-6 py-2.5 rounded disabled:opacity-50">
+              {getLeads.isPending ? 'Fetching…' : 'Get leads'}
             </button>
           </div>
+
+          {/* Lead-access status from the data provider, with a manual refresh. */}
+          <div className="flex items-center gap-3 mt-4 flex-wrap">
+            <span className="font-body text-label-md">
+              Lead access:{' '}
+              {!scraperConfigured ? <span className="text-on-surface-variant">unavailable</span>
+                : leadApproved ? <span className="text-emerald-400 font-semibold">Approved</span>
+                  : scraperStatus === 'REJECTED' ? <span className="text-error font-semibold">Rejected</span>
+                    : <span className="text-amber-400 font-semibold">Pending approval</span>}
+            </span>
+            <button type="button" onClick={() => access.refetch()} disabled={access.isFetching}
+              className="font-body text-label-sm px-3 py-1.5 rounded border border-secondary/60 text-secondary hover:bg-secondary hover:text-on-secondary transition-colors disabled:opacity-50">
+              {access.isFetching ? 'Checking…' : 'Refresh status'}
+            </button>
+          </div>
+          {!leadApproved && scraperConfigured && (
+            <p className="font-body text-label-sm text-on-surface-variant mt-2">
+              Your code is registered. Leads unlock once it is approved by the admin.
+            </p>
+          )}
+
           {leadMsg && <p className="font-body text-label-md text-on-surface-variant mt-3">{leadMsg}</p>}
           {leadBatch?.leads?.length > 0 && (
             <div className="flex flex-col gap-2 mt-4">

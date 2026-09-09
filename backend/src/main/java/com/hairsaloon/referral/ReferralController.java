@@ -31,6 +31,12 @@ class ReferralController {
         return leadService.nextBatch(user);
     }
 
+    /** Live lead-access status from the scraper (APPROVED / PENDING / REJECTED). */
+    @GetMapping("/lead-access")
+    ReferralLeadService.AccessStatus leadAccess(@AuthenticationPrincipal AuthenticatedUser user) {
+        return leadService.accessStatus(user);
+    }
+
     @GetMapping("/me")
     ReferralService.Overview overview(@AuthenticationPrincipal AuthenticatedUser user) {
         return service.overview(user.id());

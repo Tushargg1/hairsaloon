@@ -46,6 +46,18 @@ public class ReferralLeadService {
         this.properties = properties;
     }
 
+    /** Live access status from the scraper for this referrer's code, and whether leads are configured. */
+    @Transactional(readOnly = true)
+    public AccessStatus accessStatus(AuthenticatedUser user) {
+        if (!scraper.enabled()) {
+            return new AccessStatus(false, "UNKNOWN", null);
+        }
+        ReferrerProfile profile = profiles.findById(user.id()).orElse(null);
+        if (profile == null) return new AccessStatus(true, "UNKNOWN", null);
+        String status = scraper.status(profile.getReferralCode());
+        return new AccessStatus(true, status, profile.getReferralCode());
+    }
+
     @Transactional
     public LeadBatch nextBatch(AuthenticatedUser user) {
         if (!scraper.enabled()) {
@@ -194,6 +206,8 @@ public class ReferralLeadService {
         String digits = phone == null ? "" : phone.replaceAll("\\D", "");
         return digits.length() == 10 ? "91" + digits : digits;
     }
+
+    public record AccessStatus(boolean configured, String status, String referralCode) {}
 
     public record LeadView(Long referralId, String salonName, String salonPhone,
                            String salonAddress, String mapsUrl) {}

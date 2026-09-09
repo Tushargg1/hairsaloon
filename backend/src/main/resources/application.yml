@@ -133,7 +133,7 @@ app:
     api-url: "${REFERRAL_LEADS_API_URL:}"
     # Admin X-API-Key, used to register referrer codes and check their approval status.
     api-key: "${REFERRAL_LEADS_API_KEY:}"
-    daily-limit: "${REFERRAL_LEADS_DAILY_LIMIT:30}"
+    daily-limit: "${REFERRAL_LEADS_DAILY_LIMIT:50}"
     batch-size: "${REFERRAL_LEADS_BATCH_SIZE:10}"
     daily-onboard-target: "${REFERRAL_LEADS_ONBOARD_TARGET:3}"
     max-fail-days: "${REFERRAL_LEADS_MAX_FAIL_DAYS:3}"
