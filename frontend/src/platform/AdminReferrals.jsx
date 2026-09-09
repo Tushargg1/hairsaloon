@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import AdminNav from './AdminNav.jsx'
 import {
-  errorMessage, getAdminReferrals, getAdminReferrers, markReferralPaid, referralKeys,
+  errorMessage, getAdminLeads, getAdminReferrals, getAdminReferrers, markReferralPaid, referralKeys,
   rejectReferral, setReferrerApproval, setReferrerHold, verifyReferral,
 } from './referral-api.js'
 
@@ -61,6 +61,8 @@ export default function AdminReferrals() {
 
   const referrers = useQuery({ queryKey: referralKeys.adminReferrers, queryFn: getAdminReferrers })
   const submissions = useQuery({ queryKey: referralKeys.admin, queryFn: getAdminReferrals })
+  const adminLeads = useQuery({ queryKey: ['referrals', 'admin', 'leads'], queryFn: getAdminLeads,
+    enabled: tab === 'leads' })
 
   const invalidate = () => {
     client.invalidateQueries({ queryKey: referralKeys.admin })
@@ -93,10 +95,10 @@ export default function AdminReferrals() {
       </div>
 
       <div className="flex gap-2 mb-6">
-        {['referrers', 'submissions'].map((t) => (
+        {['referrers', 'submissions', 'leads'].map((t) => (
           <button key={t} onClick={() => setTab(t)}
             className={`font-body text-label-md px-4 py-2 rounded ${tab === t ? 'bg-secondary/20 text-secondary' : 'text-on-surface-variant hover:text-secondary-fixed'}`}>
-            {t === 'referrers' ? 'Referrers' : 'All submissions'}
+            {t === 'referrers' ? 'Referrers' : t === 'submissions' ? 'All submissions' : 'All leads'}
           </button>
         ))}
       </div>
@@ -185,6 +187,45 @@ export default function AdminReferrals() {
                   verify={verify} reject={reject} paid={paid} />
               </div>
             ))}
+          </div>
+        )
+      )}
+
+      {tab === 'leads' && (
+        adminLeads.isLoading ? <p className="font-body text-on-surface-variant">Loading…</p>
+        : (adminLeads.data || []).length === 0 ? (
+          <p className="font-body text-on-surface-variant">No leads have been delivered yet.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="font-body text-label-sm text-on-surface-variant">
+                  <th className="p-2">Referrer</th>
+                  <th className="p-2">Salon</th>
+                  <th className="p-2">Phone</th>
+                  <th className="p-2">Location</th>
+                  <th className="p-2">Status</th>
+                  <th className="p-2">Date</th>
+                  <th className="p-2">Links</th>
+                </tr>
+              </thead>
+              <tbody>
+                {adminLeads.data.map((l, i) => (
+                  <tr key={i} className="border-t border-outline-variant/20 font-body text-label-sm">
+                    <td className="p-2 text-on-surface-variant">#{l.referrerId}</td>
+                    <td className="p-2 text-on-surface">{l.salonName || 'Unknown'}</td>
+                    <td className="p-2 text-on-surface-variant">{l.salonPhone && l.salonPhone !== 'N/A' ? l.salonPhone : '—'}</td>
+                    <td className="p-2 text-on-surface-variant">{l.salonAddress || '—'}</td>
+                    <td className="p-2 text-secondary">{l.contactStatus}</td>
+                    <td className="p-2 text-on-surface-variant">{l.assignedOn}</td>
+                    <td className="p-2">
+                      {l.mapsUrl && <a href={l.mapsUrl} target="_blank" rel="noreferrer" className="text-secondary underline mr-2">Map</a>}
+                      {l.website && <a href={l.website} target="_blank" rel="noreferrer" className="text-secondary underline">Web</a>}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )
       )}

@@ -171,11 +171,49 @@ public class ReferralLeadService {
     /** All leads ever delivered to this referrer, newest first, with contact status. */
     @Transactional(readOnly = true)
     public List<LeadView> myLeads(long referrerId) {
-        return leads.findByReferrerIdOrderByAssignedOnDesc(referrerId).stream()
-            .map(l -> new LeadView(l.getId(), l.getSubmissionId(), l.getSalonName(),
-                l.getSalonPhone(), l.getSalonLocation(), l.getSalonMapsUrl(), l.getSalonWebsite(),
-                l.getContactStatus()))
-            .toList();
+        List<ReferralLead> rows = leads.findByReferrerIdOrderByAssignedOnDesc(referrerId);
+        return toViews(rows);
+    }
+
+    /** Admin: every delivered lead across all referrers, newest first. */
+    @Transactional(readOnly = true)
+    public List<AdminLeadView> allLeads() {
+        List<ReferralLead> rows = leads.findAll(org.springframework.data.domain.Sort
+            .by(org.springframework.data.domain.Sort.Direction.DESC, "assignedOn"));
+        // Pre-fetch linked submissions for name/phone fallback on older rows.
+        var subs = submissions.findAllById(rows.stream()
+            .map(ReferralLead::getSubmissionId).filter(java.util.Objects::nonNull).toList());
+        Map<Long, ReferralSubmission> byId = subs.stream()
+            .collect(Collectors.toMap(ReferralSubmission::getId, s -> s, (a, b) -> a));
+        return rows.stream().map(l -> {
+            LeadView v = toView(l, byId.get(l.getSubmissionId()));
+            return new AdminLeadView(l.getReferrerId(), v.salonName(), v.salonPhone(),
+                v.salonAddress(), v.mapsUrl(), v.website(), v.contactStatus(),
+                l.getAssignedOn() == null ? null : l.getAssignedOn().toString());
+        }).toList();
+    }
+
+    private List<LeadView> toViews(List<ReferralLead> rows) {
+        var subs = submissions.findAllById(rows.stream()
+            .map(ReferralLead::getSubmissionId).filter(java.util.Objects::nonNull).toList());
+        Map<Long, ReferralSubmission> byId = subs.stream()
+            .collect(Collectors.toMap(ReferralSubmission::getId, s -> s, (a, b) -> a));
+        return rows.stream().map(l -> toView(l, byId.get(l.getSubmissionId()))).toList();
+    }
+
+    /** Uses the lead's snapshot, falling back to the linked submission for older rows. */
+    private static LeadView toView(ReferralLead l, ReferralSubmission sub) {
+        String name = firstNonBlank(l.getSalonName(), sub == null ? null : sub.getSalonName());
+        String phone = firstNonBlank(l.getSalonPhone(), sub == null ? null : sub.getSalonPhone());
+        String location = firstNonBlank(l.getSalonLocation(), sub == null ? null : sub.getSalonAddress());
+        String maps = firstNonBlank(l.getSalonMapsUrl(), sub == null ? null : sub.getMapsUrl());
+        return new LeadView(l.getId(), l.getSubmissionId(), name, phone, location, maps,
+            l.getSalonWebsite(), l.getContactStatus());
+    }
+
+    private static String firstNonBlank(String a, String b) {
+        if (a != null && !a.isBlank()) return a;
+        return b != null && !b.isBlank() ? b : null;
     }
 
     /** Referrer updates their own call-outcome status for a delivered lead. */
@@ -249,6 +287,10 @@ public class ReferralLeadService {
 
     public record LeadView(Long leadId, Long referralId, String salonName, String salonPhone,
                            String salonAddress, String mapsUrl, String website, String contactStatus) {}
+
+    public record AdminLeadView(Long referrerId, String salonName, String salonPhone,
+                                String salonAddress, String mapsUrl, String website,
+                                String contactStatus, String assignedOn) {}
 
     public record LeadBatch(List<LeadView> leads, int takenToday, int dailyAllowance,
                             int onboardedToday, int onboardTarget) {}

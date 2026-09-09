@@ -20,9 +20,11 @@ import org.springframework.web.bind.annotation.RestController;
 class AdminReferralController {
 
     private final ReferralService service;
+    private final ReferralLeadService leadService;
 
-    AdminReferralController(ReferralService service) {
+    AdminReferralController(ReferralService service, ReferralLeadService leadService) {
         this.service = service;
+        this.leadService = leadService;
     }
 
     @GetMapping
@@ -33,6 +35,12 @@ class AdminReferralController {
     @GetMapping("/referrers")
     List<ReferralService.ReferrerView> referrers() {
         return service.adminReferrers();
+    }
+
+    /** Every delivered lead across all referrers, with the referrer's contact status. */
+    @GetMapping("/leads")
+    List<ReferralLeadService.AdminLeadView> allLeads() {
+        return leadService.allLeads();
     }
 
     @PostMapping("/{id}/verify")

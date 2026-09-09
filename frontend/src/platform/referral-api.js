@@ -54,6 +54,11 @@ export async function getAdminReferrers() {
   return data
 }
 
+export async function getAdminLeads() {
+  const { data } = await apiClient.get('/api/platform/admin/referrals/leads')
+  return data
+}
+
 export async function verifyReferral(id, amount) {
   const { data } = await apiClient.post(`/api/platform/admin/referrals/${id}/verify`, { amount })
   return data
