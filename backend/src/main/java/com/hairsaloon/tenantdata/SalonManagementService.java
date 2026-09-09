@@ -19,7 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-class SalonManagementService {
+public class SalonManagementService {
     /** Kept short so the price board renders each entry on one line. */
     static final int SERVICE_NAME_MAX = 36;
     static final int CATEGORY_MAX = 20;
@@ -50,6 +50,43 @@ class SalonManagementService {
     @Transactional(readOnly = true)
     Salon profile() {
         return currentSalon();
+    }
+
+    /**
+     * Seeds a referral trial site with sample services, staff and weekday hours so the
+     * public page looks like a real, bookable salon (booking itself is blocked server
+     * side for trial salons). Idempotent-ish: intended for a freshly created salon.
+     */
+    @Transactional
+    public void seedTrialData(long salonId) {
+        record Svc(String name, int minutes, String price, String category) {}
+        List<Svc> sampleServices = List.of(
+            new Svc("Haircut & Styling", 45, "499", "Hair"),
+            new Svc("Hair Spa", 60, "899", "Hair"),
+            new Svc("Party Makeup", 90, "2499", "Makeup"),
+            new Svc("Bridal Makeup", 120, "7999", "Makeup"),
+            new Svc("Threading", 15, "99", "Grooming"),
+            new Svc("Manicure & Pedicure", 60, "799", "Grooming"));
+        List<Long> serviceIds = new ArrayList<>();
+        for (Svc s : sampleServices) {
+            SalonServiceEntity saved = services.save(new SalonServiceEntity(
+                salonId, s.name(), s.minutes(), new BigDecimal(s.price()), s.category()));
+            serviceIds.add(saved.getId());
+        }
+        List<String> staffNames = List.of("Aisha", "Rohan", "Priya");
+        for (String staffName : staffNames) {
+            SalonStaff member = staff.save(new SalonStaff(salonId, staffName, null, null));
+            long staffId = member.getId();
+            // Mon–Sat, 10:00–19:00.
+            List<StaffWorkingHour> weekHours = new ArrayList<>();
+            for (int day = 1; day <= 6; day++) {
+                weekHours.add(new StaffWorkingHour(salonId, staffId, day,
+                    LocalTime.of(10, 0), LocalTime.of(19, 0)));
+            }
+            hours.saveAll(weekHours);
+            assignments.saveAll(serviceIds.stream()
+                .map(serviceId -> new StaffService(salonId, staffId, serviceId)).toList());
+        }
     }
 
     @Transactional

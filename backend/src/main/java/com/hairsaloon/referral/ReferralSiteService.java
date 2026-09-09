@@ -35,13 +35,15 @@ public class ReferralSiteService {
     private final TenantResolver tenantResolver;
     private final TenantProperties tenantProperties;
     private final com.hairsaloon.tenantdata.GoogleProfileService googleProfile;
+    private final com.hairsaloon.tenantdata.SalonManagementService salonManagement;
 
     public ReferralSiteService(ReferralLeadRepository leads,
                                ReferralSubmissionRepository submissions,
                                ReferrerProfileRepository profiles,
                                SalonRepository salons, AuthService authService,
                                TenantResolver tenantResolver, TenantProperties tenantProperties,
-                               com.hairsaloon.tenantdata.GoogleProfileService googleProfile) {
+                               com.hairsaloon.tenantdata.GoogleProfileService googleProfile,
+                               com.hairsaloon.tenantdata.SalonManagementService salonManagement) {
         this.leads = leads;
         this.submissions = submissions;
         this.profiles = profiles;
@@ -50,6 +52,7 @@ public class ReferralSiteService {
         this.tenantResolver = tenantResolver;
         this.tenantProperties = tenantProperties;
         this.googleProfile = googleProfile;
+        this.salonManagement = salonManagement;
     }
 
     @Transactional
@@ -100,6 +103,8 @@ public class ReferralSiteService {
         if (place != null) {
             googleProfile.importMedia(salonId, place, name);
         }
+        // Sample services, staff and hours so the preview looks like a real salon.
+        salonManagement.seedTrialData(salonId);
 
         lead.setCreatedSalonId(salonId);
         leads.save(lead);
