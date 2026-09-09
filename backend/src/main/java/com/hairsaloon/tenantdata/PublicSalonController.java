@@ -26,7 +26,8 @@ class PublicSalonController {
             salon.getCancellationWindowMinutes(), salon.getInstagramUrl(),
             salon.getFacebookUrl(), salon.getWhatsappUrl(), salon.getYoutubeUrl(),
             salon.getMapsUrl(), salon.getGoogleRating(), salon.getGoogleReviewCount(),
-            salon.getGoogleMapsUri(), salon.getCategoryOrder(), profile.photos().stream()
+            salon.getGoogleMapsUri(), salon.getCategoryOrder(), salon.isTrial(),
+            profile.photos().stream()
                 .map(photo -> new PhotoResponse(photo.getId(), photo.getPhotoUrl(),
                     photo.getAltText(), photo.getSortOrder())).toList());
     }
@@ -64,7 +65,8 @@ class PublicSalonController {
                            String instagramUrl, String facebookUrl, String whatsappUrl,
                            String youtubeUrl, String mapsUrl, BigDecimal googleRating,
                            Integer googleReviewCount, String googleMapsUri,
-                           List<String> categoryOrder, List<PhotoResponse> photos) {}
+                           List<String> categoryOrder, boolean trial,
+                           List<PhotoResponse> photos) {}
     record GoogleReviewResponse(String authorName, String authorPhotoUrl, short rating,
                                 String text, String relativeTime) {}
     record PhotoResponse(Long id, String photoUrl, String altText, int sortOrder) {}

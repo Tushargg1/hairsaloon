@@ -43,6 +43,15 @@ export async function setLeadStatus(leadId, status) {
   await apiClient.post(`/api/platform/referrals/leads/${leadId}/status`, { status })
 }
 
+export async function createLeadSite(leadId) {
+  const { data } = await apiClient.post(`/api/platform/referrals/leads/${leadId}/site`)
+  return data
+}
+
+export async function deleteLeadSite(leadId) {
+  await apiClient.delete(`/api/platform/referrals/leads/${leadId}/site`)
+}
+
 // Admin
 export async function getAdminReferrals() {
   const { data } = await apiClient.get('/api/platform/admin/referrals')

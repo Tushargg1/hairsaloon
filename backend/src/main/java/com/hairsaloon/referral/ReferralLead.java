@@ -50,6 +50,9 @@ public class ReferralLead {
     @Column(name = "salon_location", length = 300)
     private String salonLocation;
 
+    @Column(name = "created_salon_id")
+    private Long createdSalonId;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -76,6 +79,10 @@ public class ReferralLead {
         if (status != null && !status.isBlank()) this.contactStatus = status;
     }
 
+    public void setCreatedSalonId(Long salonId) {
+        this.createdSalonId = salonId;
+    }
+
     public Long getId() { return id; }
     public Long getReferrerId() { return referrerId; }
     public String getExternalId() { return externalId; }
@@ -87,4 +94,5 @@ public class ReferralLead {
     public String getSalonWebsite() { return salonWebsite; }
     public String getSalonMapsUrl() { return salonMapsUrl; }
     public String getSalonLocation() { return salonLocation; }
+    public Long getCreatedSalonId() { return createdSalonId; }
 }

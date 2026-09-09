@@ -3,8 +3,8 @@ import { useState } from 'react'
 import useAuth from '../shared/auth/useAuth.js'
 import DeleteAccount from '../shared/components/DeleteAccount.jsx'
 import {
-  errorMessage, getLeadAccess, getMyLeads, getReferralLeads, getReferralOverview, referralKeys,
-  requestLeadAccess, setLeadStatus, submitReferral,
+  createLeadSite, deleteLeadSite, errorMessage, getLeadAccess, getMyLeads, getReferralLeads,
+  getReferralOverview, referralKeys, requestLeadAccess, setLeadStatus, submitReferral,
 } from './referral-api.js'
 
 const LEAD_STATUSES = ['NEW', 'CONTACTED', 'INTERESTED', 'NOT_INTERESTED', 'ONBOARDED']
@@ -19,17 +19,21 @@ function waNumber(phone) {
   return d.length === 10 ? `91${d}` : d
 }
 
-function LeadCard({ lead, onStatus }) {
+function LeadCard({ lead, onStatus, onCreateSite, onDeleteSite, site, siteBusy }) {
   const phoneUsable = lead.salonPhone && lead.salonPhone !== 'N/A'
   const wa = phoneUsable ? waNumber(lead.salonPhone) : ''
   const waText = encodeURIComponent(`Hi, is this ${lead.salonName || 'your salon'}?`)
+  const hasSite = Boolean(lead.createdSalonId) || Boolean(site)
   return (
     <div className="rounded-lg border border-outline-variant/20 p-4 flex flex-col gap-1.5">
       <p className="font-body text-on-surface font-semibold">{lead.salonName || 'Unknown salon'}</p>
       {lead.salonAddress && <p className="font-body text-label-sm text-on-surface-variant">{lead.salonAddress}</p>}
-      <div className="flex flex-wrap gap-x-4 gap-y-1">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
         {lead.mapsUrl && <a href={lead.mapsUrl} target="_blank" rel="noreferrer"
           className="font-body text-label-sm text-secondary underline">Google Maps</a>}
+        {lead.mapsUrl && <button type="button"
+          onClick={() => navigator.clipboard?.writeText(lead.mapsUrl)}
+          className="font-body text-label-sm text-on-surface-variant underline hover:text-secondary transition-colors">Copy map</button>}
         {lead.website
           ? <a href={lead.website} target="_blank" rel="noreferrer"
               className="font-body text-label-sm text-secondary underline break-all">Website</a>
@@ -50,7 +54,25 @@ function LeadCard({ lead, onStatus }) {
           className="font-body text-label-sm rounded border border-outline-variant/40 bg-transparent px-2 py-1.5">
           {LEAD_STATUSES.map((s) => <option key={s} value={s}>{LEAD_STATUS_LABEL[s]}</option>)}
         </select>
+        {hasSite
+          ? <button type="button" onClick={() => onDeleteSite(lead.leadId)} disabled={siteBusy}
+              className="font-body text-label-sm px-3 py-1.5 rounded border border-error/60 text-error hover:bg-error hover:text-white transition-colors disabled:opacity-50">
+              {siteBusy ? 'Deleting…' : 'Delete site'}
+            </button>
+          : <button type="button" onClick={() => onCreateSite(lead.leadId)} disabled={siteBusy}
+              className="font-body text-label-sm px-3 py-1.5 rounded bg-secondary text-on-secondary hover:opacity-90 transition-opacity disabled:opacity-50">
+              {siteBusy ? 'Creating…' : 'Create site'}
+            </button>}
       </div>
+      {site && (
+        <div className="mt-2 rounded border border-secondary/40 bg-secondary/5 p-3 flex flex-col gap-0.5">
+          <p className="font-body text-label-sm text-on-surface">Trial site created. Share these:</p>
+          <a href={site.url} target="_blank" rel="noreferrer"
+            className="font-body text-label-sm text-secondary underline break-all">{site.url}</a>
+          <p className="font-body text-label-sm text-on-surface-variant">Login: {site.loginEmail}</p>
+          <p className="font-body text-label-sm text-on-surface-variant">Password: {site.loginPassword}</p>
+        </div>
+      )}
     </div>
   )
 }
@@ -197,6 +219,31 @@ function ReferrerDashboard() {
     },
   })
 
+  const [sites, setSites] = useState({})
+  const [siteBusyId, setSiteBusyId] = useState(null)
+  const createSite = useMutation({
+    mutationFn: (leadId) => createLeadSite(leadId),
+    onMutate: (leadId) => setSiteBusyId(leadId),
+    onSuccess: (d, leadId) => {
+      setSites((s) => ({ ...s, [leadId]: d }))
+      client.setQueryData(['referrals', 'my-leads'], (old) =>
+        (old || []).map((l) => (l.leadId === leadId ? { ...l, createdSalonId: d.salonId } : l)))
+    },
+    onError: (e) => setLeadMsg(errorMessage(e, 'Could not create the site.')),
+    onSettled: () => setSiteBusyId(null),
+  })
+  const deleteSite = useMutation({
+    mutationFn: (leadId) => deleteLeadSite(leadId),
+    onMutate: (leadId) => setSiteBusyId(leadId),
+    onSuccess: (_d, leadId) => {
+      setSites((s) => { const n = { ...s }; delete n[leadId]; return n })
+      client.setQueryData(['referrals', 'my-leads'], (old) =>
+        (old || []).map((l) => (l.leadId === leadId ? { ...l, createdSalonId: null } : l)))
+    },
+    onError: (e) => setLeadMsg(errorMessage(e, 'Could not delete the site.')),
+    onSettled: () => setSiteBusyId(null),
+  })
+
   if (isLoading) return <p className="font-body text-on-surface-variant">Loading…</p>
 
   const { referralCode, approved, perReferralAmount, totalPaid, totalPending, history = [] } = data || {}
@@ -299,7 +346,10 @@ function ReferrerDashboard() {
             <div className="flex flex-col gap-2 mt-4">
               {myLeads.data.map((l) => (
                 <LeadCard key={l.leadId} lead={l}
-                  onStatus={(leadId, status) => leadStatus.mutate({ leadId, status })} />
+                  onStatus={(leadId, status) => leadStatus.mutate({ leadId, status })}
+                  onCreateSite={(leadId) => createSite.mutate(leadId)}
+                  onDeleteSite={(leadId) => deleteSite.mutate(leadId)}
+                  site={sites[l.leadId]} siteBusy={siteBusyId === l.leadId} />
               ))}
             </div>
           )}

@@ -206,6 +206,7 @@ export default function AdminReferrals() {
                   <th className="p-2">Location</th>
                   <th className="p-2">Status</th>
                   <th className="p-2">Date</th>
+                  <th className="p-2">Site</th>
                   <th className="p-2">Links</th>
                 </tr>
               </thead>
@@ -218,6 +219,14 @@ export default function AdminReferrals() {
                     <td className="p-2 text-on-surface-variant">{l.salonAddress || '—'}</td>
                     <td className="p-2 text-secondary">{l.contactStatus}</td>
                     <td className="p-2 text-on-surface-variant">{l.assignedOn}</td>
+                    <td className="p-2">
+                      {l.siteUrl
+                        ? <a href={l.siteUrl} target="_blank" rel="noreferrer"
+                            className={l.trialSite ? 'text-amber-400 underline' : 'text-emerald-400 underline'}>
+                            {l.trialSite ? 'Trial' : 'Live'}
+                          </a>
+                        : <span className="text-on-surface-variant">—</span>}
+                    </td>
                     <td className="p-2">
                       {l.mapsUrl && <a href={l.mapsUrl} target="_blank" rel="noreferrer" className="text-secondary underline mr-2">Map</a>}
                       {l.website && <a href={l.website} target="_blank" rel="noreferrer" className="text-secondary underline">Web</a>}

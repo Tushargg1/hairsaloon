@@ -189,6 +189,7 @@ export default function SalonPublicPage() {
   const salonName = profile.name || profile.salonName || tenantNameFallback()
   const heroTitleRef = useFitToTwoLines(salonName)
   const isActive = profile.status ? profile.status === 'ACTIVE' : true
+  const isTrial = Boolean(profile.trial)
   const contactPhone = (() => {
     const raw = String(profile.phone || '').replace(/[^\d]/g, '')
     return raw.length === 10 ? `91${raw}` : raw
@@ -210,7 +211,12 @@ export default function SalonPublicPage() {
           {profileQuery.isLoading ? <p className="text-on-surface-variant">Loading...</p> : (
             <>
               <h1 ref={heroTitleRef} className="font-display text-display-lg-mobile md:text-display-lg text-white mb-6">{salonName}</h1>
-              {isActive ? (
+              {isTrial ? (
+                <span className="vintage-cta pointer-events-none opacity-90">
+                  <Icon name="info" className="text-[18px]" />
+                  Preview site — booking disabled
+                </span>
+              ) : isActive ? (
                 <a href="#book-slot" className="vintage-cta">
                   <Icon name="event_available" className="text-[18px]" />
                   Book an Appointment
@@ -352,8 +358,20 @@ export default function SalonPublicPage() {
 
       {/* Slot booking */}
       <section className="pb-12 px-4 lg:px-0 w-full md:pt-12" id="book-slot">
-        <SlotBookingWidget selectedIds={selectedIds} onToggleService={toggleService}
-          salonName={salonName} />
+        {isTrial ? (
+          <div className="booking-frame">
+            <div className="booking-plate !min-h-0">
+              <div className="booking-texture" />
+              <p className="booking-note relative z-10 text-center">
+                This is a trial preview site for {salonName}. Online booking and other
+                features are not active. Contact Groomit to set up the full site.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <SlotBookingWidget selectedIds={selectedIds} onToggleService={toggleService}
+            salonName={salonName} />
+        )}
       </section>
       </div>
 

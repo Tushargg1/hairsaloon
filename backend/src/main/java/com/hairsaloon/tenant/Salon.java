@@ -119,6 +119,9 @@ public class Salon {
     @Column(name = "whatsapp_connected_at")
     private Instant whatsappConnectedAt;
 
+    @Column(name = "is_trial", nullable = false, columnDefinition = "boolean default false")
+    private boolean trial = false;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -150,6 +153,23 @@ public class Salon {
         this.latitude = latitude;
         this.longitude = longitude;
         this.status = SalonStatus.PENDING;
+    }
+
+    /** A live-immediately trial preview salon auto-created from a referral lead. */
+    public static Salon trial(Long ownerId, String subdomain, String name, String address,
+                              String city, String phone, String mapsUrl, String timezone) {
+        Salon salon = new Salon(ownerId, subdomain, name, null, address, city, phone, null,
+            null, timezone);
+        salon.status = SalonStatus.ACTIVE;
+        salon.trial = true;
+        salon.mapsUrl = mapsUrl;
+        return salon;
+    }
+
+    /** Turns a trial preview into a real salon once the owner buys it. */
+    public void promoteFromTrial(String email) {
+        this.trial = false;
+        if (email != null && !email.isBlank()) this.email = email;
     }
 
     public void approve() {
@@ -228,6 +248,7 @@ public class Salon {
     public String getMapsUrl() { return mapsUrl; }
     public String getTimezone() { return timezone; }
     public SalonStatus getStatus() { return status; }
+    public boolean isTrial() { return trial; }
     public int getCancellationWindowMinutes() { return cancellationWindowMinutes; }
     public BigDecimal getLatitude() { return latitude; }
     public BigDecimal getLongitude() { return longitude; }

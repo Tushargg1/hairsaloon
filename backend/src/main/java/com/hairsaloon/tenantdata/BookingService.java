@@ -142,6 +142,9 @@ class BookingService {
     List<Booking> create(AuthenticatedUser user, long staffId, List<Long> serviceIds,
                          LocalDateTime start, String idempotencyKey, String promoCode) {
         requireCustomer(user);
+        if (currentSalon(TenantContext.requireSalonId()).isTrial())
+            throw new PlatformApiException(HttpStatus.FORBIDDEN, "TRIAL_SITE",
+                "This is a trial preview site. Booking is not available here.");
         if (serviceIds == null || serviceIds.isEmpty())
             throw InputPolicy.validation("serviceIds", "at least one service is required");
         if (serviceIds.size() != serviceIds.stream().distinct().count())

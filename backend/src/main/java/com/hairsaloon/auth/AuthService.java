@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-class AuthService {
+public class AuthService {
     private final UserRepository users;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
@@ -224,6 +224,31 @@ class AuthService {
         }
         user.setPasswordHash(passwordEncoder.encode(newPassword));
         users.save(user);
+    }
+
+    /**
+     * Creates a SALON_OWNER login for a referral-created site. Email is the login
+     * handle (owners sign in by email); the caller supplies a unique generated one.
+     * Returns the new user id. Public so the referral module can mint owners.
+     */
+    @Transactional
+    public long provisionSiteOwner(String name, String phone, String email, String password) {
+        User owner = new User(normalizePhone(phone), normalize(email),
+            passwordEncoder.encode(password), UserRole.SALON_OWNER);
+        if (name != null && !name.isBlank()) owner.setName(name.trim());
+        owner.markPhoneVerified(Instant.now());
+        return users.saveAndFlush(owner).getId();
+    }
+
+    /** Hard-deletes a user row (used when a referral trial site is removed). */
+    @Transactional
+    public void deleteUser(long userId) {
+        users.findById(userId).ifPresent(users::delete);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean emailExists(String email) {
+        return users.existsByEmailIgnoreCase(normalize(email));
     }
 
     private AuthResult result(User user) {

@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,10 +21,13 @@ class ReferralController {
 
     private final ReferralService service;
     private final ReferralLeadService leadService;
+    private final ReferralSiteService siteService;
 
-    ReferralController(ReferralService service, ReferralLeadService leadService) {
+    ReferralController(ReferralService service, ReferralLeadService leadService,
+                       ReferralSiteService siteService) {
         this.service = service;
         this.leadService = leadService;
+        this.siteService = siteService;
     }
 
     /** Delivers the next batch of scraped salon leads to the referrer. */
@@ -59,6 +63,19 @@ class ReferralController {
 
     @JsonIgnoreProperties(ignoreUnknown = false)
     record LeadStatusRequest(@NotBlank @Size(max = 24) String status) {}
+
+    /** Creates a live trial preview site for this lead's salon and returns the login. */
+    @PostMapping("/leads/{leadId}/site")
+    ReferralSiteService.SiteView createSite(@AuthenticationPrincipal AuthenticatedUser user,
+                                            @PathVariable long leadId) {
+        return siteService.createTrialSite(user, leadId);
+    }
+
+    /** Permanently deletes the trial site (frees its URL for future reuse). */
+    @DeleteMapping("/leads/{leadId}/site")
+    void deleteSite(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable long leadId) {
+        siteService.deleteTrialSite(user, leadId);
+    }
 
     @GetMapping("/me")
     ReferralService.Overview overview(@AuthenticationPrincipal AuthenticatedUser user) {
