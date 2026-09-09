@@ -128,8 +128,10 @@ app:
     monthly-cap: "${GOOGLE_PLACES_MONTHLY_CAP:9000}"
 
   referral-leads:
-    # External scraper API that supplies salon leads. Empty = leads feature disabled.
+    # External scraper API (India Beauty Biz Scraper) that supplies salon leads.
+    # Base URL only, e.g. https://data-scrapper-n7ua.onrender.com — empty disables the feature.
     api-url: "${REFERRAL_LEADS_API_URL:}"
+    # Admin X-API-Key, used to register referrer codes and check their approval status.
     api-key: "${REFERRAL_LEADS_API_KEY:}"
     daily-limit: "${REFERRAL_LEADS_DAILY_LIMIT:30}"
     batch-size: "${REFERRAL_LEADS_BATCH_SIZE:10}"

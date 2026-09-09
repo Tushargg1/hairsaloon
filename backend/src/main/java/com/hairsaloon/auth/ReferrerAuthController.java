@@ -40,7 +40,7 @@ class ReferrerAuthController {
         try {
             AuthService.AuthResult result = authService.referrerSignup(request.name(),
                 request.phone(), request.password());
-            referrals.createProfile(result.user().id());
+            referrals.createProfile(result.user().id(), request.name(), request.phone());
             rateLimiter.recordSuccess("referrer-signup", ip, principal);
             return ResponseEntity.status(HttpStatus.CREATED)
                 .header(HttpHeaders.SET_COOKIE, cookies.authenticated(result.token()).toString())

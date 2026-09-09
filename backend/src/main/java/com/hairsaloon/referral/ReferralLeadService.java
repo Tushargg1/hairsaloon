@@ -90,8 +90,19 @@ public class ReferralLeadService {
                 "Daily limit reached. Onboard " + target + " of today's leads to unlock more.");
         }
 
-        List<ScraperLeadsClient.Lead> fresh = fetchUnclaimed(want, user.name(), user.phone(),
-            profile.getReferralCode());
+        List<ScraperLeadsClient.Lead> fresh;
+        try {
+            // The scraper returns up to 10 fresh (never-sent) businesses and marks them sent.
+            fresh = scraper.fetchBatch(profile.getReferralCode());
+        } catch (ScraperLeadsClient.NotApprovedException notApproved) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                "Your lead access is pending approval. Please try again once it is approved.");
+        }
+        // The scraper already returns <=10 fresh leads and marked them sent, so we keep
+        // all of them (trimming would lose leads the scraper won't hand out again).
+        fresh = fresh.stream()
+            .filter(l -> !leads.existsByExternalId(l.externalId()))
+            .toList();
         if (fresh.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND,
                 "No new leads are available right now. Please try again later.");
@@ -127,27 +138,6 @@ public class ReferralLeadService {
         long takenAfter = leads.countByReferrerIdAndAssignedOn(user.id(), today);
         return new LeadBatch(delivered, (int) takenAfter, (int) (allowedBlocks * limit),
             onboardedToday, target);
-    }
-
-    /** Pulls unclaimed leads from the scraper (10 at a time), paging until enough. */
-    private List<ScraperLeadsClient.Lead> fetchUnclaimed(int want, String name, String phone,
-                                                        String referralCode) {
-        List<ScraperLeadsClient.Lead> picked = new ArrayList<>();
-        int offset = 0;
-        int pages = 0;
-        while (picked.size() < want && pages < 20) {
-            List<ScraperLeadsClient.Lead> page = scraper.fetch(offset, want, name, phone, referralCode);
-            if (page.isEmpty()) break;
-            for (ScraperLeadsClient.Lead lead : page) {
-                if (!leads.existsByExternalId(lead.externalId())) {
-                    picked.add(lead);
-                    if (picked.size() >= want) break;
-                }
-            }
-            offset += page.size();
-            pages++;
-        }
-        return picked;
     }
 
     /** Onboarded = leads assigned on {@code day} whose submission is now PAID. */

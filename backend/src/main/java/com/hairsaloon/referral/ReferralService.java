@@ -19,13 +19,16 @@ public class ReferralService {
     private final ReferrerProfileRepository profiles;
     private final ReferralSubmissionRepository submissions;
     private final com.hairsaloon.auth.UserRepository users;
+    private final ScraperLeadsClient scraper;
 
     public ReferralService(ReferrerProfileRepository profiles,
                            ReferralSubmissionRepository submissions,
-                           com.hairsaloon.auth.UserRepository users) {
+                           com.hairsaloon.auth.UserRepository users,
+                           ScraperLeadsClient scraper) {
         this.profiles = profiles;
         this.submissions = submissions;
         this.users = users;
+        this.scraper = scraper;
     }
 
     /** Admin roster: every referrer with their details, salons and earnings. */
@@ -65,19 +68,35 @@ public class ReferralService {
     /** Auto-fills salon details from a pasted Google Maps link (name, phone, address). */
     // (Google Maps auto-fill removed.)
 
-    /** Creates the referrer's profile with a unique code (called at signup). */
+    /**
+     * Creates the referrer's profile with a unique code (called at signup) and
+     * registers that code with the scraper app so the scraper admin can approve
+     * their lead access.
+     */
     @Transactional
-    public void createProfile(long userId) {
-        if (profiles.existsById(userId)) return;
-        for (int attempt = 0; attempt < 8; attempt++) {
-            String code = randomCode();
-            if (!profiles.existsByReferralCode(code)) {
-                profiles.save(new ReferrerProfile(userId, code));
-                return;
+    public void createProfile(long userId, String name, String phone) {
+        String code = null;
+        if (profiles.existsById(userId)) {
+            code = profiles.findById(userId).map(ReferrerProfile::getReferralCode).orElse(null);
+        } else {
+            for (int attempt = 0; attempt < 8 && code == null; attempt++) {
+                String candidate = randomCode();
+                if (!profiles.existsByReferralCode(candidate)) {
+                    profiles.save(new ReferrerProfile(userId, candidate));
+                    code = candidate;
+                }
+            }
+            if (code == null) {
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Could not allocate a referral code.");
             }
         }
-        throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-            "Could not allocate a referral code.");
+        // Best-effort: register the code with the scraper (PENDING until its admin approves).
+        try {
+            scraper.register(name, phone, code);
+        } catch (RuntimeException ignored) {
+            // Registration can be retried; do not block signup on the scraper being up.
+        }
     }
 
     @Transactional(readOnly = true)
