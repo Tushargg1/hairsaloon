@@ -59,9 +59,10 @@ public class ScraperLeadsClient {
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(body)).build();
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            // 200 = registered; a duplicate code is fine (already registered).
-            if (response.statusCode() / 100 != 2 && response.statusCode() != 409) {
-                log.warn("Scraper register returned {} for {}", response.statusCode(), userCode);
+            // 200 = registered; 400/409 = code already registered (both fine).
+            int code = response.statusCode();
+            if (code / 100 != 2 && code != 400 && code != 409) {
+                log.warn("Scraper register returned {} for {}", code, userCode);
             }
         } catch (Exception e) {
             log.warn("Scraper register failed for {}", userCode, e);
@@ -115,8 +116,9 @@ public class ScraperLeadsClient {
     }
 
     private List<Lead> parse(JsonNode root) {
+        // Verified live contract: the batch array is under "businesses".
         JsonNode array = root.isArray() ? root
-            : firstArray(root, "data", "businesses", "leads", "results", "items", "records");
+            : firstArray(root, "businesses", "data", "leads", "results", "items", "records");
         List<Lead> leads = new ArrayList<>();
         if (array != null && array.isArray()) {
             for (JsonNode node : array) {
@@ -135,13 +137,26 @@ public class ScraperLeadsClient {
         return null;
     }
 
-    /** Maps one scraped business to a normalized Lead. Adjust field names here only. */
+    /**
+     * Maps one scraped business to a normalized Lead, per the verified scraper
+     * contract: id, name, phone (may be "N/A"), maps_url, and location from
+     * state + pincode (there is no single address field).
+     */
     private static Lead parseLead(JsonNode n) {
-        String id = firstText(n, "id", "business_id", "_id", "place_id", "placeId");
-        String name = firstText(n, "name", "business_name", "salon_name", "title");
-        String phone = firstText(n, "phone", "phone_number", "phoneNumber", "contact", "mobile");
-        String address = firstText(n, "address", "full_address", "formatted_address", "location");
-        String maps = firstText(n, "google_maps_url", "maps_url", "map_url", "google_url", "url", "link", "website");
+        String id = firstText(n, "id", "business_id");
+        String name = firstText(n, "name");
+        String phone = firstText(n, "phone");
+        if (phone != null && phone.equalsIgnoreCase("N/A")) phone = null;
+        String maps = firstText(n, "maps_url", "website_link");
+        // No address field; build a readable location from state + pincode + niche.
+        String niche = firstText(n, "niche");
+        String state = firstText(n, "state");
+        String pincode = firstText(n, "pincode");
+        StringBuilder loc = new StringBuilder();
+        if (niche != null) loc.append(niche);
+        if (state != null) loc.append(loc.length() > 0 ? " · " : "").append(state);
+        if (pincode != null) loc.append(loc.length() > 0 ? " " : "").append(pincode);
+        String address = loc.length() > 0 ? loc.toString() : null;
         if (id == null || id.isBlank()) {
             id = (name == null ? "" : name) + "|" + (phone == null ? "" : phone);
             if (id.isBlank() || id.equals("|")) return null;

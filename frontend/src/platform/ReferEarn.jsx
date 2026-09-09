@@ -189,7 +189,8 @@ function ReferrerDashboard() {
               {!scraperConfigured ? <span className="text-on-surface-variant">unavailable</span>
                 : leadApproved ? <span className="text-emerald-400 font-semibold">Approved</span>
                   : scraperStatus === 'REJECTED' ? <span className="text-error font-semibold">Rejected</span>
-                    : <span className="text-amber-400 font-semibold">Pending approval</span>}
+                    : scraperStatus === 'PENDING' ? <span className="text-amber-400 font-semibold">Pending approval</span>
+                      : <span className="text-on-surface-variant font-semibold">Not registered</span>}
             </span>
             <button type="button" onClick={() => access.refetch()} disabled={access.isFetching}
               className="font-body text-label-sm px-3 py-1.5 rounded border border-secondary/60 text-secondary hover:bg-secondary hover:text-on-secondary transition-colors disabled:opacity-50">
@@ -206,8 +207,11 @@ function ReferrerDashboard() {
           {accessMsg && <p className="font-body text-label-sm text-on-surface-variant mt-2">{accessMsg}</p>}
           {!leadApproved && scraperConfigured && !accessMsg && (
             <p className="font-body text-label-sm text-on-surface-variant mt-2">
-              Your code is registered. Leads unlock once it is approved by the admin. Not showing up?
-              Tap &quot;Request access&quot; to re-send.
+              {scraperStatus === 'PENDING'
+                ? 'Your code is registered. Leads unlock once the admin approves it.'
+                : scraperStatus === 'REJECTED'
+                  ? 'Your access request was rejected. Contact the admin, then tap Request access to try again.'
+                  : 'You are not registered for leads yet. Tap "Request access" to send your request.'}
             </p>
           )}
 
