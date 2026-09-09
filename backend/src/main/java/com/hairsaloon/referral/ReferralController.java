@@ -37,6 +37,12 @@ class ReferralController {
         return leadService.accessStatus(user);
     }
 
+    /** Re-sends the lead-access request (re-registers the code with the scraper). */
+    @PostMapping("/lead-access/request")
+    ReferralLeadService.AccessStatus requestLeadAccess(@AuthenticationPrincipal AuthenticatedUser user) {
+        return leadService.requestAccess(user);
+    }
+
     @GetMapping("/me")
     ReferralService.Overview overview(@AuthenticationPrincipal AuthenticatedUser user) {
         return service.overview(user.id());

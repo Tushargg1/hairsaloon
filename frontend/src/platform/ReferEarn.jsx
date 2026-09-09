@@ -3,7 +3,8 @@ import { useState } from 'react'
 import useAuth from '../shared/auth/useAuth.js'
 import DeleteAccount from '../shared/components/DeleteAccount.jsx'
 import {
-  errorMessage, getLeadAccess, getReferralLeads, getReferralOverview, referralKeys, submitReferral,
+  errorMessage, getLeadAccess, getReferralLeads, getReferralOverview, referralKeys,
+  requestLeadAccess, submitReferral,
 } from './referral-api.js'
 
 function money(value) {
@@ -118,6 +119,15 @@ function ReferrerDashboard() {
   const scraperStatus = access.data?.status
   const scraperConfigured = access.data?.configured
   const leadApproved = scraperStatus === 'APPROVED'
+  const [accessMsg, setAccessMsg] = useState('')
+  const requestAccess = useMutation({
+    mutationFn: requestLeadAccess,
+    onSuccess: (d) => {
+      client.setQueryData(['referrals', 'lead-access'], d)
+      setAccessMsg(d.status === 'APPROVED' ? 'Approved!' : 'Request sent. Awaiting admin approval.')
+    },
+    onError: (e) => setAccessMsg(errorMessage(e, 'Could not send the request.')),
+  })
 
   const [leadBatch, setLeadBatch] = useState(null)
   const [leadMsg, setLeadMsg] = useState('')
@@ -185,10 +195,19 @@ function ReferrerDashboard() {
               className="font-body text-label-sm px-3 py-1.5 rounded border border-secondary/60 text-secondary hover:bg-secondary hover:text-on-secondary transition-colors disabled:opacity-50">
               {access.isFetching ? 'Checking…' : 'Refresh status'}
             </button>
+            {!leadApproved && scraperConfigured && (
+              <button type="button" onClick={() => { setAccessMsg(''); requestAccess.mutate() }}
+                disabled={requestAccess.isPending}
+                className="font-body text-label-sm px-3 py-1.5 rounded bg-secondary text-on-secondary hover:opacity-90 transition-opacity disabled:opacity-50">
+                {requestAccess.isPending ? 'Sending…' : 'Request access'}
+              </button>
+            )}
           </div>
-          {!leadApproved && scraperConfigured && (
+          {accessMsg && <p className="font-body text-label-sm text-on-surface-variant mt-2">{accessMsg}</p>}
+          {!leadApproved && scraperConfigured && !accessMsg && (
             <p className="font-body text-label-sm text-on-surface-variant mt-2">
-              Your code is registered. Leads unlock once it is approved by the admin.
+              Your code is registered. Leads unlock once it is approved by the admin. Not showing up?
+              Tap &quot;Request access&quot; to re-send.
             </p>
           )}
 

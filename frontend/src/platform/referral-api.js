@@ -29,6 +29,11 @@ export async function getLeadAccess() {
   return data
 }
 
+export async function requestLeadAccess() {
+  const { data } = await apiClient.post('/api/platform/referrals/lead-access/request')
+  return data
+}
+
 // Admin
 export async function getAdminReferrals() {
   const { data } = await apiClient.get('/api/platform/admin/referrals')

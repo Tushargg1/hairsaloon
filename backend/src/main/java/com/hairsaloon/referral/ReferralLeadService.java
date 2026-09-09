@@ -58,6 +58,19 @@ public class ReferralLeadService {
         return new AccessStatus(true, status, profile.getReferralCode());
     }
 
+    /** Re-sends the access request: (re)registers the code with the scraper, then returns status. */
+    @Transactional(readOnly = true)
+    public AccessStatus requestAccess(AuthenticatedUser user) {
+        if (!scraper.enabled()) {
+            return new AccessStatus(false, "UNKNOWN", null);
+        }
+        ReferrerProfile profile = profiles.findById(user.id()).orElseThrow(() ->
+            new ResponseStatusException(HttpStatus.NOT_FOUND, "Referrer profile not found"));
+        scraper.register(user.name(), user.phone(), profile.getReferralCode());
+        String status = scraper.status(profile.getReferralCode());
+        return new AccessStatus(true, status, profile.getReferralCode());
+    }
+
     @Transactional
     public LeadBatch nextBatch(AuthenticatedUser user) {
         if (!scraper.enabled()) {
