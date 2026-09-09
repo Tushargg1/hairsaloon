@@ -30,8 +30,10 @@ function LeadCard({ lead, onStatus }) {
       <div className="flex flex-wrap gap-x-4 gap-y-1">
         {lead.mapsUrl && <a href={lead.mapsUrl} target="_blank" rel="noreferrer"
           className="font-body text-label-sm text-secondary underline">Google Maps</a>}
-        {lead.website && <a href={lead.website} target="_blank" rel="noreferrer"
-          className="font-body text-label-sm text-secondary underline break-all">Website</a>}
+        {lead.website
+          ? <a href={lead.website} target="_blank" rel="noreferrer"
+              className="font-body text-label-sm text-secondary underline break-all">Website</a>
+          : <span className="font-body text-label-sm text-on-surface-variant">Website: NA</span>}
       </div>
       <p className="font-body text-label-sm text-on-surface-variant">
         {phoneUsable ? lead.salonPhone : 'No phone listed'}
