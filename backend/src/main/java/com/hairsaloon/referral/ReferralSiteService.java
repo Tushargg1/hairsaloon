@@ -109,11 +109,15 @@ public class ReferralSiteService {
         return lead;
     }
 
-    /** Slugify the salon name into a valid, unique subdomain. */
+    /**
+     * Slugify the salon name into a valid, unique subdomain. The DB enforces
+     * {@code [a-z0-9][a-z0-9-]{1,28}[a-z0-9]} (3-30 chars, no leading/trailing hyphen),
+     * so we normalize, pad short names, trim to length, and strip stray hyphens.
+     */
     private String uniqueSubdomain(String name) {
         String base = (name == null ? "" : name).toLowerCase(Locale.ROOT)
             .replaceAll("[^a-z0-9]+", "-").replaceAll("(^-+)|(-+$)", "");
-        if (base.length() < 3) base = "salon-" + base;
+        if (base.length() < 3) base = ("salon-" + base).replaceAll("-+$", "");
         if (base.length() > 26) base = base.substring(0, 26).replaceAll("-+$", "");
         String candidate = base;
         int suffix = 2;
