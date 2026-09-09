@@ -28,6 +28,7 @@ public class ReferralSiteService {
     private static final String DEFAULT_TIMEZONE = "Asia/Kolkata";
 
     private final ReferralLeadRepository leads;
+    private final ReferralSubmissionRepository submissions;
     private final ReferrerProfileRepository profiles;
     private final SalonRepository salons;
     private final AuthService authService;
@@ -35,11 +36,14 @@ public class ReferralSiteService {
     private final TenantProperties tenantProperties;
     private final com.hairsaloon.tenantdata.GoogleProfileService googleProfile;
 
-    public ReferralSiteService(ReferralLeadRepository leads, ReferrerProfileRepository profiles,
+    public ReferralSiteService(ReferralLeadRepository leads,
+                               ReferralSubmissionRepository submissions,
+                               ReferrerProfileRepository profiles,
                                SalonRepository salons, AuthService authService,
                                TenantResolver tenantResolver, TenantProperties tenantProperties,
                                com.hairsaloon.tenantdata.GoogleProfileService googleProfile) {
         this.leads = leads;
+        this.submissions = submissions;
         this.profiles = profiles;
         this.salons = salons;
         this.authService = authService;
@@ -64,14 +68,24 @@ public class ReferralSiteService {
             new ResponseStatusException(HttpStatus.NOT_FOUND, "Referrer profile not found"));
         String code = profile.getReferralCode();
 
+        // Older lead rows store details on the linked submission rather than the lead
+        // itself, so fall back to it for name/phone/address/maps.
+        ReferralSubmission sub = lead.getSubmissionId() == null ? null
+            : submissions.findById(lead.getSubmissionId()).orElse(null);
+        String leadName = firstNonBlank(lead.getSalonName(), sub == null ? null : sub.getSalonName());
+        String leadAddress = firstNonBlank(lead.getSalonLocation(),
+            sub == null ? null : sub.getSalonAddress());
+        String leadPhone = firstNonBlank(lead.getSalonPhone(), sub == null ? null : sub.getSalonPhone());
+        String mapsUrl = firstNonBlank(lead.getSalonMapsUrl(), sub == null ? null : sub.getMapsUrl());
+
         // Pull the real business details from the lead's Google Maps link first, so the
         // salon name, address, phone and public URL mirror the actual business. Best
         // effort: if Google is off or the fetch fails, fall back to the lead snapshot.
-        var place = googleProfile.fetchPlaceQuietly(lead.getSalonMapsUrl());
-        String name = firstNonBlank(place == null ? null : place.name(), lead.getSalonName(), "Salon");
+        var place = googleProfile.fetchPlaceQuietly(mapsUrl);
+        String name = firstNonBlank(place == null ? null : place.name(), leadName, "Salon");
         String address = firstNonBlank(place == null ? null : place.address(),
-            lead.getSalonLocation(), "Address on file");
-        String phone = firstNonBlank(place == null ? null : place.phone(), lead.getSalonPhone());
+            leadAddress, "Address on file");
+        String phone = firstNonBlank(place == null ? null : place.phone(), leadPhone);
 
         String subdomain = uniqueSubdomain(name);
         String email = uniqueEmail(code);
@@ -80,7 +94,7 @@ public class ReferralSiteService {
         long ownerId = authService.provisionSiteOwner(name, placeholderPhone(code), email, password);
 
         Salon salon = Salon.trial(ownerId, subdomain, name, address, firstWord(address),
-            phone, lead.getSalonMapsUrl(), DEFAULT_TIMEZONE);
+            phone, mapsUrl, DEFAULT_TIMEZONE);
         Long salonId = salons.saveAndFlush(salon).getId();
 
         if (place != null) {
