@@ -159,7 +159,7 @@ public class Salon {
     public static Salon trial(Long ownerId, String subdomain, String name, String address,
                               String city, String phone, String mapsUrl, String timezone) {
         Salon salon = new Salon(ownerId, subdomain, name, null, address, city, phone, null,
-            null, timezone);
+            "/default-salon-avatar.svg", timezone);
         salon.status = SalonStatus.ACTIVE;
         salon.trial = true;
         salon.mapsUrl = mapsUrl;

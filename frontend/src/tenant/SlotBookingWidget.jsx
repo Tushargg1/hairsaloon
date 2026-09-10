@@ -96,6 +96,22 @@ export default function SlotBookingWidget({ selectedIds, onToggleService, salonN
     if (firstFree) setStartAt(firstFree.start)
   }, [startAt, timeSlots])
 
+  // If the current day has no times (e.g. viewed after closing), skip forward to
+  // the next day that has openings, up to a week out, so the board is never empty.
+  const daysSkippedRef = useRef(0)
+  useEffect(() => {
+    if (availability.isLoading || !availability.data) return
+    if (timeSlots.some((entry) => entry.free.length)) {
+      daysSkippedRef.current = 0
+      return
+    }
+    if (daysSkippedRef.current >= 7) return
+    daysSkippedRef.current += 1
+    setDay((current) => shiftDay(current, 1))
+    setStartAt('')
+    setStaffId('any')
+  }, [availability.isLoading, availability.data, timeSlots])
+
   const freeBarbers = timeSlots.find((entry) => entry.start === startAt)?.free || []
   const chosen = staffId === 'any'
     ? freeBarbers[0]
