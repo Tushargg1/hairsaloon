@@ -19,6 +19,30 @@ function waNumber(phone) {
   return d.length === 10 ? `91${d}` : d
 }
 
+// Outreach scripts, written to sound like a real person. {salon} and {link} are
+// filled in per lead. Use them in order; space out the follow-ups (hours, a day,
+// 2-3 days) and stop after three unanswered.
+const WA_TEMPLATES = [
+  { key: 'intro', label: '1. First hello',
+    text: 'Hi! Do you take appointments? Wanted to ask about your services and prices 🙂' },
+  { key: 'observation', label: '2. The compliment + hook',
+    text: 'Hi! Came across your salon and honestly your work looks amazing 🔥 Went through your Google profile too — the reviews are genuinely great.\n\nOne thing I noticed though: even with reviews this good, you\'re not showing up as high on Google search as you should be. So people search, but don\'t always find you.' },
+  { key: 'offer', label: '3. The offer + link',
+    text: 'We help salons like yours turn those great reviews into more visibility and more bookings.\n\nI actually built a personalised website for {salon} so you can see what\'s possible 👇\n{link}\n\nIf you like it, I can connect you with our tech team — completely free, no charges. Would you be open to that? 💈' },
+  { key: 'hook', label: 'Follow-up A · the hook',
+    text: 'Actually, let me just show you what I meant 👇\n{link}\n\nBuilt this sample page for {salon} so you can see how it could look online. Take a look whenever you get a sec 🙂' },
+  { key: 'nudge', label: 'Follow-up B · soft nudge',
+    text: 'No pressure at all 🙏 Just wanted to make sure you saw the page I made for you — {link}\n\nIf it\'s something you\'d like, I can connect you with our team for free. If not, no worries!' },
+  { key: 'closer', label: 'Follow-up C · the closer',
+    text: 'Hey, I\'ll leave this here 🙂 If you ever want more customers finding you on Google, the offer stands — completely free. Just reply "interested" anytime 💈' },
+]
+
+function fillTemplate(text, salon, link) {
+  return text
+    .replaceAll('{salon}', salon || 'your salon')
+    .replaceAll('{link}', link || '(create the site first to get the link)')
+}
+
 function LeadCard({ lead, onStatus, onCreateSite, onDeleteSite, site, siteBusy, sitePassword }) {
   const phoneUsable = lead.salonPhone && lead.salonPhone !== 'N/A'
   const wa = phoneUsable ? waNumber(lead.salonPhone) : ''
@@ -54,6 +78,20 @@ function LeadCard({ lead, onStatus, onCreateSite, onDeleteSite, site, siteBusy, 
             className="font-body text-label-sm px-3 py-1.5 rounded bg-[#25D366] text-white font-semibold hover:opacity-90 transition-opacity">
             WhatsApp
           </a>
+        )}
+        {phoneUsable && (
+          <select value="" aria-label="Send a WhatsApp script"
+            onChange={(e) => {
+              const tpl = WA_TEMPLATES.find((t) => t.key === e.target.value)
+              e.target.value = ''
+              if (!tpl) return
+              const msg = encodeURIComponent(fillTemplate(tpl.text, lead.salonName, siteInfo?.url))
+              window.open(`https://wa.me/${wa}?text=${msg}`, '_blank', 'noopener')
+            }}
+            className="font-body text-label-sm rounded border border-[#25D366]/50 bg-transparent px-2 py-1.5 text-[#1a9c4c]">
+            <option value="">Send script…</option>
+            {WA_TEMPLATES.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}
+          </select>
         )}
         <select value={lead.contactStatus || 'NEW'}
           onChange={(e) => onStatus(lead.leadId, e.target.value)}
