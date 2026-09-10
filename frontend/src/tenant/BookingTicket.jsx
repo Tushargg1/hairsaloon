@@ -16,8 +16,8 @@ export default function BookingTicket({ salonName, services, staffName, dateLabe
           <span className="ticket-value">{services || '—'}</span>
         </div>
         <div className="ticket-row">
-          <span className="ticket-label">Barber</span>
-          <span className="ticket-value">{staffName || 'Any barber'}</span>
+          <span className="ticket-label">Stylist</span>
+          <span className="ticket-value">{staffName || 'Any team member'}</span>
         </div>
         <div className="ticket-row">
           <span className="ticket-label">Date</span>

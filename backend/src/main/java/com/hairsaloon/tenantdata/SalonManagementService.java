@@ -73,13 +73,18 @@ public class SalonManagementService {
                 salonId, s.name(), s.minutes(), new BigDecimal(s.price()), s.category()));
             serviceIds.add(saved.getId());
         }
-        List<String> staffNames = List.of("Aisha", "Rohan", "Priya");
-        for (String staffName : staffNames) {
-            SalonStaff member = staff.save(new SalonStaff(salonId, staffName, null, null));
+        record Member(String name, String character) {}
+        List<Member> team = List.of(
+            new Member("Aisha", "female-red"),
+            new Member("Rohan", "male-blue"),
+            new Member("Priya", "female-purple"));
+        for (Member m : team) {
+            SalonStaff member = staff.save(new SalonStaff(salonId, m.name(), null, m.character()));
             long staffId = member.getId();
-            // Mon–Sat, 10:00–19:00.
+            // Open every day 10:00–19:00 (day 0=Sun … 6=Sat) so a preview always
+            // shows free slots whatever day the visitor lands on.
             List<StaffWorkingHour> weekHours = new ArrayList<>();
-            for (int day = 1; day <= 6; day++) {
+            for (int day = 0; day <= 6; day++) {
                 weekHours.add(new StaffWorkingHour(salonId, staffId, day,
                     LocalTime.of(10, 0), LocalTime.of(19, 0)));
             }

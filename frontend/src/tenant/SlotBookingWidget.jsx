@@ -254,15 +254,15 @@ export default function SlotBookingWidget({ selectedIds, onToggleService, salonN
               </div>
 
               <div className="booking-roster">
-                <div className="booking-staff-list" role="group" aria-label="Barber">
+                <div className="booking-staff-list" role="group" aria-label="Team member">
                   {!startAt ? (
-                    <span className="booking-note">Pick a time to see free barbers.</span>
+                    <span className="booking-note">Pick a time to see available team members.</span>
                   ) : (
                     <>
                       <button type="button"
                         className={`booking-staff-name gold-gradient-text ${staffId === 'any' ? 'is-selected' : ''}`}
                         aria-pressed={staffId === 'any'} onClick={() => setStaffId('any')}>
-                        Any Barber
+                        Any Team Member
                       </button>
                       {freeBarbers.map((option) => (
                         <button key={option.staffId} type="button"

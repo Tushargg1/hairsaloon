@@ -30,7 +30,7 @@ export default function SalonTeam() {
             ) : staffQuery.isError ? (
               <p className="booking-note is-error">{errorMessage(staffQuery.error)}</p>
             ) : !staff.length ? (
-              <p className="booking-note">Our barbers will be listed here soon.</p>
+              <p className="booking-note">Our team will be listed here soon.</p>
             ) : (
               staff.map((member) => (
                 <article className="review-plate-item flex-row items-center gap-4" key={member.id}>
@@ -44,7 +44,7 @@ export default function SalonTeam() {
                     <span className="font-display text-sm" style={{ color: '#C8B084', letterSpacing: '0.1em' }}>
                       {member.name}
                     </span>
-                    <span className="review-plate-item-date">Barber</span>
+                    <span className="review-plate-item-date">Stylist</span>
                   </span>
                 </article>
               ))
