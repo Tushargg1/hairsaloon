@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import useAuth from '../shared/auth/useAuth.js'
 import DeleteAccount from '../shared/components/DeleteAccount.jsx'
+import PageLoader from '../shared/components/PageLoader.jsx'
 import {
   createLeadSite, deleteLeadSite, errorMessage, getLeadAccess, getMyLeads, getReferralLeads,
   getReferralOverview, recordScriptSent, referralKeys, requestLeadAccess, setLeadStatus, submitReferral,
@@ -363,7 +364,7 @@ function ReferrerDashboard() {
     onSettled: () => setSiteBusyId(null),
   })
 
-  if (isLoading) return <p className="font-body text-on-surface-variant">Loading…</p>
+  if (isLoading) return <PageLoader />
 
   const { referralCode, approved, perReferralAmount, totalPaid, totalPending, history = [] } = data || {}
   // Trial-site owner password = referral code padded to 8+ chars (matches backend).
@@ -660,8 +661,11 @@ function ReferrerDashboard() {
 }
 
 export default function ReferEarn() {
-  const { user } = useAuth()
+  const { user, loading } = useAuth()
   const isReferrer = user?.role === 'REFERRER'
+
+  // Avoid flashing the logged-out form before the session resolves.
+  if (loading) return <PageLoader />
 
   if (isReferrer) {
     return (

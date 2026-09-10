@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import BackendStatusBanner from './shared/components/BackendStatusBanner.jsx'
+import PageLoader from './shared/components/PageLoader.jsx'
 import RequireRole from './shared/auth/RequireRole.jsx'
 import { isPlatformHost } from './platform/platform-config.js'
 import PlatformLayout from './platform/PlatformLayout.jsx'
@@ -27,7 +28,7 @@ import AdminReferrals from './platform/AdminReferrals.jsx'
 import TenantRoutes from './tenant/TenantRoutes.jsx'
 
 function PlatformRoutes() {
-  const loadingFallback = <main className="state-page" aria-live="polite">Checking access…</main>
+  const loadingFallback = <PageLoader />
   return (
     <Routes>
       <Route element={<PlatformLayout />}>

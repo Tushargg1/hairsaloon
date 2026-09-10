@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import ManagementLoginPage from '../shared/auth/ManagementLoginPage.jsx'
+import PageLoader from '../shared/components/PageLoader.jsx'
 import RequireRole from '../shared/auth/RequireRole.jsx'
 import BookingFlow from './BookingFlow.jsx'
 import CustomerBookings from './CustomerBookings.jsx'
@@ -20,7 +21,7 @@ import TenantLayout from './TenantLayout.jsx'
 import TenantLoginPage from './TenantLoginPage.jsx'
 
 export default function TenantRoutes() {
-  const loadingFallback = <main className="state-page" aria-live="polite">Checking salon access…</main>
+  const loadingFallback = <PageLoader />
   return (
     <Routes>
       <Route element={<TenantLayout />}>

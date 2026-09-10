@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import AdminNav from './AdminNav.jsx'
+import PageLoader from '../shared/components/PageLoader.jsx'
 import {
   errorMessage, getAdminLeads, getAdminReferrals, getAdminReferrers, markReferralPaid, referralKeys,
   rejectReferral, setReferrerApproval, setReferrerHold, setReferrerSiteLimit, verifyReferral,
@@ -210,7 +211,7 @@ export default function AdminReferrals() {
       )}
 
       {tab === 'referrers' && (
-        referrers.isLoading ? <p className="font-body text-on-surface-variant">Loading…</p>
+        referrers.isLoading ? <PageLoader />
         : referrers.isError ? (
           <div className="glass-panel rounded-xl p-6 text-center">
             <p className="text-error mb-3">{errorMessage(referrers.error)}</p>
@@ -280,7 +281,7 @@ export default function AdminReferrals() {
       )}
 
       {tab === 'submissions' && (
-        submissions.isLoading ? <p className="font-body text-on-surface-variant">Loading…</p>
+        submissions.isLoading ? <PageLoader />
         : (submissions.data || []).length === 0 ? (
           <p className="font-body text-on-surface-variant">No referrals submitted yet.</p>
         ) : (
@@ -297,7 +298,7 @@ export default function AdminReferrals() {
       )}
 
       {tab === 'leads' && (
-        adminLeads.isLoading ? <p className="font-body text-on-surface-variant">Loading…</p>
+        adminLeads.isLoading ? <PageLoader />
         : (adminLeads.data || []).length === 0 ? (
           <p className="font-body text-on-surface-variant">No leads have been delivered yet.</p>
         ) : (
