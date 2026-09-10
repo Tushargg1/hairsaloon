@@ -3,6 +3,8 @@ package com.hairsaloon.referral;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
@@ -70,6 +72,11 @@ class AdminReferralController {
         service.setReferrerHold(userId, Boolean.TRUE.equals(request.onHold()), request.reason());
     }
 
+    @PostMapping("/referrers/{userId}/site-limit")
+    void siteLimit(@PathVariable long userId, @Valid @RequestBody SiteLimitRequest request) {
+        service.setReferrerSiteLimit(userId, request.limit());
+    }
+
     @JsonIgnoreProperties(ignoreUnknown = false)
     record AmountRequest(@NotNull @DecimalMin("0.00") BigDecimal amount) {}
 
@@ -82,4 +89,7 @@ class AdminReferralController {
 
     @JsonIgnoreProperties(ignoreUnknown = false)
     record HoldRequest(@NotNull Boolean onHold, @Size(max = 255) String reason) {}
+
+    @JsonIgnoreProperties(ignoreUnknown = false)
+    record SiteLimitRequest(@NotNull @Min(0) @Max(100000) Integer limit) {}
 }

@@ -55,6 +55,7 @@ public class ReferralService {
                 p != null ? p.getPerReferralAmount() : BigDecimal.ZERO.setScale(2),
                 p != null && p.isOnHold(),
                 p != null ? p.getHoldReason() : null,
+                p != null ? p.getSiteLimit() : 50,
                 paid, pending, thisMonth, successful, processing, declined,
                 mine.stream().map(AdminSubmissionView::of).toList());
         }).toList();
@@ -203,6 +204,15 @@ public class ReferralService {
         profiles.save(profile);
     }
 
+    /** Admin raises (or lowers) how many active trial sites this referrer may hold. */
+    @Transactional
+    public void setReferrerSiteLimit(long referrerUserId, int limit) {
+        ReferrerProfile profile = profiles.findById(referrerUserId).orElseThrow(() ->
+            new ResponseStatusException(HttpStatus.NOT_FOUND, "Referrer profile not found"));
+        profile.setSiteLimit(limit);
+        profiles.save(profile);
+    }
+
     private ReferralSubmission require(long id) {
         return submissions.findById(id).orElseThrow(() ->
             new ResponseStatusException(HttpStatus.NOT_FOUND, "Referral not found"));
@@ -226,7 +236,7 @@ public class ReferralService {
 
     public record ReferrerView(Long userId, String name, String phone, String email,
                                String referralCode, boolean approved, BigDecimal perReferralAmount,
-                               boolean onHold, String holdReason,
+                               boolean onHold, String holdReason, int siteLimit,
                                BigDecimal totalPaid, BigDecimal totalPending, BigDecimal paidThisMonth,
                                long successful, long processing, long declined,
                                List<AdminSubmissionView> referrals) {}

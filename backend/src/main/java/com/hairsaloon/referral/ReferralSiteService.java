@@ -22,8 +22,6 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 public class ReferralSiteService {
 
-    /** Active trial/live sites a single referrer may hold at once. */
-    private static final int MAX_SITES = 50;
     private static final String EMAIL_DOMAIN = "@groomit.in";
     private static final String DEFAULT_TIMEZONE = "Asia/Kolkata";
 
@@ -62,13 +60,14 @@ public class ReferralSiteService {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                 "A site already exists for this lead.");
         }
-        if (leads.countByReferrerIdAndCreatedSalonIdNotNull(user.id()) >= MAX_SITES) {
-            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS,
-                "You have reached the limit of " + MAX_SITES + " trial sites. "
-                    + "Delete an unused site to create a new one.");
-        }
         ReferrerProfile profile = profiles.findById(user.id()).orElseThrow(() ->
             new ResponseStatusException(HttpStatus.NOT_FOUND, "Referrer profile not found"));
+        int limit = profile.getSiteLimit();
+        if (leads.countByReferrerIdAndCreatedSalonIdNotNull(user.id()) >= limit) {
+            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS,
+                "You have reached the limit of " + limit + " trial sites. "
+                    + "Delete an unused site to create a new one.");
+        }
         String code = profile.getReferralCode();
 
         // Older lead rows store details on the linked submission rather than the lead

@@ -32,6 +32,9 @@ public class ReferrerProfile {
     @Column(name = "hold_reason", length = 255)
     private String holdReason;
 
+    @Column(name = "site_limit", nullable = false, columnDefinition = "integer default 50")
+    private int siteLimit = 50;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -63,11 +66,16 @@ public class ReferrerProfile {
         this.holdReason = null;
     }
 
+    public void setSiteLimit(int limit) {
+        this.siteLimit = Math.max(0, limit);
+    }
+
     public Long getUserId() { return userId; }
     public String getReferralCode() { return referralCode; }
     public boolean isApproved() { return approved; }
     public BigDecimal getPerReferralAmount() { return perReferralAmount; }
     public boolean isOnHold() { return onHold; }
     public String getHoldReason() { return holdReason; }
+    public int getSiteLimit() { return siteLimit; }
     public Instant getCreatedAt() { return createdAt; }
 }

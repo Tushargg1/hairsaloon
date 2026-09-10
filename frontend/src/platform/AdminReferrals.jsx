@@ -3,7 +3,7 @@ import { useState } from 'react'
 import AdminNav from './AdminNav.jsx'
 import {
   errorMessage, getAdminLeads, getAdminReferrals, getAdminReferrers, markReferralPaid, referralKeys,
-  rejectReferral, setReferrerApproval, setReferrerHold, verifyReferral,
+  rejectReferral, setReferrerApproval, setReferrerHold, setReferrerSiteLimit, verifyReferral,
 } from './referral-api.js'
 
 function money(v) { return `₹${Number(v || 0).toFixed(2)}` }
@@ -57,6 +57,7 @@ export default function AdminReferrals() {
   const [tab, setTab] = useState('referrers')
   const [amounts, setAmounts] = useState({})
   const [rates, setRates] = useState({})
+  const [limits, setLimits] = useState({})
   const [feedback, setFeedback] = useState('')
 
   const referrers = useQuery({ queryKey: referralKeys.adminReferrers, queryFn: getAdminReferrers })
@@ -82,6 +83,9 @@ export default function AdminReferrals() {
   const hold = useMutation({
     mutationFn: ({ userId, onHold }) => setReferrerHold(userId, onHold, null),
     onSuccess: () => { setFeedback('Referrer status updated.'); invalidate() }, onError: fail })
+  const siteLimit = useMutation({
+    mutationFn: ({ userId, limit }) => setReferrerSiteLimit(userId, limit),
+    onSuccess: () => { setFeedback('Trial-site limit updated.'); invalidate() }, onError: fail })
 
   return (
     <main className="max-w-[1280px] mx-auto px-4 py-12">
@@ -129,6 +133,7 @@ export default function AdminReferrals() {
                         ? <span className="text-emerald-400">Approved</span>
                         : <span className="text-amber-400">Not approved</span>}
                       {' · '}Rate {money(ref.perReferralAmount)}
+                      {' · '}Site limit {ref.siteLimit ?? 50}
                       {ref.onHold && <span className="text-error"> · ON HOLD</span>}
                     </p>
                     {ref.onHold && ref.holdReason && (
@@ -147,6 +152,14 @@ export default function AdminReferrals() {
                     <button className="button button-secondary" disabled={hold.isPending}
                       onClick={() => hold.mutate({ userId: ref.userId, onHold: !ref.onHold })}>
                       {ref.onHold ? 'Reactivate' : 'Hold'}
+                    </button>
+                    <input type="number" min="0" step="1" placeholder="Site limit"
+                      value={limits[ref.userId] ?? (ref.siteLimit ?? 50)}
+                      onChange={(e) => setLimits((s) => ({ ...s, [ref.userId]: e.target.value }))}
+                      className="w-24 rounded border border-outline-variant/40 bg-transparent px-3 py-1.5 font-body" />
+                    <button className="button button-secondary" disabled={siteLimit.isPending}
+                      onClick={() => siteLimit.mutate({ userId: ref.userId, limit: Number(limits[ref.userId] ?? ref.siteLimit ?? 50) })}>
+                      Set limit
                     </button>
                   </div>
                 </div>

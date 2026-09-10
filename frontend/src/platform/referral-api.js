@@ -98,3 +98,9 @@ export async function setReferrerHold(userId, onHold, reason) {
     `/api/platform/admin/referrals/referrers/${userId}/hold`, { onHold, reason })
   return data
 }
+
+export async function setReferrerSiteLimit(userId, limit) {
+  const { data } = await apiClient.post(
+    `/api/platform/admin/referrals/referrers/${userId}/site-limit`, { limit })
+  return data
+}
