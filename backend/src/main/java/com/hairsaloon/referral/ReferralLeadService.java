@@ -35,6 +35,7 @@ public class ReferralLeadService {
     private final ReferralLeadsProperties properties;
     private final com.hairsaloon.tenant.SalonRepository salons;
     private final com.hairsaloon.tenant.TenantProperties tenantProperties;
+    private final com.hairsaloon.auth.UserRepository users;
 
     public ReferralLeadService(ReferrerProfileRepository profiles,
                                ReferralSubmissionRepository submissions,
@@ -42,7 +43,8 @@ public class ReferralLeadService {
                                ScraperLeadsClient scraper,
                                ReferralLeadsProperties properties,
                                com.hairsaloon.tenant.SalonRepository salons,
-                               com.hairsaloon.tenant.TenantProperties tenantProperties) {
+                               com.hairsaloon.tenant.TenantProperties tenantProperties,
+                               com.hairsaloon.auth.UserRepository users) {
         this.profiles = profiles;
         this.submissions = submissions;
         this.leads = leads;
@@ -50,6 +52,7 @@ public class ReferralLeadService {
         this.properties = properties;
         this.salons = salons;
         this.tenantProperties = tenantProperties;
+        this.users = users;
     }
 
     /** Live access status from the scraper for this referrer's code, and whether leads are configured. */
@@ -166,7 +169,7 @@ public class ReferralLeadService {
             leadRow.setSalonDetails(lead.name(), phone, lead.website(), lead.mapsUrl(), lead.address());
             leads.save(leadRow);
             delivered.add(new LeadView(leadRow.getId(), saved.getId(), lead.name(), phone,
-                lead.address(), lead.mapsUrl(), lead.website(), "NEW", null));
+                lead.address(), lead.mapsUrl(), lead.website(), "NEW", null, null, null));
         }
 
         long takenAfter = leads.countByReferrerIdAndAssignedOn(user.id(), today);
@@ -213,17 +216,39 @@ public class ReferralLeadService {
             .map(ReferralLead::getSubmissionId).filter(java.util.Objects::nonNull).toList());
         Map<Long, ReferralSubmission> byId = subs.stream()
             .collect(Collectors.toMap(ReferralSubmission::getId, s -> s, (a, b) -> a));
-        return rows.stream().map(l -> toView(l, byId.get(l.getSubmissionId()))).toList();
+        var siteIds = rows.stream().map(ReferralLead::getCreatedSalonId)
+            .filter(java.util.Objects::nonNull).toList();
+        Map<Long, com.hairsaloon.tenant.Salon> siteById = salons.findAllById(siteIds).stream()
+            .collect(Collectors.toMap(com.hairsaloon.tenant.Salon::getId, s -> s, (a, b) -> a));
+        var ownerIds = siteById.values().stream()
+            .map(com.hairsaloon.tenant.Salon::getOwnerId).filter(java.util.Objects::nonNull).toList();
+        Map<Long, String> emailByOwnerId = users.findAllById(ownerIds).stream()
+            .filter(u -> u.getEmail() != null)
+            .collect(Collectors.toMap(com.hairsaloon.auth.User::getId,
+                com.hairsaloon.auth.User::getEmail, (a, b) -> a));
+        return rows.stream().map(l -> {
+            com.hairsaloon.tenant.Salon site = l.getCreatedSalonId() == null ? null
+                : siteById.get(l.getCreatedSalonId());
+            String url = site == null ? null
+                : "https://" + site.getSubdomain() + "." + tenantProperties.getBaseDomain();
+            String loginEmail = site == null ? null : emailByOwnerId.get(site.getOwnerId());
+            return toView(l, byId.get(l.getSubmissionId()), url, loginEmail);
+        }).toList();
     }
 
     /** Uses the lead's snapshot, falling back to the linked submission for older rows. */
     private static LeadView toView(ReferralLead l, ReferralSubmission sub) {
+        return toView(l, sub, null, null);
+    }
+
+    private static LeadView toView(ReferralLead l, ReferralSubmission sub, String siteUrl,
+                                   String siteLoginEmail) {
         String name = firstNonBlank(l.getSalonName(), sub == null ? null : sub.getSalonName());
         String phone = firstNonBlank(l.getSalonPhone(), sub == null ? null : sub.getSalonPhone());
         String location = firstNonBlank(l.getSalonLocation(), sub == null ? null : sub.getSalonAddress());
         String maps = firstNonBlank(l.getSalonMapsUrl(), sub == null ? null : sub.getMapsUrl());
         return new LeadView(l.getId(), l.getSubmissionId(), name, phone, location, maps,
-            l.getSalonWebsite(), l.getContactStatus(), l.getCreatedSalonId());
+            l.getSalonWebsite(), l.getContactStatus(), l.getCreatedSalonId(), siteUrl, siteLoginEmail);
     }
 
     private static String firstNonBlank(String a, String b) {
@@ -302,7 +327,7 @@ public class ReferralLeadService {
 
     public record LeadView(Long leadId, Long referralId, String salonName, String salonPhone,
                            String salonAddress, String mapsUrl, String website, String contactStatus,
-                           Long createdSalonId) {}
+                           Long createdSalonId, String siteUrl, String siteLoginEmail) {}
 
     public record AdminLeadView(Long referrerId, String salonName, String salonPhone,
                                 String salonAddress, String mapsUrl, String website,

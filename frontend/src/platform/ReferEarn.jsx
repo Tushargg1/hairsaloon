@@ -19,11 +19,16 @@ function waNumber(phone) {
   return d.length === 10 ? `91${d}` : d
 }
 
-function LeadCard({ lead, onStatus, onCreateSite, onDeleteSite, site, siteBusy }) {
+function LeadCard({ lead, onStatus, onCreateSite, onDeleteSite, site, siteBusy, sitePassword }) {
   const phoneUsable = lead.salonPhone && lead.salonPhone !== 'N/A'
   const wa = phoneUsable ? waNumber(lead.salonPhone) : ''
   const waText = encodeURIComponent(`Hi, is this ${lead.salonName || 'your salon'}?`)
   const hasSite = Boolean(lead.createdSalonId) || Boolean(site)
+  // After a page refresh the fresh `site` state is gone, so fall back to the
+  // persisted fields the backend returns on the lead.
+  const siteInfo = site || (lead.siteUrl
+    ? { url: lead.siteUrl, loginEmail: lead.siteLoginEmail, loginPassword: sitePassword }
+    : null)
   return (
     <div className="rounded-lg border border-outline-variant/20 p-4 flex flex-col gap-1.5">
       <p className="font-body text-on-surface font-semibold">{lead.salonName || 'Unknown salon'}</p>
@@ -64,13 +69,13 @@ function LeadCard({ lead, onStatus, onCreateSite, onDeleteSite, site, siteBusy }
               {siteBusy ? 'Creating…' : 'Create site'}
             </button>}
       </div>
-      {site && (
+      {siteInfo && (
         <div className="mt-2 rounded border border-secondary/40 bg-secondary/5 p-3 flex flex-col gap-0.5">
           <p className="font-body text-label-sm text-on-surface">Trial site created. Share these:</p>
-          <a href={site.url} target="_blank" rel="noreferrer"
-            className="font-body text-label-sm text-secondary underline break-all">{site.url}</a>
-          <p className="font-body text-label-sm text-on-surface-variant">Login: {site.loginEmail}</p>
-          <p className="font-body text-label-sm text-on-surface-variant">Password: {site.loginPassword}</p>
+          <a href={siteInfo.url} target="_blank" rel="noreferrer"
+            className="font-body text-label-sm text-secondary underline break-all">{siteInfo.url}</a>
+          {siteInfo.loginEmail && <p className="font-body text-label-sm text-on-surface-variant">Login: {siteInfo.loginEmail}</p>}
+          {siteInfo.loginPassword && <p className="font-body text-label-sm text-on-surface-variant">Password: {siteInfo.loginPassword}</p>}
         </div>
       )}
     </div>
@@ -247,6 +252,8 @@ function ReferrerDashboard() {
   if (isLoading) return <p className="font-body text-on-surface-variant">Loading…</p>
 
   const { referralCode, approved, perReferralAmount, totalPaid, totalPending, history = [] } = data || {}
+  // Trial-site owner password = referral code padded to 8+ chars (matches backend).
+  const sitePasswordValue = (referralCode || '').padEnd(8, '0')
   const successful = history.filter((r) => r.status === 'PAID').length
   const processing = history.filter((r) => r.status === 'VERIFYING' || r.status === 'PENDING').length
   const declined = history.filter((r) => r.status === 'REJECTED').length
@@ -349,7 +356,8 @@ function ReferrerDashboard() {
                   onStatus={(leadId, status) => leadStatus.mutate({ leadId, status })}
                   onCreateSite={(leadId) => createSite.mutate(leadId)}
                   onDeleteSite={(leadId) => deleteSite.mutate(leadId)}
-                  site={sites[l.leadId]} siteBusy={siteBusyId === l.leadId} />
+                  site={sites[l.leadId]} siteBusy={siteBusyId === l.leadId}
+                  sitePassword={sitePasswordValue} />
               ))}
             </div>
           )}
