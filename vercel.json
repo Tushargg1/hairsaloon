@@ -7,7 +7,10 @@
       "includeFiles": "frontend/dist/index.html"
     }
   },
-  "rewrites": [
-    { "source": "/((?!api/|assets/|.*\\.[a-zA-Z0-9]+$).*)", "destination": "/api/og" }
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/api/$1" },
+    { "src": "/assets/(.*)", "dest": "/assets/$1" },
+    { "src": "/(.*\\.[a-zA-Z0-9]+)", "dest": "/$1" },
+    { "src": "/(.*)", "dest": "/api/og" }
   ]
 }
