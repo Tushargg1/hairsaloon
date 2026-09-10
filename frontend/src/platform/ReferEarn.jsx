@@ -5,7 +5,7 @@ import useAuth from '../shared/auth/useAuth.js'
 import DeleteAccount from '../shared/components/DeleteAccount.jsx'
 import {
   createLeadSite, deleteLeadSite, errorMessage, getLeadAccess, getMyLeads, getReferralLeads,
-  getReferralOverview, recordFollowup, referralKeys, requestLeadAccess, setLeadStatus, submitReferral,
+  getReferralOverview, recordScriptSent, referralKeys, requestLeadAccess, setLeadStatus, submitReferral,
 } from './referral-api.js'
 
 const LEAD_STATUSES = ['NEW', 'CONTACTED', 'INTERESTED', 'NOT_INTERESTED', 'ONBOARDED']
@@ -28,17 +28,17 @@ function waNumber(phone) {
 // filled in per lead. Use them in order; space out the follow-ups (hours, a day,
 // 2-3 days) and stop after three unanswered.
 const WA_TEMPLATES = [
-  { key: 'intro', label: '1. First hello',
+  { key: 'intro', label: '1. First hello', short: 'Message 1', kind: 'first',
     text: 'Hi! Do you take appointments? Wanted to ask about your services and prices.' },
-  { key: 'observation', label: '2. The compliment + hook',
+  { key: 'observation', label: '2. The compliment + hook', short: 'Message 2', kind: 'first',
     text: 'Actually I came across your salon and your work looks great. Went through your Google profile too and the reviews are genuinely impressive.\n\nOne thing I noticed though: even with reviews this good, you are not showing up as high on Google search as you should be. So people search, but do not always find you.\n\nThere is a simple way to fix this that has helped salons retain 90%+ of their customers and get up to 2x more new leads. I could help you with the same, want me to explain?' },
-  { key: 'offer', label: '3. The offer + link',
+  { key: 'offer', label: '3. The offer + link', short: 'Message 3', kind: 'first',
     text: 'We help salons like yours turn those great reviews into more visibility and more bookings.\n\nI actually built a personalised website for {salon} so you can see what is possible:\n{link}\n\nIf you like it, I can connect you with our tech team, completely free with no charges. Would you be open to that?' },
-  { key: 'hook', label: 'Follow-up A - the hook',
+  { key: 'hook', label: 'Follow-up A - the hook', short: 'Follow-up A', kind: 'followup',
     text: 'Let me just show you what I meant:\n{link}\n\nBuilt this sample page for {salon} so you can see how it could look online. Take a look whenever you get a moment.\n\nIf you like it, I can connect you with our technical team to personalise and update it fully for you. It will not cost you anything. Should I go ahead?' },
-  { key: 'nudge', label: 'Follow-up B - soft nudge',
+  { key: 'nudge', label: 'Follow-up B - soft nudge', short: 'Follow-up B', kind: 'followup',
     text: 'No pressure at all. Just wanted to make sure you saw the page I made for you: {link}\n\nIf it is something you would like, I can connect you with our team for free. If not, no worries.' },
-  { key: 'closer', label: 'Follow-up C - the closer',
+  { key: 'closer', label: 'Follow-up C - the closer', short: 'Follow-up C', kind: 'followup',
     text: 'I will leave this here. If you ever want more customers finding you on Google, the offer stands, completely free. Just reply "interested" anytime.' },
 ]
 
@@ -51,27 +51,12 @@ function fillTemplate(text, salon, link) {
 // The three follow-ups (A, B, C) map to these template keys, in order.
 const FOLLOWUP_KEYS = ['hook', 'nudge', 'closer']
 const FOLLOWUP_LABELS = ['Follow-up A', 'Follow-up B', 'Follow-up C']
-const HOUR = 60 * 60 * 1000
 
-// Given a CONTACTED lead, work out whether the next follow-up is due and which one.
-// A: 14h after contactedAt. B: 12h after A sent. C: 12h after B sent. Stops after C.
-function followupState(lead) {
-  const stage = lead.followupStage || 0
-  if (stage >= 3) return { done: true }
-  const waitHours = stage === 0 ? 14 : 12
-  const since = stage === 0 ? lead.contactedAt : lead.lastFollowupAt
-  if (!since) return { stage, dueAt: null, due: false }
-  const dueAt = new Date(since).getTime() + waitHours * HOUR
-  return { stage, dueAt, due: Date.now() >= dueAt }
-}
-
-
-
-function LeadCard({ lead, onStatus, onCreateSite, onDeleteSite, site, siteBusy, sitePassword }) {
+function LeadCard({ lead, onStatus, onCreateSite, onDeleteSite, site, siteBusy, sitePassword, onSend }) {
   const phoneUsable = lead.salonPhone && lead.salonPhone !== 'N/A'
   const wa = phoneUsable ? waNumber(lead.salonPhone) : ''
-  const waText = encodeURIComponent(
-    `Hi! Do you take appointments? Wanted to ask about your services and prices.`)
+  const introTpl = WA_TEMPLATES[0]
+  const waText = encodeURIComponent(introTpl.text)
   const hasSite = Boolean(lead.createdSalonId) || Boolean(site)
   // After a page refresh the fresh `site` state is gone, so fall back to the
   // persisted fields the backend returns on the lead.
@@ -99,6 +84,7 @@ function LeadCard({ lead, onStatus, onCreateSite, onDeleteSite, site, siteBusy, 
       <div className="flex flex-wrap items-center gap-2 mt-1">
         {phoneUsable && (
           <a href={`https://wa.me/${wa}?text=${waText}`} target="_blank" rel="noreferrer"
+            onClick={() => onSend(lead.leadId, introTpl.short, 'first')}
             className="font-body text-label-sm px-3 py-1.5 rounded bg-[#25D366] text-white font-semibold hover:opacity-90 transition-opacity">
             WhatsApp
           </a>
@@ -111,6 +97,7 @@ function LeadCard({ lead, onStatus, onCreateSite, onDeleteSite, site, siteBusy, 
               if (!tpl) return
               const msg = encodeURIComponent(fillTemplate(tpl.text, lead.salonName, siteInfo?.url))
               window.open(`https://wa.me/${wa}?text=${msg}`, '_blank', 'noopener')
+              onSend(lead.leadId, tpl.short, tpl.kind)
             }}
             className="font-body text-label-sm rounded border border-[#25D366]/50 bg-transparent px-2 py-1.5 text-[#1a9c4c]">
             <option value="">Send script…</option>
@@ -132,9 +119,10 @@ function LeadCard({ lead, onStatus, onCreateSite, onDeleteSite, site, siteBusy, 
               {siteBusy ? 'Creating…' : 'Create site'}
             </button>}
       </div>
-      {(lead.followupStage > 0 || lead.contactStatus === 'CONTACTED') && (
+      {(lead.lastScript || lead.followupStage > 0 || lead.contactStatus === 'CONTACTED') && (
         <p className="font-body text-label-sm text-on-surface-variant">
           Follow-ups sent: {lead.followupStage || 0}/3
+          {lead.lastScript ? ` · Last sent: ${lead.lastScript}` : ''}
         </p>
       )}
       {siteInfo && (
@@ -305,15 +293,20 @@ function ReferrerDashboard() {
           : l)))
     },
   })
-  const followup = useMutation({
-    mutationFn: (leadId) => recordFollowup(leadId),
-    onMutate: (leadId) => {
+  const sendScript = useMutation({
+    mutationFn: ({ leadId, label, kind }) => recordScriptSent(leadId, label, kind),
+    onMutate: ({ leadId, label, kind }) => {
       client.setQueryData(['referrals', 'my-leads'], (old) =>
         (old || []).map((l) => {
           if (l.leadId !== leadId) return l
-          const stage = Math.min(3, (l.followupStage || 0) + 1)
-          return { ...l, followupStage: stage, lastFollowupAt: new Date().toISOString(),
-            contactStatus: stage >= 3 ? 'NOT_INTERESTED' : l.contactStatus }
+          const now = new Date().toISOString()
+          if (kind === 'followup') {
+            const stage = Math.min(3, (l.followupStage || 0) + 1)
+            return { ...l, followupStage: stage, lastFollowupAt: now, lastScript: label,
+              contactStatus: stage >= 3 ? 'NOT_INTERESTED' : l.contactStatus }
+          }
+          return { ...l, contactStatus: 'CONTACTED', lastScript: label, lastFollowupAt: now,
+            contactedAt: l.contactedAt || now }
         }))
     },
   })
@@ -360,18 +353,16 @@ function ReferrerDashboard() {
     </div>
   )
 
-  // Contacted leads whose next follow-up is due now (for the Follow-ups tab).
-  const dueFollowups = (myLeads.data || [])
-    .filter((l) => l.contactStatus === 'CONTACTED')
-    .map((l) => ({ lead: l, state: followupState(l) }))
-    .filter((x) => x.state.due && !x.state.done)
+  // Contacted leads still in the follow-up sequence (not interested/onboarded excluded).
+  const followupLeads = (myLeads.data || [])
+    .filter((l) => l.contactStatus === 'CONTACTED' && (l.followupStage || 0) < 3)
 
   const TABS = [
     { key: 'overview', label: 'Overview' },
     { key: 'leads', label: 'Get leads' },
     { key: 'refer', label: 'Refer a salon' },
     { key: 'referrals', label: 'My referrals' },
-    { key: 'followups', label: `Follow-ups${dueFollowups.length ? ` (${dueFollowups.length})` : ''}` },
+    { key: 'followups', label: `Follow-ups${followupLeads.length ? ` (${followupLeads.length})` : ''}` },
     { key: 'account', label: 'Account' },
   ]
 
@@ -471,6 +462,7 @@ function ReferrerDashboard() {
                   onStatus={(leadId, status) => leadStatus.mutate({ leadId, status })}
                   onCreateSite={(leadId) => createSite.mutate(leadId)}
                   onDeleteSite={(leadId) => deleteSite.mutate(leadId)}
+                  onSend={(leadId, label, kind) => sendScript.mutate({ leadId, label, kind })}
                   site={sites[l.leadId]} siteBusy={siteBusyId === l.leadId}
                   sitePassword={sitePasswordValue} />
               ))}
@@ -583,37 +575,49 @@ function ReferrerDashboard() {
 
       {tab === 'followups' && (
         <div className="glass-panel rounded-xl p-6">
-          <h2 className="font-display text-headline-sm text-on-surface mb-1">Follow-ups due</h2>
+          <h2 className="font-display text-headline-sm text-on-surface mb-1">Follow-ups</h2>
           <p className="font-body text-label-md text-on-surface-variant mb-4">
-            Contacted leads ready for their next message. Sending opens WhatsApp and moves
-            them to the next stage. After Follow-up C a lead is marked not interested.
+            Contacted leads and their follow-up sequence. Send A, then B, then C — each opens
+            WhatsApp with the message ready. If the next one is not sent within 24 hours the
+            lead is marked not interested. After C the lead is closed as not interested.
           </p>
-          {dueFollowups.length === 0 ? (
-            <p className="font-body text-on-surface-variant">Nothing due right now.</p>
+          {followupLeads.length === 0 ? (
+            <p className="font-body text-on-surface-variant">No contacted leads to follow up yet.</p>
           ) : (
-            <div className="flex flex-col gap-2">
-              {dueFollowups.map(({ lead, state }) => {
+            <div className="flex flex-col gap-3">
+              {followupLeads.map((lead) => {
                 const phoneUsable = lead.salonPhone && lead.salonPhone !== 'N/A'
                 const wa = phoneUsable ? waNumber(lead.salonPhone) : ''
-                const tpl = WA_TEMPLATES.find((t) => t.key === FOLLOWUP_KEYS[state.stage])
+                const stage = lead.followupStage || 0
                 return (
-                  <div key={lead.leadId} className="rounded-lg border border-outline-variant/20 p-3 flex flex-wrap items-center justify-between gap-2">
-                    <div>
-                      <p className="font-body text-on-surface font-medium">{lead.salonName || 'Unknown salon'}</p>
-                      <p className="font-body text-label-sm text-on-surface-variant">
-                        {FOLLOWUP_LABELS[state.stage]} · {lead.followupStage || 0}/3 sent
-                        {phoneUsable ? '' : ' · no phone'}
-                      </p>
+                  <div key={lead.leadId} className="rounded-lg border border-outline-variant/20 p-3">
+                    <p className="font-body text-on-surface font-medium">{lead.salonName || 'Unknown salon'}</p>
+                    <p className="font-body text-label-sm text-on-surface-variant mb-2">
+                      {stage}/3 sent{lead.lastScript ? ` · Last: ${lead.lastScript}` : ''}
+                      {phoneUsable ? '' : ' · no phone'}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {FOLLOWUP_KEYS.map((key, i) => {
+                        const tpl = WA_TEMPLATES.find((t) => t.key === key)
+                        const done = i < stage
+                        const isNext = i === stage
+                        return (
+                          <button key={key} type="button"
+                            disabled={!phoneUsable || done || !isNext}
+                            onClick={() => {
+                              const msg = encodeURIComponent(fillTemplate(tpl.text, lead.salonName, lead.siteUrl))
+                              window.open(`https://wa.me/${wa}?text=${msg}`, '_blank', 'noopener')
+                              sendScript.mutate({ leadId: lead.leadId, label: tpl.short, kind: 'followup' })
+                            }}
+                            className={`font-body text-label-sm px-4 py-2 rounded font-semibold transition-opacity ${
+                              done ? 'bg-outline-variant/30 text-on-surface-variant'
+                                : isNext ? 'bg-[#25D366] text-white hover:opacity-90'
+                                  : 'bg-outline-variant/20 text-on-surface-variant opacity-50'}`}>
+                            {done ? `${FOLLOWUP_LABELS[i]} sent` : `Send ${FOLLOWUP_LABELS[i]}`}
+                          </button>
+                        )
+                      })}
                     </div>
-                    <button type="button" disabled={!phoneUsable}
-                      onClick={() => {
-                        const msg = encodeURIComponent(fillTemplate(tpl.text, lead.salonName, lead.siteUrl))
-                        window.open(`https://wa.me/${wa}?text=${msg}`, '_blank', 'noopener')
-                        followup.mutate(lead.leadId)
-                      }}
-                      className="font-body text-label-sm px-4 py-2 rounded bg-[#25D366] text-white font-semibold hover:opacity-90 transition-opacity disabled:opacity-50">
-                      Send {FOLLOWUP_LABELS[state.stage]}
-                    </button>
                   </div>
                 )
               })}

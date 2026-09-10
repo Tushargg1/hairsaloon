@@ -64,11 +64,16 @@ class ReferralController {
     @JsonIgnoreProperties(ignoreUnknown = false)
     record LeadStatusRequest(@NotBlank @Size(max = 24) String status) {}
 
-    /** Records that the referrer sent the next follow-up (A/B/C) for this lead. */
+    /** Records that the referrer sent a WhatsApp script (first message or a follow-up). */
     @PostMapping("/leads/{leadId}/followup")
-    void recordFollowup(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable long leadId) {
-        leadService.recordFollowup(user.id(), leadId);
+    void recordScriptSent(@AuthenticationPrincipal AuthenticatedUser user,
+                          @PathVariable long leadId, @Valid @RequestBody ScriptSentRequest request) {
+        leadService.recordScriptSent(user.id(), leadId, request.label(), request.kind());
     }
+
+    @JsonIgnoreProperties(ignoreUnknown = false)
+    record ScriptSentRequest(@NotBlank @Size(max = 40) String label,
+                             @NotBlank @Size(max = 16) String kind) {}
 
     /** Creates a live trial preview site for this lead's salon and returns the login. */
     @PostMapping("/leads/{leadId}/site")

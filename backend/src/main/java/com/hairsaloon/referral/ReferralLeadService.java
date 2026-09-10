@@ -171,7 +171,7 @@ public class ReferralLeadService {
             leads.save(leadRow);
             delivered.add(new LeadView(leadRow.getId(), saved.getId(), lead.name(), phone,
                 lead.address(), lead.mapsUrl(), lead.website(), "NEW", null, null, null,
-                null, 0, null));
+                null, 0, null, null));
         }
 
         long takenAfter = leads.countByReferrerIdAndAssignedOn(user.id(), today);
@@ -180,9 +180,21 @@ public class ReferralLeadService {
     }
 
     /** All leads ever delivered to this referrer, newest first, with contact status. */
-    @Transactional(readOnly = true)
+    @Transactional
     public List<LeadView> myLeads(long referrerId) {
         List<ReferralLead> rows = leads.findByReferrerIdOrderByAssignedOnDesc(referrerId);
+        // A contacted lead that goes 24h without the next message is auto not-interested.
+        Instant cutoff = Instant.now().minus(java.time.Duration.ofHours(24));
+        List<ReferralLead> expired = new ArrayList<>();
+        for (ReferralLead l : rows) {
+            if (!"CONTACTED".equals(l.getContactStatus())) continue;
+            Instant last = l.getLastFollowupAt() != null ? l.getLastFollowupAt() : l.getContactedAt();
+            if (last != null && last.isBefore(cutoff)) {
+                l.setContactStatus("NOT_INTERESTED");
+                expired.add(l);
+            }
+        }
+        if (!expired.isEmpty()) leads.saveAll(expired);
         return toViews(rows);
     }
 
@@ -253,7 +265,8 @@ public class ReferralLeadService {
             l.getSalonWebsite(), l.getContactStatus(), l.getCreatedSalonId(), siteUrl, siteLoginEmail,
             l.getContactedAt() == null ? null : l.getContactedAt().toString(),
             l.getFollowupStage(),
-            l.getLastFollowupAt() == null ? null : l.getLastFollowupAt().toString());
+            l.getLastFollowupAt() == null ? null : l.getLastFollowupAt().toString(),
+            l.getLastScript());
     }
 
     private static String firstNonBlank(String a, String b) {
@@ -274,16 +287,26 @@ public class ReferralLeadService {
     }
 
     /**
-     * Records that the referrer sent the next follow-up for this lead: advances the
-     * stage (1=A, 2=B, 3=C) and stamps the time. After the third (C) the lead is
-     * marked NOT_INTERESTED so the sequence stops.
+     * Records that the referrer sent a WhatsApp script to this lead.
+     *  - {@code kind = "first"} (message 1 / the WhatsApp button): marks the lead
+     *    CONTACTED and starts the 24h clock.
+     *  - {@code kind = "followup"} (A/B/C): advances the follow-up stage; after C the
+     *    lead is marked NOT_INTERESTED so the sequence stops.
+     * Either way, the label and time of the last message are stored for display.
      */
     @Transactional
-    public void recordFollowup(long referrerId, long leadId) {
+    public void recordScriptSent(long referrerId, long leadId, String label, String kind) {
         ReferralLead lead = ownedLead(referrerId, leadId);
-        lead.recordFollowupSent(Instant.now());
-        if (lead.getFollowupStage() >= 3) {
-            lead.setContactStatus("NOT_INTERESTED");
+        Instant now = Instant.now();
+        lead.setLastScript(label);
+        if ("followup".equals(kind)) {
+            lead.recordFollowupSent(now);
+            if (lead.getFollowupStage() >= 3) lead.setContactStatus("NOT_INTERESTED");
+        } else {
+            // First contact message: begin the CONTACTED lifecycle (no stage advance).
+            if (lead.getContactedAt() == null) lead.markContacted(now);
+            lead.setContactStatus("CONTACTED");
+            lead.stampLastMessage(now);
         }
         leads.save(lead);
     }
@@ -357,7 +380,8 @@ public class ReferralLeadService {
     public record LeadView(Long leadId, Long referralId, String salonName, String salonPhone,
                            String salonAddress, String mapsUrl, String website, String contactStatus,
                            Long createdSalonId, String siteUrl, String siteLoginEmail,
-                           String contactedAt, int followupStage, String lastFollowupAt) {}
+                           String contactedAt, int followupStage, String lastFollowupAt,
+                           String lastScript) {}
 
     public record AdminLeadView(Long referrerId, String salonName, String salonPhone,
                                 String salonAddress, String mapsUrl, String website,

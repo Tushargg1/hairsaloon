@@ -62,6 +62,9 @@ public class ReferralLead {
     @Column(name = "last_followup_at")
     private Instant lastFollowupAt;
 
+    @Column(name = "last_script", length = 40)
+    private String lastScript;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -101,6 +104,15 @@ public class ReferralLead {
         this.lastFollowupAt = when;
     }
 
+    /** Stamps the time of the last message without advancing the follow-up stage. */
+    public void stampLastMessage(Instant when) {
+        this.lastFollowupAt = when;
+    }
+
+    public void setLastScript(String label) {
+        this.lastScript = label;
+    }
+
     public Long getId() { return id; }
     public Long getReferrerId() { return referrerId; }
     public String getExternalId() { return externalId; }
@@ -116,4 +128,5 @@ public class ReferralLead {
     public Instant getContactedAt() { return contactedAt; }
     public int getFollowupStage() { return followupStage; }
     public Instant getLastFollowupAt() { return lastFollowupAt; }
+    public String getLastScript() { return lastScript; }
 }
