@@ -252,6 +252,7 @@ function ReferrerDashboard() {
   })
 
   const [leadMsg, setLeadMsg] = useState('')
+  const [leadSearch, setLeadSearch] = useState('')
   const myLeads = useQuery({ queryKey: ['referrals', 'my-leads'], queryFn: getMyLeads })
   const getLeads = useMutation({
     mutationFn: getReferralLeads,
@@ -397,8 +398,18 @@ function ReferrerDashboard() {
 
           {leadMsg && <p className="font-body text-label-md text-on-surface-variant mt-3">{leadMsg}</p>}
           {(myLeads.data || []).length > 0 && (
-            <div className="flex flex-col gap-2 mt-4">
+            <input type="search" inputMode="tel" value={leadSearch}
+              onChange={(e) => setLeadSearch(e.target.value)}
+              placeholder="Search by phone number"
+              className="font-body text-label-md rounded border border-outline-variant/40 bg-transparent px-3 py-2 mt-4 w-full sm:max-w-xs" />
+          )}
+          {(myLeads.data || []).length > 0 && (
+            <div className="flex flex-col gap-2 mt-3">
               {[...myLeads.data]
+                .filter((l) => {
+                  const q = leadSearch.replace(/\D/g, '')
+                  return !q || String(l.salonPhone || '').replace(/\D/g, '').includes(q)
+                })
                 .sort((a, b) =>
                   (LEAD_STATUS_ORDER[a.contactStatus] ?? 99) - (LEAD_STATUS_ORDER[b.contactStatus] ?? 99))
                 .map((l) => (
