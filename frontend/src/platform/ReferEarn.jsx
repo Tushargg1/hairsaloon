@@ -56,15 +56,24 @@ function fillTemplate(text, salon, link) {
 const FOLLOWUP_KEYS = ['hook', 'nudge', 'closer']
 const FOLLOWUP_LABELS = ['Follow-up A', 'Follow-up B', 'Follow-up C']
 
-// The full 6-message sequence in send order (by template short label).
-const SEQUENCE = ['Message 1', 'Message 2', 'Message 3', 'Follow-up A', 'Follow-up B', 'Follow-up C']
+const byShort = (short) => WA_TEMPLATES.find((t) => t.short === short)
 
-// Given the last script label sent, return the template for the next one (or null at the end).
-function nextTemplate(lastScript) {
-  const idx = lastScript ? SEQUENCE.indexOf(lastScript) : -1
-  const nextShort = SEQUENCE[idx + 1]
-  if (!nextShort) return null
-  return WA_TEMPLATES.find((t) => t.short === nextShort)
+// Work out the next message to send from the lead's last script and status.
+//  - nothing sent yet: New -> Message 1; already Contacted -> Message 2.
+//  - after Message 1 or 2 -> Follow-up A.
+//  - after Message 3 -> Follow-up B (skips A).
+//  - after Follow-up A -> B, after B -> C, after C -> done.
+function nextTemplate(lead) {
+  const last = lead.lastScript
+  if (!last) return byShort(lead.contactStatus === 'CONTACTED' ? 'Message 2' : 'Message 1')
+  switch (last) {
+    case 'Message 1': return byShort('Message 2')
+    case 'Message 2': return byShort('Message 3')
+    case 'Message 3': return byShort('Follow-up B') // skip A after the 3-message intro
+    case 'Follow-up A': return byShort('Follow-up B')
+    case 'Follow-up B': return byShort('Follow-up C')
+    default: return null // Follow-up C or unknown -> sequence complete
+  }
 }
 
 function LeadCard({ lead, onStatus, onCreateSite, onDeleteSite, site, siteBusy, sitePassword, onSend }) {
@@ -135,7 +144,7 @@ function LeadCard({ lead, onStatus, onCreateSite, onDeleteSite, site, siteBusy, 
             </button>}
       </div>
       {phoneUsable && (() => {
-        const next = nextTemplate(lead.lastScript)
+        const next = nextTemplate(lead)
         return (
           <div className="flex flex-wrap items-center gap-2 mt-1">
             <span className="font-body text-label-sm text-on-surface-variant">
