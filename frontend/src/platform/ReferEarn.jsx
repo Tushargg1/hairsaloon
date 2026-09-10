@@ -120,6 +120,13 @@ function LeadCard({ lead, onStatus, onCreateSite, onDeleteSite, site, siteBusy, 
             className="font-body text-label-sm text-secondary underline break-all">{siteInfo.url}</a>
           {siteInfo.loginEmail && <p className="font-body text-label-sm text-on-surface-variant">Login: {siteInfo.loginEmail}</p>}
           {siteInfo.loginPassword && <p className="font-body text-label-sm text-on-surface-variant">Password: {siteInfo.loginPassword}</p>}
+          {siteInfo.url && siteInfo.loginEmail && (
+            <a href={`${siteInfo.url}/manage/login?email=${encodeURIComponent(siteInfo.loginEmail)}&password=${encodeURIComponent(siteInfo.loginPassword || '')}`}
+              target="_blank" rel="noreferrer"
+              className="font-body text-label-sm mt-1.5 self-start px-3 py-1.5 rounded bg-secondary text-on-secondary hover:opacity-90 transition-opacity">
+              Login to site
+            </a>
+          )}
         </div>
       )}
     </div>

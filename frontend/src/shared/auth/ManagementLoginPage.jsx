@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { useRef } from 'react'
+import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { apiErrorMessage, retryAfterSeconds } from '../api/client.js'
 import { isPlatformHost, platformUrl, salonUrl } from '../../platform/platform-config.js'
 import useAuth from './useAuth.js'
@@ -35,9 +36,15 @@ export default function ManagementLoginPage() {
   const navigate = useNavigate()
   const platformHost = isPlatformHost()
   const requestedPath = location.state?.from?.pathname
-  const [form, setForm] = useState({ email: '', password: '' })
+  const [searchParams] = useSearchParams()
+  const [form, setForm] = useState({
+    email: searchParams.get('email') || '',
+    password: searchParams.get('password') || '',
+  })
   const [status, setStatus] = useState({ pending: false, error: '' })
   const [retryIn, setRetryIn] = useState(0)
+  // Prefill + auto-submit once when credentials arrive via the URL (trial-site login).
+  const autoTried = useRef(false)
 
   useEffect(() => {
     if (retryIn <= 0) return undefined
@@ -49,6 +56,26 @@ export default function ManagementLoginPage() {
   useEffect(() => {
     if (externalDestination(authenticatedDestination)) window.location.replace(authenticatedDestination)
   }, [authenticatedDestination])
+
+  // Auto-submit once when trial-site credentials arrive via the URL query.
+  useEffect(() => {
+    if (autoTried.current || user) return
+    const email = searchParams.get('email')
+    const password = searchParams.get('password')
+    if (!email || !password) return
+    autoTried.current = true
+    setStatus({ pending: true, error: '' })
+    privilegedLogin({ email: email.trim(), password })
+      .then((signedInUser) => {
+        const dest = destinationFor(signedInUser.role, platformHost, signedInUser.subdomain)
+        if (!dest) { setStatus({ pending: false, error: 'This account does not have management access.' }); return }
+        if (externalDestination(dest)) window.location.assign(dest)
+        else navigate(dest, { replace: true })
+      })
+      .catch((error) => setStatus({ pending: false,
+        error: apiErrorMessage(error, 'Unable to sign in with those details.') }))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   if (authenticatedDestination) {
     const destination = compatibleRequestedPath(user.role, requestedPath, platformHost)
@@ -65,7 +92,7 @@ export default function ManagementLoginPage() {
   }
 
   async function submit(event) {
-    event.preventDefault()
+    if (event) event.preventDefault()
     setStatus({ pending: true, error: '' })
     try {
       const signedInUser = await privilegedLogin({ email: form.email.trim(), password: form.password })
