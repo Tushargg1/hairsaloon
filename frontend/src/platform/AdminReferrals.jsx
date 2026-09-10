@@ -318,7 +318,10 @@ export default function AdminReferrals() {
               <tbody>
                 {adminLeads.data.map((l, i) => (
                   <tr key={i} className="border-t border-outline-variant/20 font-body text-label-sm">
-                    <td className="p-2 text-on-surface-variant">#{l.referrerId}</td>
+                    <td className="p-2 text-on-surface-variant">
+                      <span className="text-on-surface">{l.referrerName || `#${l.referrerId}`}</span>
+                      {l.referrerCode && <><br /><span className="text-secondary">{l.referrerCode}</span></>}
+                    </td>
                     <td className="p-2 text-on-surface">{l.salonName || 'Unknown'}</td>
                     <td className="p-2 text-on-surface-variant">{l.salonPhone && l.salonPhone !== 'N/A' ? l.salonPhone : '—'}</td>
                     <td className="p-2 text-on-surface-variant">{l.salonAddress || '—'}</td>
