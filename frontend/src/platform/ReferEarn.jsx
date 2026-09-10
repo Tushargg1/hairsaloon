@@ -22,7 +22,8 @@ function waNumber(phone) {
 function LeadCard({ lead, onStatus, onCreateSite, onDeleteSite, site, siteBusy, sitePassword }) {
   const phoneUsable = lead.salonPhone && lead.salonPhone !== 'N/A'
   const wa = phoneUsable ? waNumber(lead.salonPhone) : ''
-  const waText = encodeURIComponent(`Hi, is this ${lead.salonName || 'your salon'}?`)
+  const waText = encodeURIComponent(
+    `Hi! Do you take appointments? Wanted to ask about your services and prices.`)
   const hasSite = Boolean(lead.createdSalonId) || Boolean(site)
   // After a page refresh the fresh `site` state is gone, so fall back to the
   // persisted fields the backend returns on the lead.
