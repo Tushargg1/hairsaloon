@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import useAuth from '../shared/auth/useAuth.js'
 import DeleteAccount from '../shared/components/DeleteAccount.jsx'
 import {
@@ -215,7 +216,9 @@ function AuthForm() {
 function ReferrerDashboard() {
   const client = useQueryClient()
   const { data, isLoading } = useQuery({ queryKey: referralKeys.me, queryFn: getReferralOverview })
-  const [tab, setTab] = useState('overview')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tab = searchParams.get('tab') || 'overview'
+  const setTab = (next) => setSearchParams({ tab: next }, { replace: true })
   const [form, setForm] = useState({ salonName: '', salonPhone: '', mapsUrl: '', contactName: '', salonAddress: '' })
   const [error, setError] = useState('')
   const update = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
@@ -282,7 +285,8 @@ function ReferrerDashboard() {
     onSuccess: (_d, leadId) => {
       setSites((s) => { const n = { ...s }; delete n[leadId]; return n })
       client.setQueryData(['referrals', 'my-leads'], (old) =>
-        (old || []).map((l) => (l.leadId === leadId ? { ...l, createdSalonId: null } : l)))
+        (old || []).map((l) => (l.leadId === leadId
+          ? { ...l, createdSalonId: null, siteUrl: null, siteLoginEmail: null } : l)))
     },
     onError: (e) => setLeadMsg(errorMessage(e, 'Could not delete the site.')),
     onSettled: () => setSiteBusyId(null),
