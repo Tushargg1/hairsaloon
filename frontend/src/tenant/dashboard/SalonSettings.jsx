@@ -15,6 +15,13 @@ const imageUrl = (item) => (typeof item === 'string'
   ? item
   : item?.url || item?.mediaUrl || item?.imageUrl || item?.publicUrl || item?.photoUrl)
 
+// The API requires an absolute http(s) URL; anything else is sent as null so it
+// does not fail validation and block the rest of the form from saving.
+const absoluteUrl = (value) => {
+  const trimmed = String(value || '').trim()
+  return /^https?:\/\//i.test(trimmed) ? trimmed : null
+}
+
 const SOCIAL_FIELDS = [
   { name: 'instagramUrl', label: 'Instagram', placeholder: 'https://instagram.com/yoursalon' },
   { name: 'facebookUrl', label: 'Facebook', placeholder: 'https://facebook.com/yoursalon' },
@@ -104,7 +111,9 @@ export default function SalonSettings() {
       subdomain: form.subdomain.trim().toLowerCase() || null,
       // The API rejects blank strings for optional URLs, so clear them to null.
       ...Object.fromEntries(SOCIAL_FIELDS.map(({ name }) => [name, form[name].trim() || null])),
-      logoUrl: form.logoUrl.trim() || null,
+      // The API only accepts absolute http(s) logo URLs. A relative or stale path
+      // would fail validation and block saving unrelated fields, so drop it.
+      logoUrl: absoluteUrl(form.logoUrl),
       phone: form.phone.trim() || null,
       email: form.email.trim() || null,
       description: form.description.trim() || null,
@@ -144,6 +153,12 @@ export default function SalonSettings() {
               {form.logoUrl && <img className="logo-preview" src={form.logoUrl} alt="Current salon logo" />}
               <input id="settings-logo-file" type="file" accept={ACCEPTED_IMAGES.join(',')}
                 disabled={logoUpload.isPending} onChange={chooseLogoFile} />
+              {form.logoUrl && (
+                <button type="button" className="button button-secondary button-small"
+                  onClick={() => { setForm((current) => ({ ...current, logoUrl: '' })); setSaved(''); save.reset() }}>
+                  Remove
+                </button>
+              )}
             </span>
           </label>
         </div>
