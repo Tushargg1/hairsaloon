@@ -4,7 +4,8 @@ import AdminNav from './AdminNav.jsx'
 import PageLoader from '../shared/components/PageLoader.jsx'
 import {
   errorMessage, getAdminLeads, getAdminReferrals, getAdminReferrers, markReferralPaid, referralKeys,
-  rejectReferral, setReferrerApproval, setReferrerHold, setReferrerSiteLimit, verifyReferral,
+  adminSetLeadStatus, rejectReferral, setReferrerApproval, setReferrerHold, setReferrerSiteLimit,
+  verifyReferral,
 } from './referral-api.js'
 
 function money(v) { return `₹${Number(v || 0).toFixed(2)}` }
@@ -53,15 +54,26 @@ function ReferralCard({ r, amounts, setAmounts, verify, reject, paid }) {
   )
 }
 
+const LEAD_STATUS_OPTIONS = [
+  { key: 'NEW', label: 'New' },
+  { key: 'CONTACTED', label: 'Contacted' },
+  { key: 'INTERESTED', label: 'Interested' },
+  { key: 'NOT_INTERESTED', label: 'Not interested' },
+  { key: 'ONBOARDED', label: 'Onboarded' },
+  { key: 'NOT_ON_WHATSAPP', label: 'Not on WhatsApp' },
+  { key: 'NOT_PICKING_CALL', label: 'Not picking call' },
+]
 const LEAD_TABS = [
   { key: 'CONTACTED', label: 'Contacted' },
   { key: 'INTERESTED', label: 'Interested' },
   { key: 'NOT_INTERESTED', label: 'Not interested' },
   { key: 'ONBOARDED', label: 'Onboarded' },
+  { key: 'NOT_ON_WHATSAPP', label: 'Not on WhatsApp' },
+  { key: 'NOT_PICKING_CALL', label: 'Not picking call' },
 ]
 
 // Collapsible per-referrer lead list with a status sub-navbar. Hidden by default.
-function ReferrerLeads({ leads }) {
+function ReferrerLeads({ leads, onStatus }) {
   const [open, setOpen] = useState(false)
   const [status, setStatus] = useState('CONTACTED')
   const shown = leads.filter((l) => (l.contactStatus || 'NEW') === status)
@@ -96,11 +108,16 @@ function ReferrerLeads({ leads }) {
                 {l.salonPhone && l.salonPhone !== 'N/A' ? l.salonPhone : 'No phone'}
                 {l.salonAddress ? ` · ${l.salonAddress}` : ''}
               </p>
-              <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
                 {l.mapsUrl && <a href={l.mapsUrl} target="_blank" rel="noreferrer" className="text-secondary underline text-label-sm">Map</a>}
                 {l.siteUrl && <a href={l.siteUrl} target="_blank" rel="noreferrer"
                   className={`text-label-sm underline ${l.trialSite ? 'text-amber-400' : 'text-emerald-400'}`}>
                   {l.trialSite ? 'Trial site' : 'Live site'}</a>}
+                <select value={l.contactStatus || 'NEW'}
+                  onChange={(e) => onStatus(l.leadId, e.target.value)}
+                  className="font-body text-label-sm rounded border border-outline-variant/40 bg-transparent px-2 py-1">
+                  {LEAD_STATUS_OPTIONS.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
+                </select>
               </div>
             </div>
           ))}
@@ -145,6 +162,13 @@ export default function AdminReferrals() {
   const siteLimit = useMutation({
     mutationFn: ({ userId, limit }) => setReferrerSiteLimit(userId, limit),
     onSuccess: () => { setFeedback('Trial-site limit updated.'); invalidate() }, onError: fail })
+  const leadStatus = useMutation({
+    mutationFn: ({ leadId, status }) => adminSetLeadStatus(leadId, status),
+    onMutate: ({ leadId, status }) => {
+      client.setQueryData(['referrals', 'admin', 'leads'], (old) =>
+        (old || []).map((l) => (l.leadId === leadId ? { ...l, contactStatus: status } : l)))
+    },
+    onSuccess: () => setFeedback('Lead status updated.'), onError: fail })
 
   return (
     <main className="max-w-[1280px] mx-auto px-4 py-12">
@@ -273,7 +297,8 @@ export default function AdminReferrals() {
                   <Stat label="Declined" value={ref.declined} />
                 </div>
 
-                <ReferrerLeads leads={(adminLeads.data || []).filter((l) => l.referrerId === ref.userId)} />
+                <ReferrerLeads leads={(adminLeads.data || []).filter((l) => l.referrerId === ref.userId)}
+                  onStatus={(leadId, status) => leadStatus.mutate({ leadId, status })} />
               </div>
             ))}
           </div>
@@ -326,7 +351,13 @@ export default function AdminReferrals() {
                     <td className="p-2 text-on-surface">{l.salonName || 'Unknown'}</td>
                     <td className="p-2 text-on-surface-variant">{l.salonPhone && l.salonPhone !== 'N/A' ? l.salonPhone : '—'}</td>
                     <td className="p-2 text-on-surface-variant">{l.salonAddress || '—'}</td>
-                    <td className="p-2 text-secondary">{l.contactStatus}</td>
+                    <td className="p-2">
+                      <select value={l.contactStatus || 'NEW'}
+                        onChange={(e) => leadStatus.mutate({ leadId: l.leadId, status: e.target.value })}
+                        className="font-body text-label-sm rounded border border-outline-variant/40 bg-transparent px-2 py-1 text-secondary">
+                        {LEAD_STATUS_OPTIONS.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
+                      </select>
+                    </td>
                     <td className="p-2 text-on-surface-variant">{l.assignedOn}</td>
                     <td className="p-2">
                       {l.siteUrl

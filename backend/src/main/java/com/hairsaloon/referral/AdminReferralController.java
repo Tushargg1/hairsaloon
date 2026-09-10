@@ -77,6 +77,12 @@ class AdminReferralController {
         service.setReferrerSiteLimit(userId, request.limit());
     }
 
+    /** Admin overrides the contact status of a delivered lead. */
+    @PostMapping("/leads/{leadId}/status")
+    void leadStatus(@PathVariable long leadId, @Valid @RequestBody LeadStatusRequest request) {
+        leadService.adminSetLeadStatus(leadId, request.status());
+    }
+
     @JsonIgnoreProperties(ignoreUnknown = false)
     record AmountRequest(@NotNull @DecimalMin("0.00") BigDecimal amount) {}
 
@@ -92,4 +98,8 @@ class AdminReferralController {
 
     @JsonIgnoreProperties(ignoreUnknown = false)
     record SiteLimitRequest(@NotNull @Min(0) @Max(100000) Integer limit) {}
+
+    @JsonIgnoreProperties(ignoreUnknown = false)
+    record LeadStatusRequest(@jakarta.validation.constraints.NotBlank
+                             @Size(max = 24) String status) {}
 }

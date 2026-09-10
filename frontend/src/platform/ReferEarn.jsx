@@ -9,14 +9,17 @@ import {
   getReferralOverview, recordScriptSent, referralKeys, requestLeadAccess, setLeadStatus, submitReferral,
 } from './referral-api.js'
 
-const LEAD_STATUSES = ['NEW', 'CONTACTED', 'INTERESTED', 'NOT_INTERESTED', 'ONBOARDED']
+const LEAD_STATUSES = ['NEW', 'CONTACTED', 'INTERESTED', 'NOT_INTERESTED', 'ONBOARDED',
+  'NOT_ON_WHATSAPP', 'NOT_PICKING_CALL']
 // Sort order for the lead list: new first, onboarded last.
 const LEAD_STATUS_ORDER = {
-  NEW: 0, CONTACTED: 1, INTERESTED: 2, NOT_INTERESTED: 3, ONBOARDED: 4,
+  NEW: 0, CONTACTED: 1, INTERESTED: 2, NOT_ON_WHATSAPP: 3, NOT_PICKING_CALL: 4,
+  NOT_INTERESTED: 5, ONBOARDED: 6,
 }
 const LEAD_STATUS_LABEL = {
   NEW: 'New', CONTACTED: 'Contacted', INTERESTED: 'Interested',
   NOT_INTERESTED: 'Not interested', ONBOARDED: 'Onboarded',
+  NOT_ON_WHATSAPP: 'Not on WhatsApp', NOT_PICKING_CALL: 'Not picking call',
 }
 
 // Digits only; a bare 10-digit Indian number gets 91 prefixed for wa.me.

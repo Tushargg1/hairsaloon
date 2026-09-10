@@ -226,7 +226,7 @@ public class ReferralLeadService {
                 : siteById.get(l.getCreatedSalonId());
             String url = site == null ? null
                 : "https://" + site.getSubdomain() + "." + tenantProperties.getBaseDomain();
-            return new AdminLeadView(l.getReferrerId(), nameById.get(l.getReferrerId()),
+            return new AdminLeadView(l.getId(), l.getReferrerId(), nameById.get(l.getReferrerId()),
                 codeById.get(l.getReferrerId()), v.salonName(), v.salonPhone(),
                 v.salonAddress(), v.mapsUrl(), v.website(), v.contactStatus(),
                 l.getAssignedOn() == null ? null : l.getAssignedOn().toString(),
@@ -320,6 +320,15 @@ public class ReferralLeadService {
         leads.save(lead);
     }
 
+    /** Admin overrides a lead's contact status (no ownership check). */
+    @Transactional
+    public void adminSetLeadStatus(long leadId, String status) {
+        ReferralLead lead = leads.findById(leadId).orElseThrow(() ->
+            new ResponseStatusException(HttpStatus.NOT_FOUND, "Lead not found"));
+        lead.setContactStatus(status);
+        leads.save(lead);
+    }
+
     private ReferralLead ownedLead(long referrerId, long leadId) {
         ReferralLead lead = leads.findById(leadId).orElseThrow(() ->
             new ResponseStatusException(HttpStatus.NOT_FOUND, "Lead not found"));
@@ -392,7 +401,7 @@ public class ReferralLeadService {
                            String contactedAt, int followupStage, String lastFollowupAt,
                            String lastScript) {}
 
-    public record AdminLeadView(Long referrerId, String referrerName, String referrerCode,
+    public record AdminLeadView(Long leadId, Long referrerId, String referrerName, String referrerCode,
                                 String salonName, String salonPhone,
                                 String salonAddress, String mapsUrl, String website,
                                 String contactStatus, String assignedOn,
