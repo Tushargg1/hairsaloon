@@ -64,6 +64,12 @@ class ReferralController {
     @JsonIgnoreProperties(ignoreUnknown = false)
     record LeadStatusRequest(@NotBlank @Size(max = 24) String status) {}
 
+    /** Records that the referrer sent the next follow-up (A/B/C) for this lead. */
+    @PostMapping("/leads/{leadId}/followup")
+    void recordFollowup(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable long leadId) {
+        leadService.recordFollowup(user.id(), leadId);
+    }
+
     /** Creates a live trial preview site for this lead's salon and returns the login. */
     @PostMapping("/leads/{leadId}/site")
     ReferralSiteService.SiteView createSite(@AuthenticationPrincipal AuthenticatedUser user,

@@ -5,7 +5,7 @@ import useAuth from '../shared/auth/useAuth.js'
 import DeleteAccount from '../shared/components/DeleteAccount.jsx'
 import {
   createLeadSite, deleteLeadSite, errorMessage, getLeadAccess, getMyLeads, getReferralLeads,
-  getReferralOverview, referralKeys, requestLeadAccess, setLeadStatus, submitReferral,
+  getReferralOverview, recordFollowup, referralKeys, requestLeadAccess, setLeadStatus, submitReferral,
 } from './referral-api.js'
 
 const LEAD_STATUSES = ['NEW', 'CONTACTED', 'INTERESTED', 'NOT_INTERESTED', 'ONBOARDED']
@@ -47,6 +47,25 @@ function fillTemplate(text, salon, link) {
     .replaceAll('{salon}', salon || 'your salon')
     .replaceAll('{link}', link || '(create the site first to get the link)')
 }
+
+// The three follow-ups (A, B, C) map to these template keys, in order.
+const FOLLOWUP_KEYS = ['hook', 'nudge', 'closer']
+const FOLLOWUP_LABELS = ['Follow-up A', 'Follow-up B', 'Follow-up C']
+const HOUR = 60 * 60 * 1000
+
+// Given a CONTACTED lead, work out whether the next follow-up is due and which one.
+// A: 14h after contactedAt. B: 12h after A sent. C: 12h after B sent. Stops after C.
+function followupState(lead) {
+  const stage = lead.followupStage || 0
+  if (stage >= 3) return { done: true }
+  const waitHours = stage === 0 ? 14 : 12
+  const since = stage === 0 ? lead.contactedAt : lead.lastFollowupAt
+  if (!since) return { stage, dueAt: null, due: false }
+  const dueAt = new Date(since).getTime() + waitHours * HOUR
+  return { stage, dueAt, due: Date.now() >= dueAt }
+}
+
+
 
 function LeadCard({ lead, onStatus, onCreateSite, onDeleteSite, site, siteBusy, sitePassword }) {
   const phoneUsable = lead.salonPhone && lead.salonPhone !== 'N/A'
@@ -113,6 +132,11 @@ function LeadCard({ lead, onStatus, onCreateSite, onDeleteSite, site, siteBusy, 
               {siteBusy ? 'Creating…' : 'Create site'}
             </button>}
       </div>
+      {(lead.followupStage > 0 || lead.contactStatus === 'CONTACTED') && (
+        <p className="font-body text-label-sm text-on-surface-variant">
+          Follow-ups sent: {lead.followupStage || 0}/3
+        </p>
+      )}
       {siteInfo && (
         <div className="mt-2 rounded border border-secondary/40 bg-secondary/5 p-3 flex flex-col gap-0.5">
           <p className="font-body text-label-sm text-on-surface">Trial site created. Share these:</p>
@@ -274,7 +298,23 @@ function ReferrerDashboard() {
     mutationFn: ({ leadId, status }) => setLeadStatus(leadId, status),
     onMutate: ({ leadId, status }) => {
       client.setQueryData(['referrals', 'my-leads'], (old) =>
-        (old || []).map((l) => (l.leadId === leadId ? { ...l, contactStatus: status } : l)))
+        (old || []).map((l) => (l.leadId === leadId
+          ? { ...l, contactStatus: status,
+              contactedAt: status === 'CONTACTED' && !l.contactedAt
+                ? new Date().toISOString() : l.contactedAt }
+          : l)))
+    },
+  })
+  const followup = useMutation({
+    mutationFn: (leadId) => recordFollowup(leadId),
+    onMutate: (leadId) => {
+      client.setQueryData(['referrals', 'my-leads'], (old) =>
+        (old || []).map((l) => {
+          if (l.leadId !== leadId) return l
+          const stage = Math.min(3, (l.followupStage || 0) + 1)
+          return { ...l, followupStage: stage, lastFollowupAt: new Date().toISOString(),
+            contactStatus: stage >= 3 ? 'NOT_INTERESTED' : l.contactStatus }
+        }))
     },
   })
 
@@ -320,11 +360,18 @@ function ReferrerDashboard() {
     </div>
   )
 
+  // Contacted leads whose next follow-up is due now (for the Follow-ups tab).
+  const dueFollowups = (myLeads.data || [])
+    .filter((l) => l.contactStatus === 'CONTACTED')
+    .map((l) => ({ lead: l, state: followupState(l) }))
+    .filter((x) => x.state.due && !x.state.done)
+
   const TABS = [
     { key: 'overview', label: 'Overview' },
     { key: 'leads', label: 'Get leads' },
     { key: 'refer', label: 'Refer a salon' },
     { key: 'referrals', label: 'My referrals' },
+    { key: 'followups', label: `Follow-ups${dueFollowups.length ? ` (${dueFollowups.length})` : ''}` },
     { key: 'account', label: 'Account' },
   ]
 
@@ -532,6 +579,47 @@ function ReferrerDashboard() {
           })}
         </div>
       </div>
+      )}
+
+      {tab === 'followups' && (
+        <div className="glass-panel rounded-xl p-6">
+          <h2 className="font-display text-headline-sm text-on-surface mb-1">Follow-ups due</h2>
+          <p className="font-body text-label-md text-on-surface-variant mb-4">
+            Contacted leads ready for their next message. Sending opens WhatsApp and moves
+            them to the next stage. After Follow-up C a lead is marked not interested.
+          </p>
+          {dueFollowups.length === 0 ? (
+            <p className="font-body text-on-surface-variant">Nothing due right now.</p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {dueFollowups.map(({ lead, state }) => {
+                const phoneUsable = lead.salonPhone && lead.salonPhone !== 'N/A'
+                const wa = phoneUsable ? waNumber(lead.salonPhone) : ''
+                const tpl = WA_TEMPLATES.find((t) => t.key === FOLLOWUP_KEYS[state.stage])
+                return (
+                  <div key={lead.leadId} className="rounded-lg border border-outline-variant/20 p-3 flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <p className="font-body text-on-surface font-medium">{lead.salonName || 'Unknown salon'}</p>
+                      <p className="font-body text-label-sm text-on-surface-variant">
+                        {FOLLOWUP_LABELS[state.stage]} · {lead.followupStage || 0}/3 sent
+                        {phoneUsable ? '' : ' · no phone'}
+                      </p>
+                    </div>
+                    <button type="button" disabled={!phoneUsable}
+                      onClick={() => {
+                        const msg = encodeURIComponent(fillTemplate(tpl.text, lead.salonName, lead.siteUrl))
+                        window.open(`https://wa.me/${wa}?text=${msg}`, '_blank', 'noopener')
+                        followup.mutate(lead.leadId)
+                      }}
+                      className="font-body text-label-sm px-4 py-2 rounded bg-[#25D366] text-white font-semibold hover:opacity-90 transition-opacity disabled:opacity-50">
+                      Send {FOLLOWUP_LABELS[state.stage]}
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
       )}
 
       {tab === 'account' && (

@@ -1,6 +1,7 @@
 package com.hairsaloon.referral;
 
 import com.hairsaloon.auth.AuthenticatedUser;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -169,7 +170,8 @@ public class ReferralLeadService {
             leadRow.setSalonDetails(lead.name(), phone, lead.website(), lead.mapsUrl(), lead.address());
             leads.save(leadRow);
             delivered.add(new LeadView(leadRow.getId(), saved.getId(), lead.name(), phone,
-                lead.address(), lead.mapsUrl(), lead.website(), "NEW", null, null, null));
+                lead.address(), lead.mapsUrl(), lead.website(), "NEW", null, null, null,
+                null, 0, null));
         }
 
         long takenAfter = leads.countByReferrerIdAndAssignedOn(user.id(), today);
@@ -248,7 +250,10 @@ public class ReferralLeadService {
         String location = firstNonBlank(l.getSalonLocation(), sub == null ? null : sub.getSalonAddress());
         String maps = firstNonBlank(l.getSalonMapsUrl(), sub == null ? null : sub.getMapsUrl());
         return new LeadView(l.getId(), l.getSubmissionId(), name, phone, location, maps,
-            l.getSalonWebsite(), l.getContactStatus(), l.getCreatedSalonId(), siteUrl, siteLoginEmail);
+            l.getSalonWebsite(), l.getContactStatus(), l.getCreatedSalonId(), siteUrl, siteLoginEmail,
+            l.getContactedAt() == null ? null : l.getContactedAt().toString(),
+            l.getFollowupStage(),
+            l.getLastFollowupAt() == null ? null : l.getLastFollowupAt().toString());
     }
 
     private static String firstNonBlank(String a, String b) {
@@ -259,13 +264,37 @@ public class ReferralLeadService {
     /** Referrer updates their own call-outcome status for a delivered lead. */
     @Transactional
     public void setLeadStatus(long referrerId, long leadId, String status) {
+        ReferralLead lead = ownedLead(referrerId, leadId);
+        lead.setContactStatus(status);
+        // Marking CONTACTED (the first time) starts the follow-up clock.
+        if ("CONTACTED".equals(status) && lead.getContactedAt() == null) {
+            lead.markContacted(Instant.now());
+        }
+        leads.save(lead);
+    }
+
+    /**
+     * Records that the referrer sent the next follow-up for this lead: advances the
+     * stage (1=A, 2=B, 3=C) and stamps the time. After the third (C) the lead is
+     * marked NOT_INTERESTED so the sequence stops.
+     */
+    @Transactional
+    public void recordFollowup(long referrerId, long leadId) {
+        ReferralLead lead = ownedLead(referrerId, leadId);
+        lead.recordFollowupSent(Instant.now());
+        if (lead.getFollowupStage() >= 3) {
+            lead.setContactStatus("NOT_INTERESTED");
+        }
+        leads.save(lead);
+    }
+
+    private ReferralLead ownedLead(long referrerId, long leadId) {
         ReferralLead lead = leads.findById(leadId).orElseThrow(() ->
             new ResponseStatusException(HttpStatus.NOT_FOUND, "Lead not found"));
         if (!lead.getReferrerId().equals(referrerId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not your lead");
         }
-        lead.setContactStatus(status);
-        leads.save(lead);
+        return lead;
     }
 
     /** Onboarded = leads assigned on {@code day} whose submission is now PAID. */
@@ -327,7 +356,8 @@ public class ReferralLeadService {
 
     public record LeadView(Long leadId, Long referralId, String salonName, String salonPhone,
                            String salonAddress, String mapsUrl, String website, String contactStatus,
-                           Long createdSalonId, String siteUrl, String siteLoginEmail) {}
+                           Long createdSalonId, String siteUrl, String siteLoginEmail,
+                           String contactedAt, int followupStage, String lastFollowupAt) {}
 
     public record AdminLeadView(Long referrerId, String salonName, String salonPhone,
                                 String salonAddress, String mapsUrl, String website,

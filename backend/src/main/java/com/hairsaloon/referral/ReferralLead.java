@@ -53,6 +53,15 @@ public class ReferralLead {
     @Column(name = "created_salon_id")
     private Long createdSalonId;
 
+    @Column(name = "contacted_at")
+    private Instant contactedAt;
+
+    @Column(name = "followup_stage", nullable = false, columnDefinition = "integer default 0")
+    private int followupStage = 0;
+
+    @Column(name = "last_followup_at")
+    private Instant lastFollowupAt;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -83,6 +92,15 @@ public class ReferralLead {
         this.createdSalonId = salonId;
     }
 
+    public void markContacted(Instant when) {
+        this.contactedAt = when;
+    }
+
+    public void recordFollowupSent(Instant when) {
+        this.followupStage = Math.min(3, this.followupStage + 1);
+        this.lastFollowupAt = when;
+    }
+
     public Long getId() { return id; }
     public Long getReferrerId() { return referrerId; }
     public String getExternalId() { return externalId; }
@@ -95,4 +113,7 @@ public class ReferralLead {
     public String getSalonMapsUrl() { return salonMapsUrl; }
     public String getSalonLocation() { return salonLocation; }
     public Long getCreatedSalonId() { return createdSalonId; }
+    public Instant getContactedAt() { return contactedAt; }
+    public int getFollowupStage() { return followupStage; }
+    public Instant getLastFollowupAt() { return lastFollowupAt; }
 }

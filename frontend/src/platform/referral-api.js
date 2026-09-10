@@ -43,6 +43,10 @@ export async function setLeadStatus(leadId, status) {
   await apiClient.post(`/api/platform/referrals/leads/${leadId}/status`, { status })
 }
 
+export async function recordFollowup(leadId) {
+  await apiClient.post(`/api/platform/referrals/leads/${leadId}/followup`)
+}
+
 export async function createLeadSite(leadId) {
   const { data } = await apiClient.post(`/api/platform/referrals/leads/${leadId}/site`)
   return data
