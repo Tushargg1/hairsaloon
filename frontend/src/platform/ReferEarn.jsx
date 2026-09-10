@@ -9,6 +9,10 @@ import {
 } from './referral-api.js'
 
 const LEAD_STATUSES = ['NEW', 'CONTACTED', 'INTERESTED', 'NOT_INTERESTED', 'ONBOARDED']
+// Sort order for the lead list: new first, onboarded last.
+const LEAD_STATUS_ORDER = {
+  NEW: 0, CONTACTED: 1, INTERESTED: 2, NOT_INTERESTED: 3, ONBOARDED: 4,
+}
 const LEAD_STATUS_LABEL = {
   NEW: 'New', CONTACTED: 'Contacted', INTERESTED: 'Interested',
   NOT_INTERESTED: 'Not interested', ONBOARDED: 'Onboarded',
@@ -394,7 +398,10 @@ function ReferrerDashboard() {
           {leadMsg && <p className="font-body text-label-md text-on-surface-variant mt-3">{leadMsg}</p>}
           {(myLeads.data || []).length > 0 && (
             <div className="flex flex-col gap-2 mt-4">
-              {myLeads.data.map((l) => (
+              {[...myLeads.data]
+                .sort((a, b) =>
+                  (LEAD_STATUS_ORDER[a.contactStatus] ?? 99) - (LEAD_STATUS_ORDER[b.contactStatus] ?? 99))
+                .map((l) => (
                 <LeadCard key={l.leadId} lead={l}
                   onStatus={(leadId, status) => leadStatus.mutate({ leadId, status })}
                   onCreateSite={(leadId) => createSite.mutate(leadId)}
