@@ -31,7 +31,7 @@ const WA_TEMPLATES = [
   { key: 'offer', label: '3. The offer + link',
     text: 'We help salons like yours turn those great reviews into more visibility and more bookings.\n\nI actually built a personalised website for {salon} so you can see what is possible:\n{link}\n\nIf you like it, I can connect you with our tech team, completely free with no charges. Would you be open to that?' },
   { key: 'hook', label: 'Follow-up A - the hook',
-    text: 'Let me just show you what I meant:\n{link}\n\nBuilt this sample page for {salon} so you can see how it could look online. Take a look whenever you get a moment.\n\nIf you like it, I can connect you with our technical team to personalise and update it fully for your salon. It will not cost you anything. Should I go ahead?' },
+    text: 'Let me just show you what I meant:\n{link}\n\nBuilt this sample page for {salon} so you can see how it could look online. Take a look whenever you get a moment.\n\nIf you like it, I can connect you with our technical team to personalise and update it fully for you. It will not cost you anything. Should I go ahead?' },
   { key: 'nudge', label: 'Follow-up B - soft nudge',
     text: 'No pressure at all. Just wanted to make sure you saw the page I made for you: {link}\n\nIf it is something you would like, I can connect you with our team for free. If not, no worries.' },
   { key: 'closer', label: 'Follow-up C - the closer',
