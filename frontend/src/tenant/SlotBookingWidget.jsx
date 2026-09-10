@@ -37,7 +37,19 @@ function Chevron({ back }) {
   )
 }
 
-export default function SlotBookingWidget({ selectedIds, onToggleService, salonName }) {
+// Fixed demo team + slot times used on trial preview sites, so the board renders
+// instantly and identically regardless of the real (blocked) booking backend.
+const TRIAL_STAFF = [
+  { id: -1, name: 'Aisha', characterKey: 'female-red', serviceIds: [] },
+  { id: -2, name: 'Rohan', characterKey: 'male-blue', serviceIds: [] },
+  { id: -3, name: 'Priya', characterKey: 'female-purple', serviceIds: [] },
+]
+const TRIAL_TIMES = [
+  '10:00', '10:30', '11:00', '11:30', '12:00', '12:30',
+  '13:00', '14:00', '14:30', '15:00', '15:30', '16:00',
+]
+
+export default function SlotBookingWidget({ selectedIds, onToggleService, salonName, trial }) {
   const { user } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
@@ -51,7 +63,10 @@ export default function SlotBookingWidget({ selectedIds, onToggleService, salonN
   const [booked, setBooked] = useState(null)
 
   const services = useQuery({ queryKey: tenantKeys.publicServices, queryFn: getPublicServices })
-  const staff = useQuery({ queryKey: tenantKeys.publicStaff, queryFn: getPublicStaff })
+  const staffQuery = useQuery({
+    queryKey: tenantKeys.publicStaff, queryFn: getPublicStaff, enabled: !trial,
+  })
+  const staff = trial ? { data: TRIAL_STAFF } : staffQuery
 
   const chainKey = selectedIds.join(',')
 
@@ -70,12 +85,22 @@ export default function SlotBookingWidget({ selectedIds, onToggleService, salonN
   const availability = useQuery({
     queryKey: tenantKeys.availability(chainKey, day, 'all'),
     queryFn: () => getAvailability({ serviceIds: selectedIds, date: day, includeUnavailable: true }),
-    enabled: Boolean(day),
+    enabled: Boolean(day) && !trial,
   })
 
   // One entry per clock time. A time is bookable when at least one barber is
-  // free; otherwise it still shows, marked unavailable.
+  // free; otherwise it still shows, marked unavailable. Trial sites use fixed
+  // fake times/team so the board renders instantly and every day looks open.
   const timeSlots = useMemo(() => {
+    if (trial) {
+      return TRIAL_TIMES.map((hhmm) => ({
+        start: `${day}T${hhmm}:00`,
+        free: TRIAL_STAFF.map((member) => ({
+          staffId: member.id, staffName: member.name,
+          startDatetime: `${day}T${hhmm}:00`, available: true,
+        })),
+      }))
+    }
     const byTime = new Map()
     for (const slot of availability.data || []) {
       if (!byTime.has(slot.startDatetime)) byTime.set(slot.startDatetime, [])
@@ -87,7 +112,7 @@ export default function SlotBookingWidget({ selectedIds, onToggleService, salonN
         start,
         free: options.filter((option) => option.available),
       }))
-  }, [availability.data])
+  }, [availability.data, trial, day])
 
   // Land on the first open time so the barber list is visible straight away.
   useEffect(() => {
@@ -100,7 +125,7 @@ export default function SlotBookingWidget({ selectedIds, onToggleService, salonN
   // the next day that has openings, up to a week out, so the board is never empty.
   const daysSkippedRef = useRef(0)
   useEffect(() => {
-    if (availability.isLoading || !availability.data) return
+    if (trial || availability.isLoading || !availability.data) return
     if (timeSlots.some((entry) => entry.free.length)) {
       daysSkippedRef.current = 0
       return
@@ -110,7 +135,7 @@ export default function SlotBookingWidget({ selectedIds, onToggleService, salonN
     setDay((current) => shiftDay(current, 1))
     setStartAt('')
     setStaffId('any')
-  }, [availability.isLoading, availability.data, timeSlots])
+  }, [trial, availability.isLoading, availability.data, timeSlots])
 
   const freeBarbers = timeSlots.find((entry) => entry.start === startAt)?.free || []
   const chosen = staffId === 'any'

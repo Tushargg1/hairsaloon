@@ -369,7 +369,7 @@ export default function SalonPublicPage() {
       {/* Slot booking */}
       <section className="pb-12 px-4 lg:px-0 w-full md:pt-12" id="book-slot">
         <SlotBookingWidget selectedIds={selectedIds} onToggleService={toggleService}
-          salonName={salonName} />
+          salonName={salonName} trial={Boolean(profile.trial)} />
       </section>
       </div>
 
