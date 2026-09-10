@@ -52,6 +52,17 @@ function fillTemplate(text, salon, link) {
 const FOLLOWUP_KEYS = ['hook', 'nudge', 'closer']
 const FOLLOWUP_LABELS = ['Follow-up A', 'Follow-up B', 'Follow-up C']
 
+// The full 6-message sequence in send order (by template short label).
+const SEQUENCE = ['Message 1', 'Message 2', 'Message 3', 'Follow-up A', 'Follow-up B', 'Follow-up C']
+
+// Given the last script label sent, return the template for the next one (or null at the end).
+function nextTemplate(lastScript) {
+  const idx = lastScript ? SEQUENCE.indexOf(lastScript) : -1
+  const nextShort = SEQUENCE[idx + 1]
+  if (!nextShort) return null
+  return WA_TEMPLATES.find((t) => t.short === nextShort)
+}
+
 function LeadCard({ lead, onStatus, onCreateSite, onDeleteSite, site, siteBusy, sitePassword, onSend }) {
   const phoneUsable = lead.salonPhone && lead.salonPhone !== 'N/A'
   const wa = phoneUsable ? waNumber(lead.salonPhone) : ''
@@ -119,12 +130,27 @@ function LeadCard({ lead, onStatus, onCreateSite, onDeleteSite, site, siteBusy, 
               {siteBusy ? 'Creating…' : 'Create site'}
             </button>}
       </div>
-      {(lead.lastScript || lead.followupStage > 0 || lead.contactStatus === 'CONTACTED') && (
-        <p className="font-body text-label-sm text-on-surface-variant">
-          Follow-ups sent: {lead.followupStage || 0}/3
-          {lead.lastScript ? ` · Last sent: ${lead.lastScript}` : ''}
-        </p>
-      )}
+      {phoneUsable && (() => {
+        const next = nextTemplate(lead.lastScript)
+        return (
+          <div className="flex flex-wrap items-center gap-2 mt-1">
+            <span className="font-body text-label-sm text-on-surface-variant">
+              Last sent: {lead.lastScript || 'none'} · {lead.followupStage || 0}/3 follow-ups
+            </span>
+            {next && (
+              <button type="button"
+                onClick={() => {
+                  const msg = encodeURIComponent(fillTemplate(next.text, lead.salonName, siteInfo?.url))
+                  window.open(`https://wa.me/${wa}?text=${msg}`, '_blank', 'noopener')
+                  onSend(lead.leadId, next.short, next.kind)
+                }}
+                className="font-body text-label-sm px-3 py-1.5 rounded bg-[#25D366] text-white font-semibold hover:opacity-90 transition-opacity">
+                Send next: {next.short}
+              </button>
+            )}
+          </div>
+        )
+      })()}
       {siteInfo && (
         <div className="mt-2 rounded border border-secondary/40 bg-secondary/5 p-3 flex flex-col gap-0.5">
           <p className="font-body text-label-sm text-on-surface">Trial site created. Share these:</p>
