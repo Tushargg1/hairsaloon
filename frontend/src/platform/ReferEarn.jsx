@@ -26,7 +26,7 @@ const WA_TEMPLATES = [
   { key: 'intro', label: '1. First hello',
     text: 'Hi! Do you take appointments? Wanted to ask about your services and prices.' },
   { key: 'observation', label: '2. The compliment + hook',
-    text: 'Hi! Came across your salon and your work looks great. Went through your Google profile too and the reviews are genuinely impressive.\n\nOne thing I noticed though: even with reviews this good, you are not showing up as high on Google search as you should be. So people search, but do not always find you.' },
+    text: 'Hi! Came across your salon and your work looks great. Went through your Google profile too and the reviews are genuinely impressive.\n\nOne thing I noticed though: even with reviews this good, you are not showing up as high on Google search as you should be. So people search, but do not always find you.\n\nThere is a simple way to fix this that could bring you noticeably more bookings. I could help you with that, want me to explain?' },
   { key: 'offer', label: '3. The offer + link',
     text: 'We help salons like yours turn those great reviews into more visibility and more bookings.\n\nI actually built a personalised website for {salon} so you can see what is possible:\n{link}\n\nIf you like it, I can connect you with our tech team, completely free with no charges. Would you be open to that?' },
   { key: 'hook', label: 'Follow-up A - the hook',
