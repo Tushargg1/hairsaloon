@@ -212,13 +212,22 @@ public class ReferralLeadService {
             .filter(java.util.Objects::nonNull).toList();
         Map<Long, com.hairsaloon.tenant.Salon> siteById = salons.findAllById(siteIds).stream()
             .collect(Collectors.toMap(com.hairsaloon.tenant.Salon::getId, s -> s, (a, b) -> a));
+        var referrerIds = rows.stream().map(ReferralLead::getReferrerId)
+            .filter(java.util.Objects::nonNull).distinct().toList();
+        Map<Long, String> nameById = users.findAllById(referrerIds).stream()
+            .collect(Collectors.toMap(com.hairsaloon.auth.User::getId,
+                u -> u.getName() == null ? "" : u.getName(), (a, b) -> a));
+        Map<Long, String> codeById = profiles.findAllById(referrerIds).stream()
+            .collect(Collectors.toMap(ReferrerProfile::getUserId,
+                ReferrerProfile::getReferralCode, (a, b) -> a));
         return rows.stream().map(l -> {
             LeadView v = toView(l, byId.get(l.getSubmissionId()));
             com.hairsaloon.tenant.Salon site = l.getCreatedSalonId() == null ? null
                 : siteById.get(l.getCreatedSalonId());
             String url = site == null ? null
                 : "https://" + site.getSubdomain() + "." + tenantProperties.getBaseDomain();
-            return new AdminLeadView(l.getReferrerId(), v.salonName(), v.salonPhone(),
+            return new AdminLeadView(l.getReferrerId(), nameById.get(l.getReferrerId()),
+                codeById.get(l.getReferrerId()), v.salonName(), v.salonPhone(),
                 v.salonAddress(), v.mapsUrl(), v.website(), v.contactStatus(),
                 l.getAssignedOn() == null ? null : l.getAssignedOn().toString(),
                 url, site != null && site.isTrial());
@@ -383,7 +392,8 @@ public class ReferralLeadService {
                            String contactedAt, int followupStage, String lastFollowupAt,
                            String lastScript) {}
 
-    public record AdminLeadView(Long referrerId, String salonName, String salonPhone,
+    public record AdminLeadView(Long referrerId, String referrerName, String referrerCode,
+                                String salonName, String salonPhone,
                                 String salonAddress, String mapsUrl, String website,
                                 String contactStatus, String assignedOn,
                                 String siteUrl, boolean trialSite) {}

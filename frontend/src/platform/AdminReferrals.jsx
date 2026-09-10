@@ -52,6 +52,63 @@ function ReferralCard({ r, amounts, setAmounts, verify, reject, paid }) {
   )
 }
 
+const LEAD_TABS = [
+  { key: 'CONTACTED', label: 'Contacted' },
+  { key: 'INTERESTED', label: 'Interested' },
+  { key: 'NOT_INTERESTED', label: 'Not interested' },
+  { key: 'ONBOARDED', label: 'Onboarded' },
+]
+
+// Collapsible per-referrer lead list with a status sub-navbar. Hidden by default.
+function ReferrerLeads({ leads }) {
+  const [open, setOpen] = useState(false)
+  const [status, setStatus] = useState('CONTACTED')
+  const shown = leads.filter((l) => (l.contactStatus || 'NEW') === status)
+  return (
+    <div className="border-t border-outline-variant/20 pt-3">
+      <button type="button" onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-2 font-body text-label-sm uppercase tracking-wider text-on-surface-variant">
+        <span className={`inline-block transition-transform ${open ? 'rotate-90' : ''}`}>▶</span>
+        Referred salons ({leads.length})
+      </button>
+      {open && (
+        <div className="mt-3 flex flex-col gap-3">
+          <div className="flex gap-1 overflow-x-auto border-b border-outline-variant/20">
+            {LEAD_TABS.map((t) => {
+              const n = leads.filter((l) => (l.contactStatus || 'NEW') === t.key).length
+              return (
+                <button key={t.key} type="button" onClick={() => setStatus(t.key)}
+                  className={`font-body text-label-sm px-3 py-1.5 whitespace-nowrap border-b-2 -mb-px transition-colors ${
+                    status === t.key ? 'border-secondary text-secondary'
+                      : 'border-transparent text-on-surface-variant hover:text-secondary-fixed'}`}>
+                  {t.label}{n ? ` (${n})` : ''}
+                </button>
+              )
+            })}
+          </div>
+          {shown.length === 0 ? (
+            <p className="font-body text-label-sm text-on-surface-variant">None.</p>
+          ) : shown.map((l, i) => (
+            <div key={i} className="rounded-lg border border-outline-variant/20 p-3">
+              <p className="font-body text-on-surface font-medium">{l.salonName || 'Unknown salon'}</p>
+              <p className="font-body text-label-sm text-on-surface-variant">
+                {l.salonPhone && l.salonPhone !== 'N/A' ? l.salonPhone : 'No phone'}
+                {l.salonAddress ? ` · ${l.salonAddress}` : ''}
+              </p>
+              <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1">
+                {l.mapsUrl && <a href={l.mapsUrl} target="_blank" rel="noreferrer" className="text-secondary underline text-label-sm">Map</a>}
+                {l.siteUrl && <a href={l.siteUrl} target="_blank" rel="noreferrer"
+                  className={`text-label-sm underline ${l.trialSite ? 'text-amber-400' : 'text-emerald-400'}`}>
+                  {l.trialSite ? 'Trial site' : 'Live site'}</a>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function AdminReferrals() {
   const client = useQueryClient()
   const [tab, setTab] = useState('referrers')
@@ -59,11 +116,12 @@ export default function AdminReferrals() {
   const [rates, setRates] = useState({})
   const [limits, setLimits] = useState({})
   const [feedback, setFeedback] = useState('')
+  const [salonSearch, setSalonSearch] = useState('')
 
   const referrers = useQuery({ queryKey: referralKeys.adminReferrers, queryFn: getAdminReferrers })
   const submissions = useQuery({ queryKey: referralKeys.admin, queryFn: getAdminReferrals })
   const adminLeads = useQuery({ queryKey: ['referrals', 'admin', 'leads'], queryFn: getAdminLeads,
-    enabled: tab === 'leads' })
+    enabled: tab === 'leads' || tab === 'referrers' })
 
   const invalidate = () => {
     client.invalidateQueries({ queryKey: referralKeys.admin })
@@ -108,6 +166,48 @@ export default function AdminReferrals() {
       </div>
 
       {feedback && <p className="font-body text-body-md rounded px-3 py-2 mb-6 text-[#A89048] bg-[rgba(168,144,72,0.1)]">{feedback}</p>}
+
+      {tab === 'referrers' && (
+        <div className="mb-6">
+          <input type="search" value={salonSearch} onChange={(e) => setSalonSearch(e.target.value)}
+            placeholder="Search any salon by name or phone…"
+            className="w-full sm:max-w-md rounded border border-outline-variant/40 bg-transparent px-3 py-2 font-body" />
+          {salonSearch.trim() && (() => {
+            const q = salonSearch.trim().toLowerCase()
+            const qDigits = q.replace(/\D/g, '')
+            const matches = (adminLeads.data || []).filter((l) =>
+              (l.salonName || '').toLowerCase().includes(q)
+              || (qDigits && String(l.salonPhone || '').replace(/\D/g, '').includes(qDigits)))
+            return (
+              <div className="glass-panel rounded-xl p-4 mt-3 flex flex-col gap-2">
+                <p className="font-body text-label-sm uppercase tracking-wider text-on-surface-variant">
+                  {matches.length} match{matches.length === 1 ? '' : 'es'}
+                </p>
+                {matches.length === 0 ? (
+                  <p className="font-body text-label-sm text-on-surface-variant">
+                    No salon found. If you refer it, no one holds it yet.
+                  </p>
+                ) : matches.map((l, i) => (
+                  <div key={i} className="rounded-lg border border-outline-variant/20 p-3 flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <p className="font-body text-on-surface font-medium">{l.salonName || 'Unknown salon'}</p>
+                      <p className="font-body text-label-sm text-on-surface-variant">
+                        {l.salonPhone && l.salonPhone !== 'N/A' ? l.salonPhone : 'No phone'} · {l.contactStatus}
+                      </p>
+                    </div>
+                    <p className="font-body text-label-sm">
+                      {l.referrerName || l.referrerCode
+                        ? <>Referred by <span className="text-on-surface">{l.referrerName || 'Referrer'}</span>
+                            {' · '}<span className="text-secondary">{l.referrerCode || `#${l.referrerId}`}</span></>
+                        : <span className="text-on-surface-variant">No referrer</span>}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )
+          })()}
+        </div>
+      )}
 
       {tab === 'referrers' && (
         referrers.isLoading ? <p className="font-body text-on-surface-variant">Loading…</p>
@@ -172,15 +272,7 @@ export default function AdminReferrals() {
                   <Stat label="Declined" value={ref.declined} />
                 </div>
 
-                {ref.referrals.length > 0 && (
-                  <div className="flex flex-col gap-2">
-                    <p className="font-body text-label-sm uppercase tracking-wider text-on-surface-variant">Referred salons</p>
-                    {ref.referrals.map((r) => (
-                      <ReferralCard key={r.id} r={r} amounts={amounts} setAmounts={setAmounts}
-                        verify={verify} reject={reject} paid={paid} />
-                    ))}
-                  </div>
-                )}
+                <ReferrerLeads leads={(adminLeads.data || []).filter((l) => l.referrerId === ref.userId)} />
               </div>
             ))}
           </div>
