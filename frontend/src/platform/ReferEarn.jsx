@@ -24,17 +24,17 @@ function waNumber(phone) {
 // 2-3 days) and stop after three unanswered.
 const WA_TEMPLATES = [
   { key: 'intro', label: '1. First hello',
-    text: 'Hi! Do you take appointments? Wanted to ask about your services and prices 🙂' },
+    text: 'Hi! Do you take appointments? Wanted to ask about your services and prices.' },
   { key: 'observation', label: '2. The compliment + hook',
-    text: 'Hi! Came across your salon and honestly your work looks amazing 🔥 Went through your Google profile too — the reviews are genuinely great.\n\nOne thing I noticed though: even with reviews this good, you\'re not showing up as high on Google search as you should be. So people search, but don\'t always find you.' },
+    text: 'Hi! Came across your salon and your work looks great. Went through your Google profile too and the reviews are genuinely impressive.\n\nOne thing I noticed though: even with reviews this good, you are not showing up as high on Google search as you should be. So people search, but do not always find you.' },
   { key: 'offer', label: '3. The offer + link',
-    text: 'We help salons like yours turn those great reviews into more visibility and more bookings.\n\nI actually built a personalised website for {salon} so you can see what\'s possible 👇\n{link}\n\nIf you like it, I can connect you with our tech team — completely free, no charges. Would you be open to that? 💈' },
-  { key: 'hook', label: 'Follow-up A · the hook',
-    text: 'Actually, let me just show you what I meant 👇\n{link}\n\nBuilt this sample page for {salon} so you can see how it could look online. Take a look whenever you get a sec 🙂' },
-  { key: 'nudge', label: 'Follow-up B · soft nudge',
-    text: 'No pressure at all 🙏 Just wanted to make sure you saw the page I made for you — {link}\n\nIf it\'s something you\'d like, I can connect you with our team for free. If not, no worries!' },
-  { key: 'closer', label: 'Follow-up C · the closer',
-    text: 'Hey, I\'ll leave this here 🙂 If you ever want more customers finding you on Google, the offer stands — completely free. Just reply "interested" anytime 💈' },
+    text: 'We help salons like yours turn those great reviews into more visibility and more bookings.\n\nI actually built a personalised website for {salon} so you can see what is possible:\n{link}\n\nIf you like it, I can connect you with our tech team, completely free with no charges. Would you be open to that?' },
+  { key: 'hook', label: 'Follow-up A - the hook',
+    text: 'Let me just show you what I meant:\n{link}\n\nBuilt this sample page for {salon} so you can see how it could look online. Take a look whenever you get a moment.' },
+  { key: 'nudge', label: 'Follow-up B - soft nudge',
+    text: 'No pressure at all. Just wanted to make sure you saw the page I made for you: {link}\n\nIf it is something you would like, I can connect you with our team for free. If not, no worries.' },
+  { key: 'closer', label: 'Follow-up C - the closer',
+    text: 'I will leave this here. If you ever want more customers finding you on Google, the offer stands, completely free. Just reply "interested" anytime.' },
 ]
 
 function fillTemplate(text, salon, link) {

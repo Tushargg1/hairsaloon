@@ -189,6 +189,22 @@ export default function SalonPublicPage() {
   const salonName = profile.name || profile.salonName || tenantNameFallback()
   const heroTitleRef = useFitToTwoLines(salonName)
   const isActive = profile.status ? profile.status === 'ACTIVE' : true
+
+  // Personalize the tab title and description for this salon (per-tenant page).
+  useEffect(() => {
+    if (!profile.name) return
+    const prevTitle = document.title
+    document.title = `${salonName} · Book on Groomit`
+    const meta = document.querySelector('meta[name="description"]')
+    const prevDesc = meta?.getAttribute('content')
+    const desc = `Book an appointment at ${salonName}. View services, prices and available slots.`
+    if (meta) meta.setAttribute('content', desc)
+    return () => {
+      document.title = prevTitle
+      if (meta && prevDesc != null) meta.setAttribute('content', prevDesc)
+    }
+  }, [profile.name, salonName])
+
   const contactPhone = (() => {
     const raw = String(profile.phone || '').replace(/[^\d]/g, '')
     return raw.length === 10 ? `91${raw}` : raw
