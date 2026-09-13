@@ -695,13 +695,12 @@ function ReferrerDashboard() {
                         const isNext = i === stage
                         return (
                           <button key={key} type="button"
-                            disabled={!phoneUsable || done || !isNext}
+                            disabled={!phoneUsable}
                             onClick={() => sendMessage(lead, tpl)}
-                            className={`font-body text-label-sm px-4 py-2 rounded font-semibold transition-opacity ${
-                              done ? 'bg-outline-variant/30 text-on-surface-variant'
-                                : isNext ? 'bg-[#25D366] text-white hover:opacity-90'
-                                  : 'bg-outline-variant/20 text-on-surface-variant opacity-50'}`}>
-                            {done ? `${FOLLOWUP_LABELS[i]} sent` : `Send ${FOLLOWUP_LABELS[i]}`}
+                            className={`font-body text-label-sm px-4 py-2 rounded font-semibold transition-opacity disabled:opacity-50 ${
+                              isNext ? 'bg-[#25D366] text-white hover:opacity-90'
+                                : 'bg-transparent border border-[#25D366]/60 text-[#1a9c4c] hover:bg-[#25D366]/10'}`}>
+                            {done ? `Resend ${FOLLOWUP_LABELS[i]}` : `Send ${FOLLOWUP_LABELS[i]}`}
                           </button>
                         )
                       })}
