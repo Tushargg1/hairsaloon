@@ -71,10 +71,6 @@ function fillTemplate(text, salon, link) {
     .replaceAll('{link}', link || '(create the site first to get the link)')
 }
 
-// The three follow-ups (A, B, C) map to these template keys, in order.
-const FOLLOWUP_KEYS = ['hook', 'nudge', 'closer']
-const FOLLOWUP_LABELS = ['Follow-up A', 'Follow-up B', 'Follow-up C']
-
 // True when a lead matches the search query (by salon name or phone digits).
 function matchesSearch(lead, query) {
   const q = (query || '').trim().toLowerCase()
@@ -345,6 +341,7 @@ function ReferrerDashboard() {
 
   const [leadMsg, setLeadMsg] = useState('')
   const [leadSearch, setLeadSearch] = useState('')
+  const [sortNewest, setSortNewest] = useState(true) // true = latest first
   const myLeads = useQuery({ queryKey: ['referrals', 'my-leads'], queryFn: getMyLeads })
   const getLeads = useMutation({
     mutationFn: getReferralLeads,
@@ -472,6 +469,30 @@ function ReferrerDashboard() {
     <div className="glass-panel rounded-xl p-5">
       <p className="font-body text-label-sm uppercase tracking-wider text-on-surface-variant mb-1">{label}</p>
       <p className={`font-display text-headline-sm ${accent || 'text-on-surface'}`}>{value}</p>
+    </div>
+  )
+
+  // myLeads is newest-first from the backend; reverse for oldest-first.
+  const applySort = (list) => sortNewest ? list : [...list].reverse()
+  const SortToggle = () => (
+    <button type="button" onClick={() => setSortNewest((v) => !v)}
+      className="font-body text-label-sm px-3 py-1.5 rounded-full border border-outline-variant/40 text-on-surface-variant hover:text-secondary hover:border-secondary/50 transition-colors self-start">
+      {sortNewest ? 'Newest first ↓' : 'Oldest first ↑'}
+    </button>
+  )
+
+  // Reusable renderer so every sub-page shows leads with the identical card.
+  const renderLeadList = (list) => (
+    <div className="flex flex-col gap-2">
+      {applySort(list).map((l) => (
+        <LeadCard key={l.leadId} lead={l}
+          onStatus={(leadId, status) => leadStatus.mutate({ leadId, status })}
+          onCreateSite={(leadId) => createSite.mutate(leadId)}
+          onDeleteSite={(leadId) => deleteSite.mutate(leadId)}
+          onSendMessage={sendMessage}
+          site={sites[l.leadId]} siteBusy={siteBusyId === l.leadId}
+          sitePassword={sitePasswordValue} />
+      ))}
     </div>
   )
 
@@ -647,24 +668,11 @@ function ReferrerDashboard() {
 
           {leadMsg && <p className="font-body text-label-md text-on-surface-variant mt-3">{leadMsg}</p>}
           {(myLeads.data || []).length > 0 && (
-            <div className="flex flex-col gap-2 mt-3">
-              {[...myLeads.data]
-                .filter((l) => {
-                  const st = l.contactStatus || 'NEW'
-                  return st === 'NEW' || st === 'ONBOARDED'
-                })
-                .filter((l) => matchesSearch(l, leadSearch))
-                .sort((a, b) =>
-                  (LEAD_STATUS_ORDER[a.contactStatus] ?? 99) - (LEAD_STATUS_ORDER[b.contactStatus] ?? 99))
-                .map((l) => (
-                <LeadCard key={l.leadId} lead={l}
-                  onStatus={(leadId, status) => leadStatus.mutate({ leadId, status })}
-                  onCreateSite={(leadId) => createSite.mutate(leadId)}
-                  onDeleteSite={(leadId) => deleteSite.mutate(leadId)}
-                  onSendMessage={sendMessage}
-                  site={sites[l.leadId]} siteBusy={siteBusyId === l.leadId}
-                  sitePassword={sitePasswordValue} />
-              ))}
+            <div className="mt-4 flex flex-col gap-3">
+              <SortToggle />
+              {renderLeadList((myLeads.data || [])
+                .filter((l) => ['NEW', 'ONBOARDED'].includes(l.contactStatus || 'NEW'))
+                .filter((l) => matchesSearch(l, leadSearch)))}
             </div>
           )}
         </div>
@@ -732,38 +740,8 @@ function ReferrerDashboard() {
             <p className="font-body text-on-surface-variant">No contacted leads to follow up yet.</p>
           ) : (
             <div className="flex flex-col gap-3">
-              {followupLeads.map((lead) => {
-                const phoneUsable = lead.salonPhone && lead.salonPhone !== 'N/A'
-                const stage = lead.followupStage || 0
-                return (
-                  <div key={lead.leadId} className="rounded-lg border border-outline-variant/20 p-3">
-                    <p className="font-body text-on-surface font-medium">{lead.salonName || 'Unknown salon'}</p>
-                    <p className="font-body text-label-sm text-on-surface-variant mb-2">
-                      {LEAD_STATUS_LABEL[lead.contactStatus] || lead.contactStatus}
-                      {' · '}{stage}/3 sent{lead.lastScript ? ` · Last: ${lead.lastScript}` : ''}
-                      {lead.contactedAt ? ` · Contacted ${fmtDate(lead.contactedAt)}` : ''}
-                      {phoneUsable ? '' : ' · no phone'}
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {FOLLOWUP_KEYS.map((key, i) => {
-                        const tpl = WA_TEMPLATES.find((t) => t.key === key)
-                        const done = i < stage
-                        const isNext = i === stage
-                        return (
-                          <button key={key} type="button"
-                            disabled={!phoneUsable}
-                            onClick={() => sendMessage(lead, tpl)}
-                            className={`font-body text-label-sm px-4 py-2 rounded font-semibold transition-opacity disabled:opacity-50 ${
-                              isNext ? 'bg-[#25D366] text-white hover:opacity-90'
-                                : 'bg-transparent border border-[#25D366]/60 text-[#1a9c4c] hover:bg-[#25D366]/10'}`}>
-                            {done ? `Resend ${FOLLOWUP_LABELS[i]}` : `Send ${FOLLOWUP_LABELS[i]}`}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )
-              })}
+              <SortToggle />
+              {renderLeadList(followupLeads)}
             </div>
           )}
         </div>
@@ -773,24 +751,14 @@ function ReferrerDashboard() {
         <div className="glass-panel rounded-xl p-6">
           <h2 className="font-display text-headline-sm text-on-surface mb-1">Trial sites</h2>
           <p className="font-body text-label-md text-on-surface-variant mb-4">
-            Salons you have created a preview site for, newest first.
+            Salons you have created a preview site for.
           </p>
           {trialSiteLeads.length === 0 ? (
             <p className="font-body text-on-surface-variant">No trial sites yet.</p>
           ) : (
-            <div className="flex flex-col gap-2">
-              {trialSiteLeads.map((l) => (
-                <div key={l.leadId} className="rounded-lg border border-outline-variant/20 p-3">
-                  <p className="font-body text-on-surface font-medium">{l.salonName || 'Unknown salon'}</p>
-                  {l.siteUrl && <a href={l.siteUrl} target="_blank" rel="noreferrer"
-                    className="font-body text-label-sm text-secondary underline break-all">{l.siteUrl}</a>}
-                  <p className="font-body text-label-sm text-on-surface-variant mt-1">
-                    {LEAD_STATUS_LABEL[l.contactStatus] || l.contactStatus}
-                    {l.contactedAt && ` · Contacted ${fmtDate(l.contactedAt)}`}
-                    {l.lastFollowupAt && ` · Last follow-up ${fmtDateTime(l.lastFollowupAt)}`}
-                  </p>
-                </div>
-              ))}
+            <div className="flex flex-col gap-3">
+              <SortToggle />
+              {renderLeadList(trialSiteLeads)}
             </div>
           )}
         </div>
@@ -802,16 +770,9 @@ function ReferrerDashboard() {
           {leadsByStatus(s.key).length === 0 ? (
             <p className="font-body text-on-surface-variant">No leads with this status.</p>
           ) : (
-            <div className="flex flex-col gap-2">
-              {leadsByStatus(s.key).map((l) => (
-                <LeadCard key={l.leadId} lead={l}
-                  onStatus={(leadId, status) => leadStatus.mutate({ leadId, status })}
-                  onCreateSite={(leadId) => createSite.mutate(leadId)}
-                  onDeleteSite={(leadId) => deleteSite.mutate(leadId)}
-                  onSendMessage={sendMessage}
-                  site={sites[l.leadId]} siteBusy={siteBusyId === l.leadId}
-                  sitePassword={sitePasswordValue} />
-              ))}
+            <div className="flex flex-col gap-3">
+              <SortToggle />
+              {renderLeadList(leadsByStatus(s.key))}
             </div>
           )}
         </div>
