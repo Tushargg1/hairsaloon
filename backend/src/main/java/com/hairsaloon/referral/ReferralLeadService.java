@@ -180,21 +180,9 @@ public class ReferralLeadService {
     }
 
     /** All leads ever delivered to this referrer, newest first, with contact status. */
-    @Transactional
+    @Transactional(readOnly = true)
     public List<LeadView> myLeads(long referrerId) {
         List<ReferralLead> rows = leads.findByReferrerIdOrderByAssignedOnDesc(referrerId);
-        // A contacted lead that goes 24h without the next message is auto not-interested.
-        Instant cutoff = Instant.now().minus(java.time.Duration.ofHours(24));
-        List<ReferralLead> expired = new ArrayList<>();
-        for (ReferralLead l : rows) {
-            if (!"CONTACTED".equals(l.getContactStatus())) continue;
-            Instant last = l.getLastFollowupAt() != null ? l.getLastFollowupAt() : l.getContactedAt();
-            if (last != null && last.isBefore(cutoff)) {
-                l.setContactStatus("NOT_INTERESTED");
-                expired.add(l);
-            }
-        }
-        if (!expired.isEmpty()) leads.saveAll(expired);
         return toViews(rows);
     }
 

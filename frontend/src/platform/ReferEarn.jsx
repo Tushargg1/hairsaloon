@@ -726,8 +726,7 @@ function ReferrerDashboard() {
           <h2 className="font-display text-headline-sm text-on-surface mb-1">Follow-ups</h2>
           <p className="font-body text-label-md text-on-surface-variant mb-4">
             Contacted leads and their follow-up sequence. Send A, then B, then C — each opens
-            WhatsApp with the message ready. If the next one is not sent within 24 hours the
-            lead is marked not interested. After C the lead is closed as not interested.
+            WhatsApp with the message ready. After Follow-up C the lead is closed as not interested.
           </p>
           {followupLeads.length === 0 ? (
             <p className="font-body text-on-surface-variant">No contacted leads to follow up yet.</p>
