@@ -478,7 +478,7 @@ function ReferrerDashboard() {
   return (
     <div className="flex flex-col gap-6">
       {/* Sub navbar */}
-      <div className="flex gap-1 overflow-x-auto scrollbar-none border-b border-outline-variant/20 pb-px">
+      <div className="flex flex-wrap gap-1 border-b border-outline-variant/20 pb-px">
         {TABS.map((t) => (
           <button key={t.key} type="button" onClick={() => setTab(t.key)}
             className={`font-body text-label-md px-4 py-2 whitespace-nowrap border-b-2 -mb-px transition-colors ${
@@ -796,7 +796,7 @@ export default function ReferEarn() {
 
   if (isReferrer) {
     return (
-      <main className="max-w-[900px] mx-auto px-4 py-12">
+      <main className="max-w-[1280px] mx-auto px-4 lg:px-8 py-12">
         <div className="mb-8">
           <p className="font-body text-label-md text-secondary tracking-wider uppercase mb-2">Groomit</p>
           <h1 className="font-display text-headline-md text-on-surface">Refer &amp; Earn</h1>
