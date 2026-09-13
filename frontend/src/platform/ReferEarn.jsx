@@ -56,6 +56,18 @@ function fillTemplate(text, salon, link) {
 const FOLLOWUP_KEYS = ['hook', 'nudge', 'closer']
 const FOLLOWUP_LABELS = ['Follow-up A', 'Follow-up B', 'Follow-up C']
 
+// Short date, or date + time, from an ISO string.
+function fmtDate(iso) {
+  if (!iso) return null
+  return new Date(iso).toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' })
+}
+function fmtDateTime(iso) {
+  if (!iso) return null
+  return new Date(iso).toLocaleString([], {
+    day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit',
+  })
+}
+
 const byShort = (short) => WA_TEMPLATES.find((t) => t.short === short)
 
 // Work out the next message to send from the lead's last script and status.
@@ -143,6 +155,8 @@ function LeadCard({ lead, onStatus, onCreateSite, onDeleteSite, site, siteBusy, 
           <div className="flex flex-wrap items-center gap-2 mt-1">
             <span className="font-body text-label-sm text-on-surface-variant">
               Last sent: {lead.lastScript || 'none'} · {lead.followupStage || 0}/3 follow-ups
+              {lead.contactedAt && ` · Contacted ${fmtDate(lead.contactedAt)}`}
+              {lead.lastFollowupAt && ` · Last follow-up ${fmtDateTime(lead.lastFollowupAt)}`}
             </span>
             {next && (
               <button type="button" onClick={() => onSendMessage(lead, next)}
@@ -390,14 +404,24 @@ function ReferrerDashboard() {
   const sendMessage = async (lead, tpl) => {
     const wa = waNumber(lead.salonPhone)
     const needsLink = tpl.text.includes('{link}')
-    // Open the tab synchronously so the browser does not block the popup.
-    const win = window.open('', '_blank', 'noopener')
     let link = lead.siteUrl || sites[lead.leadId]?.url || null
-    if (needsLink && !link) link = await ensureSite(lead)
-    const msg = encodeURIComponent(fillTemplate(tpl.text, lead.salonName, link))
-    const url = `https://wa.me/${wa}?text=${msg}`
-    if (win) win.location = url
-    else window.open(url, '_blank', 'noopener')
+    const openWa = (l) => {
+      const msg = encodeURIComponent(fillTemplate(tpl.text, lead.salonName, l))
+      window.open(`https://wa.me/${wa}?text=${msg}`, '_blank', 'noopener')
+    }
+    if (needsLink && !link) {
+      // Open a real tab synchronously (no noopener so we keep the handle), then
+      // point it at WhatsApp once the site is created; close it if creation fails.
+      const win = window.open('about:blank', '_blank')
+      link = await ensureSite(lead)
+      if (!link) { if (win) win.close(); return }
+      const msg = encodeURIComponent(fillTemplate(tpl.text, lead.salonName, link))
+      const url = `https://wa.me/${wa}?text=${msg}`
+      if (win) win.location.href = url
+      else openWa(link)
+    } else {
+      openWa(link)
+    }
     sendScript.mutate({ leadId: lead.leadId, label: tpl.short, kind: tpl.kind })
   }
 
@@ -421,12 +445,17 @@ function ReferrerDashboard() {
   const followupLeads = (myLeads.data || [])
     .filter((l) => l.contactStatus === 'CONTACTED' && (l.followupStage || 0) < 3)
 
+  // Leads that currently have a live trial site (my-leads is already newest-first).
+  const trialSiteLeads = (myLeads.data || [])
+    .filter((l) => l.createdSalonId || l.siteUrl)
+
   const TABS = [
     { key: 'overview', label: 'Overview' },
     { key: 'leads', label: 'Get leads' },
     { key: 'refer', label: 'Refer a salon' },
     { key: 'referrals', label: 'My referrals' },
     { key: 'followups', label: `Follow-ups${followupLeads.length ? ` (${followupLeads.length})` : ''}` },
+    { key: 'sites', label: `Trial sites${trialSiteLeads.length ? ` (${trialSiteLeads.length})` : ''}` },
     { key: 'account', label: 'Account' },
   ]
 
@@ -680,6 +709,33 @@ function ReferrerDashboard() {
                   </div>
                 )
               })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {tab === 'sites' && (
+        <div className="glass-panel rounded-xl p-6">
+          <h2 className="font-display text-headline-sm text-on-surface mb-1">Trial sites</h2>
+          <p className="font-body text-label-md text-on-surface-variant mb-4">
+            Salons you have created a preview site for, newest first.
+          </p>
+          {trialSiteLeads.length === 0 ? (
+            <p className="font-body text-on-surface-variant">No trial sites yet.</p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {trialSiteLeads.map((l) => (
+                <div key={l.leadId} className="rounded-lg border border-outline-variant/20 p-3">
+                  <p className="font-body text-on-surface font-medium">{l.salonName || 'Unknown salon'}</p>
+                  {l.siteUrl && <a href={l.siteUrl} target="_blank" rel="noreferrer"
+                    className="font-body text-label-sm text-secondary underline break-all">{l.siteUrl}</a>}
+                  <p className="font-body text-label-sm text-on-surface-variant mt-1">
+                    {LEAD_STATUS_LABEL[l.contactStatus] || l.contactStatus}
+                    {l.contactedAt && ` · Contacted ${fmtDate(l.contactedAt)}`}
+                    {l.lastFollowupAt && ` · Last follow-up ${fmtDateTime(l.lastFollowupAt)}`}
+                  </p>
+                </div>
+              ))}
             </div>
           )}
         </div>
