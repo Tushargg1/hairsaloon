@@ -126,7 +126,7 @@ function LeadCard({ lead, onStatus, onCreateSite, onDeleteSite, site, siteBusy, 
     ? { url: lead.siteUrl, loginEmail: lead.siteLoginEmail, loginPassword: sitePassword }
     : null)
   return (
-    <div className="rounded-xl border border-outline-variant/20 bg-surface/40 p-4 flex flex-col gap-1.5 hover:border-secondary/40 hover:shadow-sm transition-all">
+    <div className="rounded-xl border border-outline-variant/20 p-4 flex flex-col gap-1.5 hover:border-secondary/40 hover:shadow-sm transition-all">
       <div className="flex items-start justify-between gap-3">
         <p className="font-body text-on-surface font-semibold">{lead.salonName || 'Unknown salon'}</p>
         <StatusChip status={lead.contactStatus} />
