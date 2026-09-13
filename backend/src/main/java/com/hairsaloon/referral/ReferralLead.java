@@ -104,6 +104,10 @@ public class ReferralLead {
         this.lastFollowupAt = when;
     }
 
+    public void setFollowupStage(int stage) {
+        this.followupStage = Math.max(0, Math.min(3, stage));
+    }
+
     /** Stamps the time of the last message without advancing the follow-up stage. */
     public void stampLastMessage(Instant when) {
         this.lastFollowupAt = when;

@@ -309,8 +309,14 @@ public class ReferralLeadService {
         Instant now = Instant.now();
         lead.setLastScript(label);
         if ("followup".equals(kind)) {
-            lead.recordFollowupSent(now);
-            if (lead.getFollowupStage() >= 3) lead.setContactStatus("NOT_INTERESTED");
+            // Stage reflects the specific follow-up sent (A=1, B=2, C=3), so resending
+            // an earlier one never over-advances. Only C closes the lead.
+            int sent = "Follow-up C".equals(label) ? 3
+                : "Follow-up B".equals(label) ? 2
+                : "Follow-up A".equals(label) ? 1 : lead.getFollowupStage();
+            lead.setFollowupStage(Math.max(lead.getFollowupStage(), sent));
+            lead.stampLastMessage(now);
+            if ("Follow-up C".equals(label)) lead.setContactStatus("NOT_INTERESTED");
         } else {
             // First contact message: begin the CONTACTED lifecycle (no stage advance).
             if (lead.getContactedAt() == null) lead.markContacted(now);

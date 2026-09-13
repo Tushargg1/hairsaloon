@@ -56,6 +56,15 @@ function fillTemplate(text, salon, link) {
 const FOLLOWUP_KEYS = ['hook', 'nudge', 'closer']
 const FOLLOWUP_LABELS = ['Follow-up A', 'Follow-up B', 'Follow-up C']
 
+// True when a lead matches the search query (by salon name or phone digits).
+function matchesSearch(lead, query) {
+  const q = (query || '').trim().toLowerCase()
+  if (!q) return true
+  const digits = q.replace(/\D/g, '')
+  if ((lead.salonName || '').toLowerCase().includes(q)) return true
+  return digits && String(lead.salonPhone || '').replace(/\D/g, '').includes(digits)
+}
+
 // Short date, or date + time, from an ISO string.
 function fmtDate(iso) {
   if (!iso) return null
@@ -343,9 +352,12 @@ function ReferrerDashboard() {
           if (l.leadId !== leadId) return l
           const now = new Date().toISOString()
           if (kind === 'followup') {
-            const stage = Math.min(3, (l.followupStage || 0) + 1)
+            // Stage reflects which follow-up was sent, so resending A/B never over-advances.
+            const sent = label === 'Follow-up C' ? 3 : label === 'Follow-up B' ? 2
+              : label === 'Follow-up A' ? 1 : (l.followupStage || 0)
+            const stage = Math.max(l.followupStage || 0, sent)
             return { ...l, followupStage: stage, lastFollowupAt: now, lastScript: label,
-              contactStatus: stage >= 3 ? 'NOT_INTERESTED' : l.contactStatus }
+              contactStatus: label === 'Follow-up C' ? 'NOT_INTERESTED' : l.contactStatus }
           }
           return { ...l, contactStatus: 'CONTACTED', lastScript: label, lastFollowupAt: now,
             contactedAt: l.contactedAt || now }
@@ -451,9 +463,10 @@ function ReferrerDashboard() {
   const trialSiteLeads = (myLeads.data || [])
     .filter((l) => l.createdSalonId || l.siteUrl)
 
-  // Leads grouped for the per-status tabs.
+  // Leads grouped for the per-status tabs (respects the global search).
   const leadsByStatus = (status) => (myLeads.data || [])
     .filter((l) => (l.contactStatus || 'NEW') === status)
+    .filter((l) => matchesSearch(l, leadSearch))
   const STATUS_TABS = [
     { key: 'CONTACTED', label: 'Contacted' },
     { key: 'INTERESTED', label: 'Interested' },
@@ -477,6 +490,11 @@ function ReferrerDashboard() {
 
   return (
     <div className="flex flex-col gap-6">
+      {/* Global lead search: filters every lead list by salon name or phone. */}
+      <input type="search" value={leadSearch} onChange={(e) => setLeadSearch(e.target.value)}
+        placeholder="Search leads by salon name or phone number"
+        className="font-body text-label-md rounded border border-outline-variant/40 bg-transparent px-3 py-2 w-full sm:max-w-md" />
+
       {/* Sub navbar */}
       <div className="flex flex-wrap gap-1 border-b border-outline-variant/20 pb-px">
         {TABS.map((t) => (
@@ -604,22 +622,13 @@ function ReferrerDashboard() {
 
           {leadMsg && <p className="font-body text-label-md text-on-surface-variant mt-3">{leadMsg}</p>}
           {(myLeads.data || []).length > 0 && (
-            <input type="search" inputMode="tel" value={leadSearch}
-              onChange={(e) => setLeadSearch(e.target.value)}
-              placeholder="Search by phone number"
-              className="font-body text-label-md rounded border border-outline-variant/40 bg-transparent px-3 py-2 mt-4 w-full sm:max-w-xs" />
-          )}
-          {(myLeads.data || []).length > 0 && (
             <div className="flex flex-col gap-2 mt-3">
               {[...myLeads.data]
                 .filter((l) => {
                   const st = l.contactStatus || 'NEW'
                   return st === 'NEW' || st === 'ONBOARDED'
                 })
-                .filter((l) => {
-                  const q = leadSearch.replace(/\D/g, '')
-                  return !q || String(l.salonPhone || '').replace(/\D/g, '').includes(q)
-                })
+                .filter((l) => matchesSearch(l, leadSearch))
                 .sort((a, b) =>
                   (LEAD_STATUS_ORDER[a.contactStatus] ?? 99) - (LEAD_STATUS_ORDER[b.contactStatus] ?? 99))
                 .map((l) => (
