@@ -982,6 +982,17 @@
   .walk-in-form { @apply glass-panel rounded-xl p-6 flex flex-col gap-4; }
   .walk-in-fields { @apply grid grid-cols-1 md:grid-cols-2 gap-4; }
 
+  /* Referrer lead card: subtle themed tint (light on cream, dark on the public site). */
+  .lead-card {
+    background-color: rgb(var(--c-surface-container) / 0.45);
+    border: 1px solid rgb(var(--c-outline-variant) / 0.25);
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .lead-card:hover {
+    border-color: rgb(var(--c-secondary) / 0.4);
+    box-shadow: 0 6px 18px -10px rgba(60, 45, 20, 0.3);
+  }
+
   /* --- Backend status banner --- */
   .backend-status-banner {
     @apply flex flex-wrap items-center justify-center gap-3 px-4 py-2
