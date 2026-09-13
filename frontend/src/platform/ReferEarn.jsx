@@ -441,9 +441,11 @@ function ReferrerDashboard() {
     </div>
   )
 
-  // Contacted leads still in the follow-up sequence (not interested/onboarded excluded).
+  // Every lead that has been engaged (any non-NEW status) shows in Follow-ups,
+  // sorted by status so contacted/interested come first.
   const followupLeads = (myLeads.data || [])
-    .filter((l) => l.contactStatus === 'CONTACTED' && (l.followupStage || 0) < 3)
+    .filter((l) => (l.contactStatus || 'NEW') !== 'NEW')
+    .sort((a, b) => (LEAD_STATUS_ORDER[a.contactStatus] ?? 99) - (LEAD_STATUS_ORDER[b.contactStatus] ?? 99))
 
   // Leads that currently have a live trial site (my-leads is already newest-first).
   const trialSiteLeads = (myLeads.data || [])
@@ -685,7 +687,9 @@ function ReferrerDashboard() {
                   <div key={lead.leadId} className="rounded-lg border border-outline-variant/20 p-3">
                     <p className="font-body text-on-surface font-medium">{lead.salonName || 'Unknown salon'}</p>
                     <p className="font-body text-label-sm text-on-surface-variant mb-2">
-                      {stage}/3 sent{lead.lastScript ? ` · Last: ${lead.lastScript}` : ''}
+                      {LEAD_STATUS_LABEL[lead.contactStatus] || lead.contactStatus}
+                      {' · '}{stage}/3 sent{lead.lastScript ? ` · Last: ${lead.lastScript}` : ''}
+                      {lead.contactedAt ? ` · Contacted ${fmtDate(lead.contactedAt)}` : ''}
                       {phoneUsable ? '' : ' · no phone'}
                     </p>
                     <div className="flex flex-wrap gap-2">
