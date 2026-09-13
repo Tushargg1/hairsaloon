@@ -76,11 +76,9 @@ function nextTemplate(lead) {
   }
 }
 
-function LeadCard({ lead, onStatus, onCreateSite, onDeleteSite, site, siteBusy, sitePassword, onSend }) {
+function LeadCard({ lead, onStatus, onCreateSite, onDeleteSite, site, siteBusy, sitePassword, onSendMessage }) {
   const phoneUsable = lead.salonPhone && lead.salonPhone !== 'N/A'
-  const wa = phoneUsable ? waNumber(lead.salonPhone) : ''
   const introTpl = WA_TEMPLATES[0]
-  const waText = encodeURIComponent(introTpl.text)
   const hasSite = Boolean(lead.createdSalonId) || Boolean(site)
   // After a page refresh the fresh `site` state is gone, so fall back to the
   // persisted fields the backend returns on the lead.
@@ -107,21 +105,17 @@ function LeadCard({ lead, onStatus, onCreateSite, onDeleteSite, site, siteBusy, 
       </p>
       <div className="flex flex-wrap items-center gap-2 mt-1">
         {phoneUsable && (
-          <a href={`https://wa.me/${wa}?text=${waText}`} target="_blank" rel="noreferrer"
-            onClick={() => onSend(lead.leadId, introTpl.short, 'first')}
+          <button type="button" onClick={() => onSendMessage(lead, introTpl)}
             className="font-body text-label-sm px-3 py-1.5 rounded bg-[#25D366] text-white font-semibold hover:opacity-90 transition-opacity">
             WhatsApp
-          </a>
+          </button>
         )}
         {phoneUsable && (
           <select value="" aria-label="Send a WhatsApp script"
             onChange={(e) => {
               const tpl = WA_TEMPLATES.find((t) => t.key === e.target.value)
               e.target.value = ''
-              if (!tpl) return
-              const msg = encodeURIComponent(fillTemplate(tpl.text, lead.salonName, siteInfo?.url))
-              window.open(`https://wa.me/${wa}?text=${msg}`, '_blank', 'noopener')
-              onSend(lead.leadId, tpl.short, tpl.kind)
+              if (tpl) onSendMessage(lead, tpl)
             }}
             className="font-body text-label-sm rounded border border-[#25D366]/50 bg-transparent px-2 py-1.5 text-[#1a9c4c]">
             <option value="">Send script…</option>
@@ -151,12 +145,7 @@ function LeadCard({ lead, onStatus, onCreateSite, onDeleteSite, site, siteBusy, 
               Last sent: {lead.lastScript || 'none'} · {lead.followupStage || 0}/3 follow-ups
             </span>
             {next && (
-              <button type="button"
-                onClick={() => {
-                  const msg = encodeURIComponent(fillTemplate(next.text, lead.salonName, siteInfo?.url))
-                  window.open(`https://wa.me/${wa}?text=${msg}`, '_blank', 'noopener')
-                  onSend(lead.leadId, next.short, next.kind)
-                }}
+              <button type="button" onClick={() => onSendMessage(lead, next)}
                 className="font-body text-label-sm px-3 py-1.5 rounded bg-[#25D366] text-white font-semibold hover:opacity-90 transition-opacity">
                 Send next: {next.short}
               </button>
@@ -376,6 +365,42 @@ function ReferrerDashboard() {
     onSettled: () => setSiteBusyId(null),
   })
 
+  // Returns the lead's trial-site URL, creating the site first if it doesn't exist.
+  const ensureSite = async (lead) => {
+    if (lead.siteUrl) return lead.siteUrl
+    if (sites[lead.leadId]?.url) return sites[lead.leadId].url
+    setSiteBusyId(lead.leadId)
+    try {
+      const d = await createLeadSite(lead.leadId)
+      setSites((s) => ({ ...s, [lead.leadId]: d }))
+      client.setQueryData(['referrals', 'my-leads'], (old) =>
+        (old || []).map((l) => (l.leadId === lead.leadId
+          ? { ...l, createdSalonId: d.salonId, siteUrl: d.url, siteLoginEmail: d.loginEmail } : l)))
+      return d.url
+    } catch (e) {
+      setLeadMsg(errorMessage(e, 'Could not create the site.'))
+      return null
+    } finally {
+      setSiteBusyId(null)
+    }
+  }
+
+  // Opens WhatsApp with a filled script. Templates that carry {link} auto-create the
+  // trial site first, then point the already-opened tab at the final wa.me URL.
+  const sendMessage = async (lead, tpl) => {
+    const wa = waNumber(lead.salonPhone)
+    const needsLink = tpl.text.includes('{link}')
+    // Open the tab synchronously so the browser does not block the popup.
+    const win = window.open('', '_blank', 'noopener')
+    let link = lead.siteUrl || sites[lead.leadId]?.url || null
+    if (needsLink && !link) link = await ensureSite(lead)
+    const msg = encodeURIComponent(fillTemplate(tpl.text, lead.salonName, link))
+    const url = `https://wa.me/${wa}?text=${msg}`
+    if (win) win.location = url
+    else window.open(url, '_blank', 'noopener')
+    sendScript.mutate({ leadId: lead.leadId, label: tpl.short, kind: tpl.kind })
+  }
+
   if (isLoading) return <PageLoader />
 
   const { referralCode, approved, perReferralAmount, totalPaid, totalPending, history = [] } = data || {}
@@ -501,7 +526,7 @@ function ReferrerDashboard() {
                   onStatus={(leadId, status) => leadStatus.mutate({ leadId, status })}
                   onCreateSite={(leadId) => createSite.mutate(leadId)}
                   onDeleteSite={(leadId) => deleteSite.mutate(leadId)}
-                  onSend={(leadId, label, kind) => sendScript.mutate({ leadId, label, kind })}
+                  onSendMessage={sendMessage}
                   site={sites[l.leadId]} siteBusy={siteBusyId === l.leadId}
                   sitePassword={sitePasswordValue} />
               ))}
@@ -626,7 +651,6 @@ function ReferrerDashboard() {
             <div className="flex flex-col gap-3">
               {followupLeads.map((lead) => {
                 const phoneUsable = lead.salonPhone && lead.salonPhone !== 'N/A'
-                const wa = phoneUsable ? waNumber(lead.salonPhone) : ''
                 const stage = lead.followupStage || 0
                 return (
                   <div key={lead.leadId} className="rounded-lg border border-outline-variant/20 p-3">
@@ -643,11 +667,7 @@ function ReferrerDashboard() {
                         return (
                           <button key={key} type="button"
                             disabled={!phoneUsable || done || !isNext}
-                            onClick={() => {
-                              const msg = encodeURIComponent(fillTemplate(tpl.text, lead.salonName, lead.siteUrl))
-                              window.open(`https://wa.me/${wa}?text=${msg}`, '_blank', 'noopener')
-                              sendScript.mutate({ leadId: lead.leadId, label: tpl.short, kind: 'followup' })
-                            }}
+                            onClick={() => sendMessage(lead, tpl)}
                             className={`font-body text-label-sm px-4 py-2 rounded font-semibold transition-opacity ${
                               done ? 'bg-outline-variant/30 text-on-surface-variant'
                                 : isNext ? 'bg-[#25D366] text-white hover:opacity-90'
