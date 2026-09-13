@@ -478,7 +478,7 @@ function ReferrerDashboard() {
   return (
     <div className="flex flex-col gap-6">
       {/* Sub navbar */}
-      <div className="flex gap-1 overflow-x-auto border-b border-outline-variant/20 pb-px">
+      <div className="flex gap-1 overflow-x-auto scrollbar-none border-b border-outline-variant/20 pb-px">
         {TABS.map((t) => (
           <button key={t.key} type="button" onClick={() => setTab(t.key)}
             className={`font-body text-label-md px-4 py-2 whitespace-nowrap border-b-2 -mb-px transition-colors ${
