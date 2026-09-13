@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import useAuth from '../shared/auth/useAuth.js'
 import DeleteAccount from '../shared/components/DeleteAccount.jsx'
+import Icon from '../shared/components/Icon.jsx'
 import PageLoader from '../shared/components/PageLoader.jsx'
 import {
   createLeadSite, deleteLeadSite, errorMessage, getLeadAccess, getMyLeads, getReferralLeads,
@@ -20,6 +21,24 @@ const LEAD_STATUS_LABEL = {
   NEW: 'New', CONTACTED: 'Contacted', INTERESTED: 'Interested',
   NOT_INTERESTED: 'Not interested', ONBOARDED: 'Onboarded',
   NOT_ON_WHATSAPP: 'Not on WhatsApp', NOT_PICKING_CALL: 'Not picking call',
+}
+// Chip colours per status, so the lead's state reads at a glance.
+const LEAD_STATUS_CHIP = {
+  NEW: 'bg-sky-500/15 text-sky-500',
+  CONTACTED: 'bg-amber-500/15 text-amber-500',
+  INTERESTED: 'bg-emerald-500/15 text-emerald-500',
+  ONBOARDED: 'bg-emerald-600/20 text-emerald-400',
+  NOT_INTERESTED: 'bg-error/15 text-error',
+  NOT_ON_WHATSAPP: 'bg-outline-variant/25 text-on-surface-variant',
+  NOT_PICKING_CALL: 'bg-outline-variant/25 text-on-surface-variant',
+}
+function StatusChip({ status }) {
+  const s = status || 'NEW'
+  return (
+    <span className={`font-body text-label-sm px-2 py-0.5 rounded-full whitespace-nowrap ${LEAD_STATUS_CHIP[s] || 'bg-outline-variant/25 text-on-surface-variant'}`}>
+      {LEAD_STATUS_LABEL[s] || s}
+    </span>
+  )
 }
 
 // Digits only; a bare 10-digit Indian number gets 91 prefixed for wa.me.
@@ -107,8 +126,11 @@ function LeadCard({ lead, onStatus, onCreateSite, onDeleteSite, site, siteBusy, 
     ? { url: lead.siteUrl, loginEmail: lead.siteLoginEmail, loginPassword: sitePassword }
     : null)
   return (
-    <div className="rounded-lg border border-outline-variant/20 p-4 flex flex-col gap-1.5">
-      <p className="font-body text-on-surface font-semibold">{lead.salonName || 'Unknown salon'}</p>
+    <div className="rounded-xl border border-outline-variant/20 bg-surface/40 p-4 flex flex-col gap-1.5 hover:border-secondary/40 hover:shadow-sm transition-all">
+      <div className="flex items-start justify-between gap-3">
+        <p className="font-body text-on-surface font-semibold">{lead.salonName || 'Unknown salon'}</p>
+        <StatusChip status={lead.contactStatus} />
+      </div>
       {lead.salonAddress && <p className="font-body text-label-sm text-on-surface-variant">{lead.salonAddress}</p>}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
         {lead.mapsUrl && <a href={lead.mapsUrl} target="_blank" rel="noreferrer"
@@ -491,18 +513,21 @@ function ReferrerDashboard() {
   return (
     <div className="flex flex-col gap-6">
       {/* Global lead search: filters every lead list by salon name or phone. */}
-      <input type="search" value={leadSearch} onChange={(e) => setLeadSearch(e.target.value)}
-        placeholder="Search leads by salon name or phone number"
-        className="font-body text-label-md rounded border border-outline-variant/40 bg-transparent px-3 py-2 w-full sm:max-w-md" />
+      <div className="relative w-full sm:max-w-md">
+        <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-on-surface-variant pointer-events-none" />
+        <input type="search" value={leadSearch} onChange={(e) => setLeadSearch(e.target.value)}
+          placeholder="Search leads by salon name or phone number"
+          className="font-body text-label-md rounded-lg border border-outline-variant/40 bg-transparent pl-10 pr-3 py-2.5 w-full focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary/40 transition-colors" />
+      </div>
 
       {/* Sub navbar */}
-      <div className="flex flex-wrap gap-1 border-b border-outline-variant/20 pb-px">
+      <div className="flex flex-wrap gap-1.5">
         {TABS.map((t) => (
           <button key={t.key} type="button" onClick={() => setTab(t.key)}
-            className={`font-body text-label-md px-4 py-2 whitespace-nowrap border-b-2 -mb-px transition-colors ${
+            className={`font-body text-label-md px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
               tab === t.key
-                ? 'border-secondary text-secondary'
-                : 'border-transparent text-on-surface-variant hover:text-secondary-fixed'}`}>
+                ? 'bg-secondary text-on-secondary'
+                : 'text-on-surface-variant hover:bg-secondary/10 hover:text-secondary-fixed'}`}>
             {t.label}
           </button>
         ))}
