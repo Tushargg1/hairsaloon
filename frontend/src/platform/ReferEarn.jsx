@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import useAuth from '../shared/auth/useAuth.js'
 import DeleteAccount from '../shared/components/DeleteAccount.jsx'
@@ -90,6 +90,25 @@ function fmtDateTime(iso) {
   return new Date(iso).toLocaleString([], {
     day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit',
   })
+}
+
+// Floating "back to top" button; appears once the page is scrolled down.
+function BackToTop() {
+  const [show, setShow] = useState(false)
+  useEffect(() => {
+    const onScroll = () => setShow(window.scrollY > 400)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+  if (!show) return null
+  return (
+    <button type="button" aria-label="Back to top"
+      onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+      className="fixed bottom-6 right-6 z-50 w-11 h-11 rounded-full bg-secondary text-on-secondary shadow-lg flex items-center justify-center hover:opacity-90 transition-opacity">
+      <Icon name="arrow_upward" className="text-[22px]" />
+    </button>
+  )
 }
 
 const byShort = (short) => WA_TEMPLATES.find((t) => t.short === short)
@@ -777,6 +796,8 @@ function ReferrerDashboard() {
           )}
         </div>
       ))}
+
+      <BackToTop />
     </div>
   )
 }
