@@ -451,14 +451,28 @@ function ReferrerDashboard() {
   const trialSiteLeads = (myLeads.data || [])
     .filter((l) => l.createdSalonId || l.siteUrl)
 
+  // Leads grouped for the per-status tabs.
+  const leadsByStatus = (status) => (myLeads.data || [])
+    .filter((l) => (l.contactStatus || 'NEW') === status)
+  const STATUS_TABS = [
+    { key: 'CONTACTED', label: 'Contacted' },
+    { key: 'INTERESTED', label: 'Interested' },
+    { key: 'NOT_INTERESTED', label: 'Not interested' },
+    { key: 'ONBOARDED', label: 'Onboarded' },
+    { key: 'NOT_ON_WHATSAPP', label: 'Not on WhatsApp' },
+    { key: 'NOT_PICKING_CALL', label: 'Not picking call' },
+  ]
+
   const TABS = [
     { key: 'overview', label: 'Overview' },
-    { key: 'leads', label: 'Get leads' },
-    { key: 'refer', label: 'Refer a salon' },
     { key: 'referrals', label: 'My referrals' },
+    { key: 'leads', label: 'Get leads' },
     { key: 'followups', label: `Follow-ups${followupLeads.length ? ` (${followupLeads.length})` : ''}` },
     { key: 'sites', label: `Trial sites${trialSiteLeads.length ? ` (${trialSiteLeads.length})` : ''}` },
-    { key: 'account', label: 'Account' },
+    ...STATUS_TABS.map((s) => {
+      const n = leadsByStatus(s.key).length
+      return { key: `status:${s.key}`, label: `${s.label}${n ? ` (${n})` : ''}` }
+    }),
   ]
 
   return (
@@ -477,13 +491,65 @@ function ReferrerDashboard() {
       </div>
 
       {tab === 'overview' && (
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Stat label="Your code" value={referralCode} accent="text-secondary" />
-        <Stat label="Total earned" value={money(totalPaid)} />
-        <Stat label="Awaiting payment" value={money(totalPending)} />
-        <Stat label="Successful referrals" value={successful} />
-        <Stat label="Pending / processing" value={processing} />
-        <Stat label="Declined" value={declined} accent="text-error" />
+      <div className="flex flex-col gap-6">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <Stat label="Your code" value={referralCode} accent="text-secondary" />
+          <Stat label="Total earned" value={money(totalPaid)} />
+          <Stat label="Awaiting payment" value={money(totalPending)} />
+          <Stat label="Successful referrals" value={successful} />
+          <Stat label="Pending / processing" value={processing} />
+          <Stat label="Declined" value={declined} accent="text-error" />
+        </div>
+
+        {approved ? (
+          <div className="glass-panel rounded-xl p-6">
+            <h2 className="font-display text-headline-sm text-on-surface mb-1">Refer a salon</h2>
+            <p className="font-body text-label-md text-on-surface-variant mb-4">
+              You earn {money(perReferralAmount)} per approved referral. Details cannot be edited
+              once submitted.
+            </p>
+            <form onSubmit={(e) => { e.preventDefault(); submit.mutate() }} className="grid gap-4 sm:grid-cols-2">
+              <label className="flex flex-col gap-1 font-body text-label-md">Salon name
+                <input name="salonName" required maxLength="160" value={form.salonName} onChange={update}
+                  className="rounded border border-outline-variant/40 bg-transparent px-3 py-2" />
+              </label>
+              <label className="flex flex-col gap-1 font-body text-label-md">Salon phone
+                <input name="salonPhone" type="tel" required minLength="10" maxLength="15"
+                  value={form.salonPhone} onChange={update}
+                  className="rounded border border-outline-variant/40 bg-transparent px-3 py-2" />
+              </label>
+              <label className="flex flex-col gap-1 font-body text-label-md">Contact person (whose number)
+                <input name="contactName" maxLength="160" value={form.contactName} onChange={update}
+                  className="rounded border border-outline-variant/40 bg-transparent px-3 py-2" />
+              </label>
+              <label className="flex flex-col gap-1 font-body text-label-md">Location / address
+                <input name="salonAddress" maxLength="500" value={form.salonAddress} onChange={update}
+                  className="rounded border border-outline-variant/40 bg-transparent px-3 py-2" />
+              </label>
+              <label className="flex flex-col gap-1 font-body text-label-md sm:col-span-2">Google Maps location link
+                <input name="mapsUrl" type="url" required maxLength="2048" value={form.mapsUrl} onChange={update}
+                  placeholder="https://maps.app.goo.gl/..."
+                  className="rounded border border-outline-variant/40 bg-transparent px-3 py-2" />
+              </label>
+              {error && <p className="font-body text-label-sm text-error sm:col-span-2" role="alert">{error}</p>}
+              <div className="sm:col-span-2">
+                <button type="submit" disabled={submit.isPending}
+                  className="brass-gradient text-espresso font-body font-semibold px-6 py-2.5 rounded">
+                  {submit.isPending ? 'Submitting…' : 'Submit referral'}
+                </button>
+              </div>
+            </form>
+          </div>
+        ) : (
+          <div className="glass-panel rounded-xl p-6">
+            <p className="font-body text-on-surface-variant">
+              Your referrer account is awaiting admin approval. Once approved you can submit salon
+              referrals and start earning.
+            </p>
+          </div>
+        )}
+
+        <DeleteAccount note="This permanently closes your referrer account. Your referral history stays on record but you won't be able to sign in again." />
       </div>
       )}
 
@@ -547,6 +613,10 @@ function ReferrerDashboard() {
             <div className="flex flex-col gap-2 mt-3">
               {[...myLeads.data]
                 .filter((l) => {
+                  const st = l.contactStatus || 'NEW'
+                  return st === 'NEW' || st === 'ONBOARDED'
+                })
+                .filter((l) => {
                   const q = leadSearch.replace(/\D/g, '')
                   return !q || String(l.salonPhone || '').replace(/\D/g, '').includes(q)
                 })
@@ -572,57 +642,6 @@ function ReferrerDashboard() {
             Your referrer account is awaiting admin approval. Once approved you can pull leads and
             submit salon referrals.
           </p>
-        </div>
-      )}
-
-      {tab === 'refer' && !approved && (
-        <div className="glass-panel rounded-xl p-6">
-          <p className="font-body text-on-surface-variant">
-            Your referrer account is awaiting admin approval. Once approved you can submit salon
-            referrals and start earning.
-          </p>
-        </div>
-      )}
-
-      {tab === 'refer' && approved && (
-        <div className="glass-panel rounded-xl p-6">
-          <h2 className="font-display text-headline-sm text-on-surface mb-1">Refer a salon</h2>
-          <p className="font-body text-label-md text-on-surface-variant mb-4">
-            You earn {money(perReferralAmount)} per approved referral. Details cannot be edited
-            once submitted.
-          </p>
-
-          <form onSubmit={(e) => { e.preventDefault(); submit.mutate() }} className="grid gap-4 sm:grid-cols-2">
-            <label className="flex flex-col gap-1 font-body text-label-md">Salon name
-              <input name="salonName" required maxLength="160" value={form.salonName} onChange={update}
-                className="rounded border border-outline-variant/40 bg-transparent px-3 py-2" />
-            </label>
-            <label className="flex flex-col gap-1 font-body text-label-md">Salon phone
-              <input name="salonPhone" type="tel" required minLength="10" maxLength="15"
-                value={form.salonPhone} onChange={update}
-                className="rounded border border-outline-variant/40 bg-transparent px-3 py-2" />
-            </label>
-            <label className="flex flex-col gap-1 font-body text-label-md">Contact person (whose number)
-              <input name="contactName" maxLength="160" value={form.contactName} onChange={update}
-                className="rounded border border-outline-variant/40 bg-transparent px-3 py-2" />
-            </label>
-            <label className="flex flex-col gap-1 font-body text-label-md">Location / address
-              <input name="salonAddress" maxLength="500" value={form.salonAddress} onChange={update}
-                className="rounded border border-outline-variant/40 bg-transparent px-3 py-2" />
-            </label>
-            <label className="flex flex-col gap-1 font-body text-label-md sm:col-span-2">Google Maps location link
-              <input name="mapsUrl" type="url" required maxLength="2048" value={form.mapsUrl} onChange={update}
-                placeholder="https://maps.app.goo.gl/..."
-                className="rounded border border-outline-variant/40 bg-transparent px-3 py-2" />
-            </label>
-            {error && <p className="font-body text-label-sm text-error sm:col-span-2" role="alert">{error}</p>}
-            <div className="sm:col-span-2">
-              <button type="submit" disabled={submit.isPending}
-                className="brass-gradient text-espresso font-body font-semibold px-6 py-2.5 rounded">
-                {submit.isPending ? 'Submitting…' : 'Submit referral'}
-              </button>
-            </div>
-          </form>
         </div>
       )}
 
@@ -744,9 +763,26 @@ function ReferrerDashboard() {
         </div>
       )}
 
-      {tab === 'account' && (
-        <DeleteAccount note="This permanently closes your referrer account. Your referral history stays on record but you won't be able to sign in again." />
-      )}
+      {STATUS_TABS.map((s) => tab === `status:${s.key}` && (
+        <div key={s.key} className="glass-panel rounded-xl p-6">
+          <h2 className="font-display text-headline-sm text-on-surface mb-4">{s.label}</h2>
+          {leadsByStatus(s.key).length === 0 ? (
+            <p className="font-body text-on-surface-variant">No leads with this status.</p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {leadsByStatus(s.key).map((l) => (
+                <LeadCard key={l.leadId} lead={l}
+                  onStatus={(leadId, status) => leadStatus.mutate({ leadId, status })}
+                  onCreateSite={(leadId) => createSite.mutate(leadId)}
+                  onDeleteSite={(leadId) => deleteSite.mutate(leadId)}
+                  onSendMessage={sendMessage}
+                  site={sites[l.leadId]} siteBusy={siteBusyId === l.leadId}
+                  sitePassword={sitePasswordValue} />
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
     </div>
   )
 }
