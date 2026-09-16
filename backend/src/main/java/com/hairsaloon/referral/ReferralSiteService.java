@@ -88,6 +88,9 @@ public class ReferralSiteService {
         String address = firstNonBlank(place == null ? null : place.address(),
             leadAddress, "Address on file");
         String phone = firstNonBlank(place == null ? null : place.phone(), leadPhone);
+        // Prefer Google's verified Maps link (points to the real business listing) over
+        // the raw scraped link, then fall back to the lead's own maps link.
+        String salonMapsUrl = firstNonBlank(place == null ? null : place.mapsUri(), mapsUrl);
 
         String subdomain = uniqueSubdomain(name);
         String email = uniqueEmail(code);
@@ -96,7 +99,7 @@ public class ReferralSiteService {
         long ownerId = authService.provisionSiteOwner(name, placeholderPhone(code), email, password);
 
         Salon salon = Salon.trial(ownerId, subdomain, name, address, firstWord(address),
-            phone, mapsUrl, DEFAULT_TIMEZONE);
+            phone, salonMapsUrl, DEFAULT_TIMEZONE);
         Long salonId = salons.saveAndFlush(salon).getId();
 
         if (place != null) {
