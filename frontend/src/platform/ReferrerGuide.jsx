@@ -6,34 +6,54 @@ import Icon from '../shared/components/Icon.jsx'
 // "Unitechverse" here — the actual brand is introduced later by the team.
 const SECTIONS = [
   {
-    title: 'What you are offering',
-    icon: 'storefront',
+    title: 'What Unitechverse offers',
+    icon: 'rocket_launch',
     points: [
-      'A ready-made website for the salon — services, photos, reviews and an online booking page, all in one link.',
-      'Customers can view the salon and book an appointment online, so the salon looks professional and gets found more easily.',
-      'You show them a live preview site built for their own salon, so they see exactly what they get before deciding.',
+      'A complete digital growth system for salons — not just a website, a full business platform.',
+      'A professional booking website with online appointments, services, photos and reviews.',
+      'WhatsApp automation — auto-replies, booking confirmations and reminders that go out on their own.',
+      'An AI chatbot that answers customer questions and books appointments 24/7, even after hours.',
+      'A built-in CRM (customer relationship management) that stores every customer and their history in one place.',
+      'Lead management to track every enquiry from "new" to "booked" so nothing slips through.',
+      'AI sales analysis that shows what is working, busiest hours, top services and where the money comes from.',
+      'You show them a live preview built for their own salon, so they see it before deciding.',
     ],
   },
   {
-    title: 'Why a salon wants this',
+    title: 'Why a salon will want this',
     icon: 'trending_up',
     points: [
-      'More visibility on Google — people searching nearby actually find them.',
-      'Fewer missed customers — online booking works even when they are busy or closed.',
-      'Looks premium — a clean website builds trust and brings repeat customers.',
-      'Salons using it retain 90%+ of their customers and can get up to 2x more new leads.',
+      'More visibility on Google — customers searching nearby actually find them.',
+      'Never miss a customer — the AI chatbot and WhatsApp automation reply and book even when the salon is busy or closed.',
+      'Fewer no-shows — automatic WhatsApp reminders bring customers back on time.',
+      'Smarter decisions — AI sales analysis tells them what to promote and when.',
+      'Loyal customers — the CRM helps them remember and re-engage every client.',
+      'Results: salons using this retain 90%+ of their customers and can get up to 2x more new leads.',
     ],
   },
   {
     title: 'How to pitch — step by step',
     icon: 'record_voice_over',
     points: [
-      'Start friendly, like a real enquiry. Ask if they take appointments and about their services.',
+      'Open friendly, like a real enquiry — ask if they take appointments and about their services.',
       'Give a genuine compliment about their work and their Google reviews.',
       'Point out the gap: even with great reviews they may not rank high on Google, so people search but do not always find them.',
-      'Offer the fix and share the preview website you built for their salon.',
-      'End with an easy yes/no question, e.g. "Would you be open to that?"',
-      'Use the ready-made WhatsApp scripts on each lead — send message 1, then 2, then 3, then follow-ups A, B, C. Do not rush all at once.',
+      'Introduce the solution — a complete system with a booking website, WhatsApp automation, an AI chatbot, a CRM and AI sales insights.',
+      'Share the live preview site you built for their salon so it feels real.',
+      'End with an easy yes/no question, e.g. "Would you be open to a quick look?"',
+      'Use the ready-made WhatsApp scripts on each lead — message 1, then 2, then 3, then follow-ups A, B, C. Never all at once.',
+    ],
+  },
+  {
+    title: 'Words that make them curious',
+    icon: 'auto_awesome',
+    points: [
+      '"An AI chatbot that books appointments for you 24/7, even when you are closed."',
+      '"WhatsApp automation that sends reminders and confirmations automatically."',
+      '"A dashboard that shows your sales, busiest hours and best services using AI."',
+      '"A CRM that remembers every customer so you can bring them back."',
+      '"Your own booking website that gets you found on Google."',
+      'Say it is a complete growth platform, not just a website — that is what makes people want to try it.',
     ],
   },
   {
@@ -42,9 +62,10 @@ const SECTIONS = [
     points: [
       'Introduce yourself as being from Unitechverse. Keep it warm and confident, never pushy.',
       'Write short, natural messages — like a person, not an ad. Avoid heavy formatting or too many emojis.',
-      'Personalise: use their salon name and the site link made for them.',
+      'Personalise: use their salon name and the preview link made for them.',
+      'Lead with one big benefit (more bookings, less manual work), then offer to show the demo.',
       'One clear ask per message. Make it easy to reply yes.',
-      'If they go quiet, the preview link is your best nudge — a page built for them usually gets a reply.',
+      'If they go quiet, the preview link is your best nudge — a system built for them usually gets a reply.',
     ],
   },
   {
@@ -53,8 +74,8 @@ const SECTIONS = [
     points: [
       'Space out your follow-ups — do not send them back to back.',
       'Stop after three unanswered follow-ups so it never feels like spam.',
-      'The setup is completely free for the salon — say so clearly, it removes their hesitation.',
-      'You represent Unitechverse. Be honest about what the site does and does not do yet.',
+      'The demo and setup are free — say so clearly, it removes their hesitation.',
+      'You represent Unitechverse. Be honest and only promise what the platform delivers.',
       'Update each lead status (Contacted, Interested, Not interested, etc.) so your pipeline stays clean.',
     ],
   },
@@ -76,7 +97,7 @@ export default function ReferrerGuide({ onClose }) {
         <div className="flex items-start justify-between gap-4 mb-2">
           <div>
             <p className="font-body text-label-md text-secondary tracking-wider uppercase mb-1">Getting started</p>
-            <h2 className="font-display text-headline-sm text-on-surface">How to start &amp; pitch</h2>
+            <h2 className="font-display text-headline-sm text-on-surface">How to pitch Unitechverse</h2>
           </div>
           <button type="button" onClick={onClose} aria-label="Close"
             className="text-on-surface-variant hover:text-secondary transition-colors">
@@ -84,8 +105,9 @@ export default function ReferrerGuide({ onClose }) {
           </button>
         </div>
         <p className="font-body text-body-md text-on-surface-variant mb-6">
-          A quick guide to what you are offering and how to pitch it well. Read it once — it makes
-          every conversation easier.
+          You are offering salons a complete growth platform — a booking website, WhatsApp
+          automation, an AI chatbot, a CRM and AI sales insights. This guide shows how to explain
+          it so salons get curious and want a demo. Read it once — it makes every pitch easier.
         </p>
 
         <div className="flex flex-col gap-6">

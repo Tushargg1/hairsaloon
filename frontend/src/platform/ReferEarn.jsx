@@ -588,10 +588,10 @@ function ReferrerDashboard() {
           <div>
             <p className="font-display text-title-lg text-on-surface flex items-center gap-2">
               <Icon name="school" className="text-[20px] text-secondary" />
-              New here? Learn how to pitch
+              How to pitch the platform
             </p>
             <p className="font-body text-label-md text-on-surface-variant mt-0.5">
-              A quick guide to the product and how to explain it professionally.
+              Booking website, WhatsApp automation, AI chatbot, CRM and AI sales insights — learn how to explain it so salons want a demo.
             </p>
           </div>
           <button type="button" onClick={() => setShowGuide(true)}
