@@ -313,7 +313,9 @@
   .theme-light .site-nav { background-color: rgb(35 15 8 / 0.12); }
   /* Mobile dropdown: matching tint so the hero shows through the same way. */
   .site-menu { background-color: rgb(20 16 8 / 0.18); }
-  .theme-light .site-menu { background-color: rgb(20 16 8 / 0.18); }
+  /* Light theme: a light translucent sheet (like the page) with dark, readable links,
+     matching the top nav rather than a dark muddy block. */
+  .theme-light .site-menu { background-color: rgb(247 242 233 / 0.92); }
   /* Light theme, inner pages (no dark hero behind the nav): use dark, readable text. */
   .theme-light .site-nav .text-on-surface-variant { color: rgb(74 60 42); }
   .theme-light .site-nav .text-on-surface-variant:hover { color: rgb(138 90 34); }
