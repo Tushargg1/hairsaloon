@@ -569,18 +569,22 @@ function ReferrerDashboard() {
           className="font-body text-label-md rounded-lg border border-outline-variant/40 bg-transparent pl-10 pr-3 py-2.5 w-full focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary/40 transition-colors" />
       </div>
 
-      {/* Sub navbar */}
-      <div className="flex flex-wrap gap-1.5">
-        {TABS.map((t) => (
-          <button key={t.key} type="button" onClick={() => setTab(t.key)}
-            className={`font-body text-label-md px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
-              tab === t.key
-                ? 'bg-secondary text-on-secondary'
-                : 'text-on-surface-variant hover:bg-secondary/10 hover:text-secondary-fixed'}`}>
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <div className="flex flex-col md:flex-row gap-6 items-start">
+        {/* Left vertical sub navbar */}
+        <nav className="w-full md:w-56 md:flex-shrink-0 flex md:flex-col gap-1 overflow-x-auto md:overflow-visible scrollbar-none md:sticky md:top-4">
+          {TABS.map((t) => (
+            <button key={t.key} type="button" onClick={() => setTab(t.key)}
+              className={`font-body text-label-md text-left px-4 py-2.5 rounded-lg whitespace-nowrap transition-colors ${
+                tab === t.key
+                  ? 'bg-secondary text-on-secondary font-semibold'
+                  : 'text-on-surface-variant hover:bg-secondary/10 hover:text-secondary-fixed'}`}>
+              {t.label}
+            </button>
+          ))}
+        </nav>
+
+        {/* Content area */}
+        <div className="flex-1 min-w-0 flex flex-col gap-6">
 
       {tab === 'overview' && (
       <div className="flex flex-col gap-6">
@@ -821,6 +825,9 @@ function ReferrerDashboard() {
           )}
         </div>
       ))}
+
+        </div>
+      </div>
 
       <BackToTop />
       {showGuide && <ReferrerGuide onClose={() => setShowGuide(false)} />}
