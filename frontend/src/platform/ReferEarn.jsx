@@ -5,6 +5,7 @@ import useAuth from '../shared/auth/useAuth.js'
 import DeleteAccount from '../shared/components/DeleteAccount.jsx'
 import Icon from '../shared/components/Icon.jsx'
 import PageLoader from '../shared/components/PageLoader.jsx'
+import ReferrerGuide from './ReferrerGuide.jsx'
 import {
   createLeadSite, deleteLeadSite, errorMessage, getLeadAccess, getMyLeads, getReferralLeads,
   getReferralOverview, recordScriptSent, referralKeys, requestLeadAccess, setLeadStatus, submitReferral,
@@ -361,6 +362,14 @@ function ReferrerDashboard() {
   const [leadMsg, setLeadMsg] = useState('')
   const [leadSearch, setLeadSearch] = useState('')
   const [sortNewest, setSortNewest] = useState(true) // true = latest first
+  const [showGuide, setShowGuide] = useState(false)
+  // Auto-open the how-to-start guide the first time a referrer signs in.
+  useEffect(() => {
+    if (!localStorage.getItem('groomit-referrer-guide-seen')) {
+      setShowGuide(true)
+      localStorage.setItem('groomit-referrer-guide-seen', '1')
+    }
+  }, [])
   const myLeads = useQuery({ queryKey: ['referrals', 'my-leads'], queryFn: getMyLeads })
   const getLeads = useMutation({
     mutationFn: getReferralLeads,
@@ -575,6 +584,22 @@ function ReferrerDashboard() {
 
       {tab === 'overview' && (
       <div className="flex flex-col gap-6">
+        <div className="glass-panel rounded-xl p-5 flex items-center justify-between gap-4 flex-wrap">
+          <div>
+            <p className="font-display text-title-lg text-on-surface flex items-center gap-2">
+              <Icon name="school" className="text-[20px] text-secondary" />
+              New here? Learn how to pitch
+            </p>
+            <p className="font-body text-label-md text-on-surface-variant mt-0.5">
+              A quick guide to the product and how to explain it professionally.
+            </p>
+          </div>
+          <button type="button" onClick={() => setShowGuide(true)}
+            className="brass-gradient text-espresso font-body font-semibold px-5 py-2.5 rounded whitespace-nowrap">
+            How to start &amp; pitch
+          </button>
+        </div>
+
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <Stat label="Your code" value={referralCode} accent="text-secondary" />
           <Stat label="Total earned" value={money(totalPaid)} />
@@ -798,6 +823,7 @@ function ReferrerDashboard() {
       ))}
 
       <BackToTop />
+      {showGuide && <ReferrerGuide onClose={() => setShowGuide(false)} />}
     </div>
   )
 }
