@@ -97,13 +97,9 @@ export default function HomePage() {
             className="absolute top-[67px] right-4 lg:right-6 z-20 drop-shadow-lg" style={{ '--toggle-size': '8px' }} />
         )}
         <div className="hero-content relative z-10 w-full max-w-[1280px] mx-auto px-4 lg:px-6 pb-[5vh] flex flex-col items-center text-center">
-          <h1 className="font-display text-display-lg-mobile md:text-display-lg text-white mb-4 max-w-4xl leading-tight">
+          <h1 className="font-display text-display-lg-mobile md:text-display-lg text-white mb-6 max-w-4xl leading-tight">
             Grow Your Salon with Groomit
           </h1>
-          <p className="font-body text-body-lg text-white/90 mb-6 max-w-2xl" style={{ textShadow: '0 2px 12px rgba(0,0,0,0.6)' }}>
-            The all-in-one platform for salons — your own booking website, online appointments,
-            automatic reminders and customer insights. More bookings, less phone time, zero commission.
-          </p>
           <div className="flex flex-wrap gap-3 justify-center">
             <Link to="/for-business" className="vintage-cta">
               <Icon name="storefront" className="text-[18px]" />
