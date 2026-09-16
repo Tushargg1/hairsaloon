@@ -28,12 +28,6 @@ const VALUES = [
   },
 ]
 
-const CUSTOMER_STEPS = [
-  { icon: 'link', title: 'Open', text: 'Open your salon\u2019s booking page from the link they share on Instagram, WhatsApp, or a QR code.' },
-  { icon: 'menu_book', title: 'Choose', text: 'See the salon\u2019s services, prices, and staff, and pick what you want.' },
-  { icon: 'event_available', title: 'Book', text: 'Pick a slot that is genuinely free and get instant confirmation.' },
-]
-
 const OWNER_STEPS = [
   { icon: 'app_registration', title: 'Register', text: 'Claim your subdomain and add your salon details in minutes.' },
   { icon: 'tune', title: 'Set up', text: 'Add services, staff, working hours, and time off.' },
@@ -117,35 +111,30 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* How it works, both sides */}
-      <section className="px-4 pb-16 max-w-[1280px] mx-auto w-full">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {[
-            { heading: 'For customers', steps: CUSTOMER_STEPS, cta: 'Sign in', to: '/login' },
-            { heading: 'For salon owners', steps: OWNER_STEPS, cta: 'List your salon', to: '/for-business' },
-          ].map((side) => (
-            <GlassPanel key={side.heading} className="flex flex-col">
-              <h2 className="font-display text-headline-sm text-secondary-fixed mb-6">{side.heading}</h2>
-              <ol className="flex flex-col gap-5 flex-grow mb-6">
-                {side.steps.map((s, i) => (
-                  <li key={s.title} className="flex gap-4">
-                    <span className="font-display text-brass text-label-md tracking-widest pt-1 flex-shrink-0">
-                      0{i + 1}
-                    </span>
-                    <div>
-                      <h3 className="font-body text-title-lg text-on-surface text-base mb-0.5 flex items-center gap-2">
-                        <Icon name={s.icon} className="text-secondary text-[18px]" />
-                        {s.title}
-                      </h3>
-                      <p className="font-body text-body-md text-on-surface-variant">{s.text}</p>
-                    </div>
-                  </li>
-                ))}
-              </ol>
-              <BrassButton to={side.to} variant="outline" className="w-full">{side.cta}</BrassButton>
-            </GlassPanel>
-          ))}
-        </div>
+      {/* How it works for salon owners */}
+      <section className="px-4 pb-16 max-w-[900px] mx-auto w-full">
+        <h2 className="font-display text-headline-sm text-on-surface text-center mb-8">
+          How it works for your salon
+        </h2>
+        <GlassPanel className="flex flex-col">
+          <ol className="flex flex-col gap-5 flex-grow mb-6">
+            {OWNER_STEPS.map((s, i) => (
+              <li key={s.title} className="flex gap-4">
+                <span className="font-display text-brass text-label-md tracking-widest pt-1 flex-shrink-0">
+                  0{i + 1}
+                </span>
+                <div>
+                  <h3 className="font-body text-title-lg text-on-surface text-base mb-0.5 flex items-center gap-2">
+                    <Icon name={s.icon} className="text-secondary text-[18px]" />
+                    {s.title}
+                  </h3>
+                  <p className="font-body text-body-md text-on-surface-variant">{s.text}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+          <BrassButton to="/for-business" variant="outline" className="w-full">List your salon</BrassButton>
+        </GlassPanel>
       </section>
 
       {/* CTA */}

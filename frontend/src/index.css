@@ -310,29 +310,20 @@
 
   /* Same translucent tint in both themes so the nav looks identical. */
   .site-nav { background-color: rgb(35 15 8 / 0.12); }
-  .theme-light .site-nav { background-color: rgb(247 242 233 / 0.85); }
+  .theme-light .site-nav { background-color: rgb(35 15 8 / 0.12); }
   /* Mobile dropdown: matching tint so the hero shows through the same way. */
   .site-menu { background-color: rgb(20 16 8 / 0.18); }
-  .theme-light .site-menu { background-color: rgb(247 242 233 / 0.95); }
-  /* Nav links must read on the cream page (inner pages) yet stay legible over the
-     dark hero, so use a readable dark tone with a soft light halo. */
+  .theme-light .site-menu { background-color: rgb(20 16 8 / 0.18); }
+  /* The tint is dark in both themes, so keep nav text/icons light in light mode too. */
   .theme-light .site-nav .text-on-surface-variant,
-  .theme-light .site-menu .text-on-surface-variant {
-    color: rgb(74 60 42);
-    text-shadow: 0 1px 2px rgb(255 250 242 / 0.6);
-  }
-  .theme-light .site-nav .text-on-surface-variant:hover,
-  .theme-light .site-menu .text-on-surface-variant:hover { color: rgb(138 90 34); }
+  .theme-light .site-menu .text-on-surface-variant { color: rgb(216 194 189); }
   .theme-light .site-nav .text-secondary,
   .theme-light .site-menu .text-secondary,
-  .theme-light .site-nav .text-secondary-fixed {
-    color: rgb(138 90 34);
-    text-shadow: 0 1px 2px rgb(255 250 242 / 0.6);
-  }
-  /* Salon/brand name in the light-theme nav sits on cream, so use a dark brass tone. */
+  .theme-light .site-nav .text-secondary-fixed { color: rgb(243 187 144); }
+  /* Salon name over the translucent nav needs a shadow to stay legible in light mode. */
   .theme-light .site-nav .font-display.text-secondary-fixed {
-    color: rgb(92 58 18);
-    text-shadow: none;
+    color: rgb(250 224 200);
+    text-shadow: 0 1px 3px rgb(20 12 6 / 0.7);
   }
 
   /* Hero text gets a soft shadow so it stays legible over the footage. */
