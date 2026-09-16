@@ -22,9 +22,10 @@ const GROWTH = [
 const FEATURES = [
   { icon: 'language', title: 'Your own booking website', text: 'A branded page at yourname.groomit.in so customers find you on Google and book online.' },
   { icon: 'event_available', title: 'Online appointments 24/7', text: 'Customers book themselves anytime — even when the salon is closed. No more missed calls.' },
-  { icon: 'notifications_active', title: 'Automatic reminders', text: 'Confirmations and reminders go out on their own, cutting no-shows almost in half.' },
-  { icon: 'groups', title: 'Customer records', text: 'Every customer and their booking history in one place, so you can bring them back.' },
-  { icon: 'insights', title: 'Sales insights', text: 'See your busiest hours, top services, and where your money comes from.' },
+  { icon: 'chat', title: 'WhatsApp automation', text: 'Confirmations and reminders sent automatically on WhatsApp, cutting no-shows almost in half.' },
+  { icon: 'smart_toy', title: 'AI chatbot', text: 'Answers customer questions and books appointments round the clock — even when you are busy.', soon: true },
+  { icon: 'groups', title: 'Customer records (CRM)', text: 'Every customer and their booking history in one place, so you can bring them back.' },
+  { icon: 'insights', title: 'AI sales insights', text: 'See your busiest hours, top services, and where your money comes from.' },
   { icon: 'star', title: 'Reviews that build trust', text: 'Show your Google rating and collect real reviews from completed appointments.' },
 ]
 
@@ -164,7 +165,14 @@ export default function HomePage() {
                   <div key={f.title} className="flex items-start gap-4">
                     <Icon name={f.icon} filled className="text-2xl text-secondary flex-shrink-0 mt-0.5" />
                     <div>
-                      <h3 className="font-display text-title-lg gold-gradient-text mb-0.5">{f.title}</h3>
+                      <h3 className="font-display text-title-lg gold-gradient-text mb-0.5 flex items-center gap-2 flex-wrap">
+                        {f.title}
+                        {f.soon && (
+                          <span className="font-body text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-secondary/50 text-secondary">
+                            Coming soon
+                          </span>
+                        )}
+                      </h3>
                       <p className="font-body text-body-md text-on-surface-variant">{f.text}</p>
                     </div>
                   </div>
