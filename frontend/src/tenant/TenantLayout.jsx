@@ -167,6 +167,16 @@ export default function TenantLayout() {
   const isDashboard = location.pathname.startsWith('/dashboard')
   const isHome = location.pathname === '/'
   const managementRoute = location.pathname.startsWith('/manage') || isDashboard
+  // Light nav text only while the hero is behind the nav; switch to dark once the
+  // content scrolls up over it. Only relevant on the salon home page.
+  const [overHero, setOverHero] = useState(false)
+  useEffect(() => {
+    if (!isHome) { setOverHero(false); return undefined }
+    const onScroll = () => setOverHero(window.scrollY < window.innerHeight * 0.6)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [isHome])
   const notOnboarded = !managementRoute
     && ((profileStatus && profileStatus !== 'ACTIVE')
       || profileQuery.error?.response?.data?.error === 'SALON_INACTIVE')
@@ -239,7 +249,7 @@ export default function TenantLayout() {
   return (
     <div className={`site-root min-h-screen flex flex-col ${siteLight ? 'theme-light' : ''}`}>
       {/* Tenant Nav */}
-      <nav className={`site-nav fixed top-0 z-[100] w-full backdrop-blur-xl border-b border-outline-variant/10 ${isHome ? 'nav-on-hero' : ''}`}>
+      <nav className={`site-nav fixed top-0 z-[100] w-full backdrop-blur-xl border-b border-outline-variant/10 ${overHero ? 'nav-on-hero' : ''}`}>
         <div className="flex justify-between items-center w-full px-4 lg:px-[80px] py-1 max-w-[1280px] mx-auto h-12">
           <NavLink to="/" className="flex items-center gap-3 min-w-0 flex-shrink" aria-label={`${salonName} home`}>
             {profileQuery.data?.logoUrl ? (

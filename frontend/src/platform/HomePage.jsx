@@ -80,12 +80,8 @@ export default function HomePage() {
         )}
         <div className="hero-content relative z-10 w-full max-w-[1280px] mx-auto px-4 lg:px-6 pb-[5vh] flex flex-col items-center text-center">
           <h1 className="font-display text-display-lg-mobile md:text-display-lg text-white mb-6 max-w-4xl leading-tight">
-            Booking Software for Your Salon
+            Grow Your Salon with Groomit
           </h1>
-          <p className="font-body text-body-lg text-white/85 mb-6 max-w-xl">
-            Your own booking page, online appointments, and reminders. Share it with your
-            customers on Instagram, WhatsApp, or a QR code.
-          </p>
           <div className="flex flex-wrap gap-3 justify-center">
             <Link to="/for-business" className="vintage-cta">
               <Icon name="storefront" className="text-[18px]" />

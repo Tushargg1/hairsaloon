@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { NavLink, Link, useLocation } from 'react-router-dom'
 import useAuth from '../auth/useAuth.js'
 import BrassButton from './BrassButton.jsx'
@@ -13,11 +13,20 @@ export default function Navbar() {
   const { user, logout } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
   const close = () => setMenuOpen(false)
-  // Only the home page has the dark hero behind the nav; there the light text stays.
-  const onHero = useLocation().pathname === '/'
+  // The home hero sits behind the nav; keep light text only while it is in view,
+  // switch to dark once the content scrolls up over it.
+  const isHome = useLocation().pathname === '/'
+  const [overHero, setOverHero] = useState(isHome)
+  useEffect(() => {
+    if (!isHome) { setOverHero(false); return undefined }
+    const onScroll = () => setOverHero(window.scrollY < window.innerHeight * 0.6)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [isHome])
 
   return (
-    <nav className={`site-nav fixed top-0 w-full z-50 backdrop-blur-md border-b border-outline-variant/15 shadow-sm transition-all duration-300 ${onHero ? 'nav-on-hero' : ''}`}>
+    <nav className={`site-nav fixed top-0 w-full z-50 backdrop-blur-md border-b border-outline-variant/15 shadow-sm transition-all duration-300 ${overHero ? 'nav-on-hero' : ''}`}>
       <div className="flex justify-between items-center w-full px-4 lg:px-[80px] py-1 max-w-[1280px] mx-auto h-12">
         {/* Brand */}
         <Link to="/" className="flex items-center gap-2" aria-label="Groomit home">
