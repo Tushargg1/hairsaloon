@@ -83,7 +83,7 @@ export default function Navbar() {
 
       {/* Mobile Menu */}
       {menuOpen && (
-        <div className="site-menu md:hidden border-t border-outline-variant/20 backdrop-blur-md px-4 py-4 flex flex-col gap-4">
+        <div className={`site-menu md:hidden border-t border-outline-variant/20 backdrop-blur-md px-4 py-4 flex flex-col gap-4 ${overHero ? 'nav-on-hero' : ''}`}>
           <NavLink to="/for-business" onClick={close} className="font-body text-label-md text-on-surface-variant">For Salons</NavLink>
           <NavLink to="/pricing" onClick={close} className="font-body text-label-md text-on-surface-variant">Pricing</NavLink>
           <NavLink to="/about" onClick={close} className="font-body text-label-md text-on-surface-variant">About</NavLink>

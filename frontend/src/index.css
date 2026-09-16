@@ -313,9 +313,8 @@
   .theme-light .site-nav { background-color: rgb(35 15 8 / 0.12); }
   /* Mobile dropdown: matching tint so the hero shows through the same way. */
   .site-menu { background-color: rgb(20 16 8 / 0.18); }
-  /* Light theme: a light translucent sheet (like the page) with dark, readable links,
-     matching the top nav rather than a dark muddy block. */
-  .theme-light .site-menu { background-color: rgb(247 242 233 / 0.92); }
+  /* Light theme: same faint translucent tint as the nav so the hero shows through. */
+  .theme-light .site-menu { background-color: rgb(35 15 8 / 0.12); }
   /* Light theme, inner pages (no dark hero behind the nav): use dark, readable text. */
   .theme-light .site-nav .text-on-surface-variant { color: rgb(74 60 42); }
   .theme-light .site-nav .text-on-surface-variant:hover { color: rgb(138 90 34); }
@@ -324,12 +323,16 @@
   .theme-light .site-nav .font-display.text-secondary-fixed { color: rgb(92 58 18); }
   .theme-light .site-menu .text-on-surface-variant { color: rgb(74 60 42); }
   .theme-light .site-menu .text-secondary { color: rgb(138 90 34); }
+  .theme-light .site-menu .font-display.text-secondary-fixed { color: rgb(92 58 18); }
 
-  /* Home page (and salon pages): the nav overlays the dark hero, so keep text light. */
-  .theme-light .site-nav.nav-on-hero .text-on-surface-variant { color: rgb(216 194 189); }
+  /* Home page (and salon pages): the nav/menu overlays the dark hero, so keep text light. */
+  .theme-light .site-nav.nav-on-hero .text-on-surface-variant,
+  .theme-light .site-menu.nav-on-hero .text-on-surface-variant { color: rgb(216 194 189); }
   .theme-light .site-nav.nav-on-hero .text-secondary,
-  .theme-light .site-nav.nav-on-hero .text-secondary-fixed { color: rgb(243 187 144); }
-  .theme-light .site-nav.nav-on-hero .font-display.text-secondary-fixed {
+  .theme-light .site-nav.nav-on-hero .text-secondary-fixed,
+  .theme-light .site-menu.nav-on-hero .text-secondary { color: rgb(243 187 144); }
+  .theme-light .site-nav.nav-on-hero .font-display.text-secondary-fixed,
+  .theme-light .site-menu.nav-on-hero .font-display.text-secondary-fixed {
     color: rgb(250 224 200);
     text-shadow: 0 1px 3px rgb(20 12 6 / 0.7);
   }
