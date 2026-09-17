@@ -77,6 +77,11 @@ class AdminReferralController {
         service.setReferrerSiteLimit(userId, request.limit());
     }
 
+    @PostMapping("/referrers/{userId}/lead-limit")
+    void leadLimit(@PathVariable long userId, @Valid @RequestBody LeadLimitRequest request) {
+        service.setReferrerDailyLeadLimit(userId, request.limit());
+    }
+
     /** Admin overrides the contact status of a delivered lead. */
     @PostMapping("/leads/{leadId}/status")
     void leadStatus(@PathVariable long leadId, @Valid @RequestBody LeadStatusRequest request) {
@@ -98,6 +103,10 @@ class AdminReferralController {
 
     @JsonIgnoreProperties(ignoreUnknown = false)
     record SiteLimitRequest(@NotNull @Min(0) @Max(100000) Integer limit) {}
+
+    // Nullable limit = clear the override and fall back to the global default.
+    @JsonIgnoreProperties(ignoreUnknown = false)
+    record LeadLimitRequest(@Min(0) @Max(100000) Integer limit) {}
 
     @JsonIgnoreProperties(ignoreUnknown = false)
     record LeadStatusRequest(@jakarta.validation.constraints.NotBlank

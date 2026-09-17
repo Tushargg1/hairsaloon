@@ -20,15 +20,21 @@ public class ReferralService {
     private final ReferralSubmissionRepository submissions;
     private final com.hairsaloon.auth.UserRepository users;
     private final ScraperLeadsClient scraper;
+    private final ReferralLeadRepository leads;
+    private final ReferralLeadsProperties leadsProperties;
 
     public ReferralService(ReferrerProfileRepository profiles,
                            ReferralSubmissionRepository submissions,
                            com.hairsaloon.auth.UserRepository users,
-                           ScraperLeadsClient scraper) {
+                           ScraperLeadsClient scraper,
+                           ReferralLeadRepository leads,
+                           ReferralLeadsProperties leadsProperties) {
         this.profiles = profiles;
         this.submissions = submissions;
         this.users = users;
         this.scraper = scraper;
+        this.leads = leads;
+        this.leadsProperties = leadsProperties;
     }
 
     /** Admin roster: every referrer with their details, salons and earnings. */
@@ -56,6 +62,8 @@ public class ReferralService {
                 p != null && p.isOnHold(),
                 p != null ? p.getHoldReason() : null,
                 p != null ? p.getSiteLimit() : 50,
+                p != null && p.getDailyLeadLimit() != null && p.getDailyLeadLimit() > 0
+                    ? p.getDailyLeadLimit() : leadsProperties.dailyLimitOr(),
                 paid, pending, thisMonth, successful, processing, declined,
                 mine.stream().map(AdminSubmissionView::of).toList());
         }).toList();
@@ -113,8 +121,13 @@ public class ReferralService {
             .filter(s -> s.getStatus() == ReferralStatus.PENDING)
             .map(ReferralSubmission::getAmount)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
+        int dailyLimit = profile.getDailyLeadLimit() != null && profile.getDailyLeadLimit() > 0
+            ? profile.getDailyLeadLimit() : leadsProperties.dailyLimitOr();
+        long takenToday = leads.countByReferrerIdAndAssignedOn(userId,
+            java.time.LocalDate.now(java.time.ZoneId.of("Asia/Kolkata")));
         return new Overview(profile.getReferralCode(), profile.isApproved(),
             profile.getPerReferralAmount(), paid, pending,
+            dailyLimit, (int) takenToday,
             mine.stream().map(SubmissionView::of).toList());
     }
 
@@ -204,6 +217,15 @@ public class ReferralService {
         profiles.save(profile);
     }
 
+    /** Admin raises (or lowers) this referrer's daily lead cap (null = global default). */
+    @Transactional
+    public void setReferrerDailyLeadLimit(long referrerUserId, Integer limit) {
+        ReferrerProfile profile = profiles.findById(referrerUserId).orElseThrow(() ->
+            new ResponseStatusException(HttpStatus.NOT_FOUND, "Referrer profile not found"));
+        profile.setDailyLeadLimit(limit);
+        profiles.save(profile);
+    }
+
     /** Admin raises (or lowers) how many active trial sites this referrer may hold. */
     @Transactional
     public void setReferrerSiteLimit(long referrerUserId, int limit) {
@@ -231,12 +253,13 @@ public class ReferralService {
 
     public record Overview(String referralCode, boolean approved, BigDecimal perReferralAmount,
                            BigDecimal totalPaid, BigDecimal totalPending,
+                           int dailyLeadLimit, int leadsTakenToday,
                            List<SubmissionView> history) {}
 
 
     public record ReferrerView(Long userId, String name, String phone, String email,
                                String referralCode, boolean approved, BigDecimal perReferralAmount,
-                               boolean onHold, String holdReason, int siteLimit,
+                               boolean onHold, String holdReason, int siteLimit, int dailyLeadLimit,
                                BigDecimal totalPaid, BigDecimal totalPending, BigDecimal paidThisMonth,
                                long successful, long processing, long declined,
                                List<AdminSubmissionView> referrals) {}

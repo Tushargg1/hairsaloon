@@ -35,6 +35,10 @@ public class ReferrerProfile {
     @Column(name = "site_limit", nullable = false, columnDefinition = "integer default 50")
     private int siteLimit = 50;
 
+    // null = fall back to the global REFERRAL_LEADS_DAILY_LIMIT default.
+    @Column(name = "daily_lead_limit")
+    private Integer dailyLeadLimit;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -70,6 +74,10 @@ public class ReferrerProfile {
         this.siteLimit = Math.max(0, limit);
     }
 
+    public void setDailyLeadLimit(Integer limit) {
+        this.dailyLeadLimit = limit == null ? null : Math.max(0, limit);
+    }
+
     public Long getUserId() { return userId; }
     public String getReferralCode() { return referralCode; }
     public boolean isApproved() { return approved; }
@@ -77,5 +85,6 @@ public class ReferrerProfile {
     public boolean isOnHold() { return onHold; }
     public String getHoldReason() { return holdReason; }
     public int getSiteLimit() { return siteLimit; }
+    public Integer getDailyLeadLimit() { return dailyLeadLimit; }
     public Instant getCreatedAt() { return createdAt; }
 }

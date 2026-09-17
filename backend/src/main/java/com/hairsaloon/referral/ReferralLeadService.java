@@ -105,7 +105,9 @@ public class ReferralLeadService {
         }
 
         LocalDate today = LocalDate.now(ZONE);
-        int limit = properties.dailyLimitOr();
+        // Per-referrer daily limit if the admin set one, else the global default.
+        int limit = profile.getDailyLeadLimit() != null && profile.getDailyLeadLimit() > 0
+            ? profile.getDailyLeadLimit() : properties.dailyLimitOr();
         int target = properties.onboardTargetOr();
         int batch = properties.batchSizeOr();
 

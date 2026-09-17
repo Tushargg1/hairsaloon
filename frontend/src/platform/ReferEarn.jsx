@@ -701,6 +701,11 @@ function ReferrerDashboard() {
               <p className="font-body text-label-md text-on-surface-variant">
                 Pull a batch of salons to contact. Onboard 3 of each day&apos;s leads to unlock more.
               </p>
+              {data && typeof data.dailyLeadLimit === 'number' && (
+                <p className="font-body text-label-md text-on-surface font-semibold mt-1">
+                  Today: {data.leadsTakenToday}/{data.dailyLeadLimit} leads · Your daily limit: {data.dailyLeadLimit}
+                </p>
+              )}
             </div>
             <button type="button" onClick={() => getLeads.mutate()}
               disabled={getLeads.isPending || !leadApproved}

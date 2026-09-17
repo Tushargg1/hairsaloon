@@ -109,6 +109,12 @@ export async function setReferrerSiteLimit(userId, limit) {
   return data
 }
 
+export async function setReferrerDailyLeadLimit(userId, limit) {
+  const { data } = await apiClient.post(
+    `/api/platform/admin/referrals/referrers/${userId}/lead-limit`, { limit })
+  return data
+}
+
 export async function adminSetLeadStatus(leadId, status) {
   await apiClient.post(`/api/platform/admin/referrals/leads/${leadId}/status`, { status })
 }

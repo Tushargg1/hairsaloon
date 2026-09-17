@@ -4,7 +4,7 @@ import AdminNav from './AdminNav.jsx'
 import PageLoader from '../shared/components/PageLoader.jsx'
 import {
   errorMessage, getAdminLeads, getAdminReferrals, getAdminReferrers, markReferralPaid, referralKeys,
-  adminSetLeadStatus, rejectReferral, setReferrerApproval, setReferrerHold, setReferrerSiteLimit,
+  adminSetLeadStatus, rejectReferral, setReferrerApproval, setReferrerDailyLeadLimit, setReferrerHold, setReferrerSiteLimit,
   verifyReferral,
 } from './referral-api.js'
 
@@ -133,6 +133,7 @@ export default function AdminReferrals() {
   const [amounts, setAmounts] = useState({})
   const [rates, setRates] = useState({})
   const [limits, setLimits] = useState({})
+  const [leadLimits, setLeadLimits] = useState({})
   const [feedback, setFeedback] = useState('')
   const [salonSearch, setSalonSearch] = useState('')
 
@@ -162,6 +163,9 @@ export default function AdminReferrals() {
   const siteLimit = useMutation({
     mutationFn: ({ userId, limit }) => setReferrerSiteLimit(userId, limit),
     onSuccess: () => { setFeedback('Trial-site limit updated.'); invalidate() }, onError: fail })
+  const leadLimit = useMutation({
+    mutationFn: ({ userId, limit }) => setReferrerDailyLeadLimit(userId, limit),
+    onSuccess: () => { setFeedback('Daily lead limit updated.'); invalidate() }, onError: fail })
   const leadStatus = useMutation({
     mutationFn: ({ leadId, status }) => adminSetLeadStatus(leadId, status),
     onMutate: ({ leadId, status }) => {
@@ -259,6 +263,7 @@ export default function AdminReferrals() {
                         : <span className="text-amber-400">Not approved</span>}
                       {' · '}Rate {money(ref.perReferralAmount)}
                       {' · '}Site limit {ref.siteLimit ?? 50}
+                      {' · '}Daily leads {ref.dailyLeadLimit ?? 50}
                       {ref.onHold && <span className="text-error"> · ON HOLD</span>}
                     </p>
                     {ref.onHold && ref.holdReason && (
@@ -285,6 +290,14 @@ export default function AdminReferrals() {
                     <button className="button button-secondary" disabled={siteLimit.isPending}
                       onClick={() => siteLimit.mutate({ userId: ref.userId, limit: Number(limits[ref.userId] ?? ref.siteLimit ?? 50) })}>
                       Set limit
+                    </button>
+                    <input type="number" min="0" step="1" placeholder="Daily leads"
+                      value={leadLimits[ref.userId] ?? (ref.dailyLeadLimit ?? 50)}
+                      onChange={(e) => setLeadLimits((s) => ({ ...s, [ref.userId]: e.target.value }))}
+                      className="w-24 rounded border border-outline-variant/40 bg-transparent px-3 py-1.5 font-body" />
+                    <button className="button button-secondary" disabled={leadLimit.isPending}
+                      onClick={() => leadLimit.mutate({ userId: ref.userId, limit: Number(leadLimits[ref.userId] ?? ref.dailyLeadLimit ?? 50) })}>
+                      Set leads
                     </button>
                   </div>
                 </div>
