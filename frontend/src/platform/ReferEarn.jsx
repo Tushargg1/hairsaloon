@@ -132,6 +132,14 @@ function nextTemplate(lead) {
   }
 }
 
+// Sequence order of the "next message to send", for filtering and sorting Follow-ups.
+const NEXT_MSG_SEQUENCE = ['Message 1', 'Message 2', 'Message 3', 'Follow-up A', 'Follow-up B', 'Follow-up C']
+const nextMsgLabel = (lead) => nextTemplate(lead)?.short || null
+const nextMsgOrder = (lead) => {
+  const i = NEXT_MSG_SEQUENCE.indexOf(nextMsgLabel(lead))
+  return i === -1 ? 99 : i
+}
+
 function LeadCard({ lead, onStatus, onCreateSite, onDeleteSite, site, siteBusy, sitePassword, onSendMessage }) {
   const phoneUsable = lead.salonPhone && lead.salonPhone !== 'N/A'
   const introTpl = WA_TEMPLATES[0]
@@ -362,6 +370,8 @@ function ReferrerDashboard() {
   const [leadMsg, setLeadMsg] = useState('')
   const [leadSearch, setLeadSearch] = useState('')
   const [sortNewest, setSortNewest] = useState(true) // true = latest first
+  const [nextMsgFilter, setNextMsgFilter] = useState('') // '' = all next-messages
+  const [msgSortAsc, setMsgSortAsc] = useState(true) // true = Message 1 → Follow-up C
   const [showGuide, setShowGuide] = useState(false)
   // Auto-open the how-to-start guide the first time a referrer signs in.
   useEffect(() => {
@@ -510,9 +520,10 @@ function ReferrerDashboard() {
   )
 
   // Reusable renderer so every sub-page shows leads with the identical card.
-  const renderLeadList = (list) => (
+  // preSorted = true keeps the caller's order (used by the Follow-ups message sort).
+  const renderLeadList = (list, preSorted = false) => (
     <div className="flex flex-col gap-2">
-      {applySort(list).map((l) => (
+      {(preSorted ? list : applySort(list)).map((l) => (
         <LeadCard key={l.leadId} lead={l}
           onStatus={(leadId, status) => leadStatus.mutate({ leadId, status })}
           onCreateSite={(leadId) => createSite.mutate(leadId)}
@@ -785,12 +796,30 @@ function ReferrerDashboard() {
           </p>
           {followupLeads.length === 0 ? (
             <p className="font-body text-on-surface-variant">No contacted leads to follow up yet.</p>
-          ) : (
-            <div className="flex flex-col gap-3">
-              <SortToggle />
-              {renderLeadList(followupLeads)}
-            </div>
-          )}
+          ) : (() => {
+            const filtered = followupLeads
+              .filter((l) => !nextMsgFilter || nextMsgLabel(l) === nextMsgFilter)
+            const sorted = [...filtered].sort((a, b) =>
+              msgSortAsc ? nextMsgOrder(a) - nextMsgOrder(b) : nextMsgOrder(b) - nextMsgOrder(a))
+            return (
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <select value={nextMsgFilter} onChange={(e) => setNextMsgFilter(e.target.value)}
+                    className="font-body text-label-sm rounded-lg border border-outline-variant/40 bg-transparent px-3 py-1.5">
+                    <option value="">All next messages</option>
+                    {NEXT_MSG_SEQUENCE.map((m) => <option key={m} value={m}>Next: {m}</option>)}
+                  </select>
+                  <button type="button" onClick={() => setMsgSortAsc((v) => !v)}
+                    className="font-body text-label-sm px-3 py-1.5 rounded-full border border-outline-variant/40 text-on-surface-variant hover:text-secondary hover:border-secondary/50 transition-colors">
+                    {msgSortAsc ? 'Message 1 → Follow-up C' : 'Follow-up C → Message 1'}
+                  </button>
+                </div>
+                {sorted.length === 0
+                  ? <p className="font-body text-on-surface-variant">No leads for this message.</p>
+                  : renderLeadList(sorted, true)}
+              </div>
+            )
+          })()}
         </div>
       )}
 
