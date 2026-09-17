@@ -55,7 +55,7 @@ public class ScraperLeadsClient {
             + "\",\"user_code\":\"" + esc(userCode) + "\"}";
         try {
             HttpRequest request = HttpRequest.newBuilder(URI.create(base() + "/api/users/register"))
-                .timeout(Duration.ofSeconds(20))
+                .timeout(Duration.ofSeconds(50))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(body)).build();
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
@@ -75,7 +75,7 @@ public class ScraperLeadsClient {
         try {
             HttpRequest request = HttpRequest.newBuilder(
                     URI.create(base() + "/api/users/status/" + enc(userCode)))
-                .timeout(Duration.ofSeconds(20)).GET().build();
+                .timeout(Duration.ofSeconds(50)).GET().build();
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() / 100 != 2) return "UNKNOWN";
             JsonNode root = mapper.readTree(response.body());
@@ -95,7 +95,7 @@ public class ScraperLeadsClient {
         if (!properties.enabled()) return List.of();
         try {
             HttpRequest request = HttpRequest.newBuilder(URI.create(base() + "/api/data/batch"))
-                .timeout(Duration.ofSeconds(30))
+                .timeout(Duration.ofSeconds(60))
                 .header("X-User-Code", userCode)
                 .GET().build();
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());

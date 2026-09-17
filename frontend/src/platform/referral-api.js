@@ -19,18 +19,22 @@ export async function submitReferral(payload) {
   return data
 }
 
+// These three hit the external scraper, which can cold-start (~30-40s) on its
+// free host, so they override the default 12s client timeout.
+const SCRAPER_TIMEOUT = 60000
+
 export async function getReferralLeads() {
-  const { data } = await apiClient.post('/api/platform/referrals/leads')
+  const { data } = await apiClient.post('/api/platform/referrals/leads', null, { timeout: SCRAPER_TIMEOUT })
   return data
 }
 
 export async function getLeadAccess() {
-  const { data } = await apiClient.get('/api/platform/referrals/lead-access')
+  const { data } = await apiClient.get('/api/platform/referrals/lead-access', { timeout: SCRAPER_TIMEOUT })
   return data
 }
 
 export async function requestLeadAccess() {
-  const { data } = await apiClient.post('/api/platform/referrals/lead-access/request')
+  const { data } = await apiClient.post('/api/platform/referrals/lead-access/request', null, { timeout: SCRAPER_TIMEOUT })
   return data
 }
 
