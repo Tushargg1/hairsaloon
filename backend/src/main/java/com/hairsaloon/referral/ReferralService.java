@@ -127,7 +127,7 @@ public class ReferralService {
             java.time.LocalDate.now(java.time.ZoneId.of("Asia/Kolkata")));
         return new Overview(profile.getReferralCode(), profile.isApproved(),
             profile.getPerReferralAmount(), paid, pending,
-            dailyLimit, (int) takenToday,
+            dailyLimit, (int) takenToday, profile.getSiteLimit(),
             mine.stream().map(SubmissionView::of).toList());
     }
 
@@ -253,7 +253,7 @@ public class ReferralService {
 
     public record Overview(String referralCode, boolean approved, BigDecimal perReferralAmount,
                            BigDecimal totalPaid, BigDecimal totalPending,
-                           int dailyLeadLimit, int leadsTakenToday,
+                           int dailyLeadLimit, int leadsTakenToday, int siteLimit,
                            List<SubmissionView> history) {}
 
 

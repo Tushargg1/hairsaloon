@@ -849,9 +849,24 @@ function ReferrerDashboard() {
       {tab === 'sites' && (
         <div className="glass-panel rounded-xl p-6">
           <h2 className="font-display text-headline-sm text-on-surface mb-1">Trial sites</h2>
-          <p className="font-body text-label-md text-on-surface-variant mb-4">
+          <p className="font-body text-label-md text-on-surface-variant mb-1">
             Salons you have created a preview site for.
           </p>
+          {data && typeof data.siteLimit === 'number' && (() => {
+            const atCap = trialSiteLeads.length >= data.siteLimit
+            return (
+              <p className={`font-body text-label-md font-semibold mb-1 ${atCap ? 'text-error' : 'text-on-surface'}`}>
+                Active: {trialSiteLeads.length}/{data.siteLimit} sites
+              </p>
+            )
+          })()}
+          {data && typeof data.siteLimit === 'number' && trialSiteLeads.length >= data.siteLimit && (
+            <p className="font-body text-label-sm text-error mb-3">
+              You&apos;ve reached your trial-site limit. To create a new site, free up a slot:
+              delete a trial site here, or mark a lead Not interested (its site is removed automatically).
+            </p>
+          )}
+          <div className="mb-3" />
           {trialSiteLeads.length === 0 ? (
             <p className="font-body text-on-surface-variant">No trial sites yet.</p>
           ) : (
