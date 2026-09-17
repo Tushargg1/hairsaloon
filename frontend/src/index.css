@@ -53,7 +53,9 @@
   body {
     scrollbar-width: none;
     -ms-overflow-style: none;
-    overflow-x: hidden;
+    /* clip (not hidden) stops horizontal overflow without creating a scroll
+       container that would break position: sticky on descendants. */
+    overflow-x: clip;
     max-width: 100%;
   }
 
