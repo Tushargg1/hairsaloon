@@ -535,9 +535,9 @@ function ReferrerDashboard() {
     </div>
   )
 
-  // Follow-ups shows only new, contacted and interested leads, sorted by status.
+  // Follow-ups shows new and contacted leads, sorted by status (interested excluded).
   const followupLeads = (myLeads.data || [])
-    .filter((l) => ['NEW', 'CONTACTED', 'INTERESTED'].includes(l.contactStatus || 'NEW'))
+    .filter((l) => ['NEW', 'CONTACTED'].includes(l.contactStatus || 'NEW'))
     .sort((a, b) => (LEAD_STATUS_ORDER[a.contactStatus] ?? 99) - (LEAD_STATUS_ORDER[b.contactStatus] ?? 99))
 
   // Leads that currently have a live trial site (my-leads is already newest-first).
@@ -549,6 +549,7 @@ function ReferrerDashboard() {
     .filter((l) => (l.contactStatus || 'NEW') === status)
     .filter((l) => matchesSearch(l, leadSearch))
   const STATUS_TABS = [
+    { key: 'NEW', label: 'New leads' },
     { key: 'CONTACTED', label: 'Contacted' },
     { key: 'INTERESTED', label: 'Interested' },
     { key: 'NOT_INTERESTED', label: 'Not interested' },
@@ -556,17 +557,20 @@ function ReferrerDashboard() {
     { key: 'NOT_ON_WHATSAPP', label: 'Not on WhatsApp' },
     { key: 'NOT_PICKING_CALL', label: 'Not picking call' },
   ]
+  const statusTab = (key) => {
+    const s = STATUS_TABS.find((t) => t.key === key)
+    const n = leadsByStatus(key).length
+    return { key: `status:${key}`, label: `${s.label}${n ? ` (${n})` : ''}` }
+  }
 
   const TABS = [
     { key: 'overview', label: 'Overview' },
     { key: 'referrals', label: 'My referrals' },
     { key: 'leads', label: 'Get leads' },
+    statusTab('NEW'),
     { key: 'followups', label: `Follow-ups${followupLeads.length ? ` (${followupLeads.length})` : ''}` },
     { key: 'sites', label: `Trial sites${trialSiteLeads.length ? ` (${trialSiteLeads.length})` : ''}` },
-    ...STATUS_TABS.map((s) => {
-      const n = leadsByStatus(s.key).length
-      return { key: `status:${s.key}`, label: `${s.label}${n ? ` (${n})` : ''}` }
-    }),
+    ...STATUS_TABS.filter((s) => s.key !== 'NEW').map((s) => statusTab(s.key)),
   ]
 
   return (
