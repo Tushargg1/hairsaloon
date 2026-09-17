@@ -136,10 +136,11 @@ public class ReferralLeadService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
                 "Your lead access is pending approval. Please try again once it is approved.");
         }
-        // The scraper already returns <=10 fresh leads and marked them sent, so we keep
-        // all of them (trimming would lose leads the scraper won't hand out again).
+        // The scraper already returns <=10 fresh leads and marked them sent. Keep every
+        // one for this referrer (only skip a lead this same referrer already holds) —
+        // the scraper won't hand these out again, so dropping them here loses them.
         fresh = fresh.stream()
-            .filter(l -> !leads.existsByExternalId(l.externalId()))
+            .filter(l -> !leads.existsByReferrerIdAndExternalId(user.id(), l.externalId()))
             .toList();
         if (fresh.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -149,17 +150,15 @@ public class ReferralLeadService {
         List<LeadView> delivered = new ArrayList<>();
         for (ScraperLeadsClient.Lead lead : fresh) {
             String phone = lead.phone() == null ? "" : lead.phone();
-            String normalized = normalizePhone(phone);
-            // Skip salons already referred by anyone (keeps the one-referral rule).
-            if (!normalized.isBlank()
-                && submissions.existsBySalonPhoneNormalizedAndStatusNot(normalized, ReferralStatus.REJECTED)) {
-                continue;
-            }
+            // Auto-delivered scraper leads are keyed by their external id (not the salon
+            // phone) so the one-referral unique constraint never rejects them here — the
+            // scraper won't hand a lead out twice, so dropping it would lose it. The
+            // one-referral rule is still enforced on the manual referral form.
             ReferralSubmission submission = new ReferralSubmission(
                 user.id(),
                 blankTo(lead.name(), "Unknown salon"),
                 blankTo(phone, "N/A"),
-                normalized.isBlank() ? ("lead-" + lead.externalId()) : normalized,
+                "lead-" + lead.externalId(),
                 blankTo(lead.mapsUrl(), ""),
                 null,
                 lead.address());
@@ -167,7 +166,7 @@ public class ReferralLeadService {
             try {
                 saved = submissions.saveAndFlush(submission);
             } catch (RuntimeException duplicate) {
-                continue; // salon got referred concurrently; skip
+                continue; // already delivered under this external id; skip
             }
             ReferralLead leadRow = new ReferralLead(user.id(), lead.externalId(), saved.getId(), today);
             leadRow.setSalonDetails(lead.name(), phone, lead.website(), lead.mapsUrl(), lead.address());

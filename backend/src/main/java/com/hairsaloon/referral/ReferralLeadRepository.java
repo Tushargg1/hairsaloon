@@ -13,6 +13,8 @@ public interface ReferralLeadRepository extends JpaRepository<ReferralLead, Long
 
     boolean existsByExternalId(String externalId);
 
+    boolean existsByReferrerIdAndExternalId(Long referrerId, String externalId);
+
     // Distinct assignment dates for a referrer, newest first (to evaluate the hold streak).
     List<ReferralLead> findByReferrerIdOrderByAssignedOnDesc(Long referrerId);
 }
