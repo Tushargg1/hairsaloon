@@ -37,6 +37,7 @@ public class ReferralLeadService {
     private final com.hairsaloon.tenant.SalonRepository salons;
     private final com.hairsaloon.tenant.TenantProperties tenantProperties;
     private final com.hairsaloon.auth.UserRepository users;
+    private final ReferralSiteService siteService;
 
     public ReferralLeadService(ReferrerProfileRepository profiles,
                                ReferralSubmissionRepository submissions,
@@ -45,7 +46,8 @@ public class ReferralLeadService {
                                ReferralLeadsProperties properties,
                                com.hairsaloon.tenant.SalonRepository salons,
                                com.hairsaloon.tenant.TenantProperties tenantProperties,
-                               com.hairsaloon.auth.UserRepository users) {
+                               com.hairsaloon.auth.UserRepository users,
+                               ReferralSiteService siteService) {
         this.profiles = profiles;
         this.submissions = submissions;
         this.leads = leads;
@@ -54,6 +56,7 @@ public class ReferralLeadService {
         this.salons = salons;
         this.tenantProperties = tenantProperties;
         this.users = users;
+        this.siteService = siteService;
     }
 
     /** Live access status from the scraper for this referrer's code, and whether leads are configured. */
@@ -281,6 +284,8 @@ public class ReferralLeadService {
             lead.markContacted(Instant.now());
         }
         leads.save(lead);
+        // Not interested -> tear down the trial preview site.
+        if ("NOT_INTERESTED".equals(status)) siteService.removeSiteFor(lead);
     }
 
     /**
@@ -312,6 +317,8 @@ public class ReferralLeadService {
             lead.stampLastMessage(now);
         }
         leads.save(lead);
+        // Follow-up C closes the lead -> remove its trial preview site.
+        if ("Follow-up C".equals(label)) siteService.removeSiteFor(lead);
     }
 
     /** Admin overrides a lead's contact status (no ownership check). */
@@ -321,6 +328,8 @@ public class ReferralLeadService {
             new ResponseStatusException(HttpStatus.NOT_FOUND, "Lead not found"));
         lead.setContactStatus(status);
         leads.save(lead);
+        // Not interested -> tear down the trial preview site.
+        if ("NOT_INTERESTED".equals(status)) siteService.removeSiteFor(lead);
     }
 
     private ReferralLead ownedLead(long referrerId, long leadId) {

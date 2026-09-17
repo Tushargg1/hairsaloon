@@ -133,10 +133,21 @@ public class ReferralSiteService {
     @Transactional
     public void deleteTrialSite(AuthenticatedUser user, long leadId) {
         ReferralLead lead = ownedLead(user.id(), leadId);
-        Long salonId = lead.getCreatedSalonId();
-        if (salonId == null) {
+        if (lead.getCreatedSalonId() == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No site to delete.");
         }
+        removeSiteFor(lead);
+    }
+
+    /**
+     * Deletes the trial site linked to a lead, if any (salon + owner account + tenant
+     * data), and frees the subdomain. Safe to call when nothing is linked. Used by the
+     * status flow so marking a lead NOT_INTERESTED tears its preview site down.
+     */
+    @Transactional
+    public void removeSiteFor(ReferralLead lead) {
+        Long salonId = lead.getCreatedSalonId();
+        if (salonId == null) return;
         Salon salon = salons.findById(salonId).orElse(null);
         lead.setCreatedSalonId(null);
         leads.save(lead);
