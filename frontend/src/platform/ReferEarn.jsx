@@ -524,10 +524,9 @@ function ReferrerDashboard() {
     </div>
   )
 
-  // Every lead that has been engaged (any non-NEW status) shows in Follow-ups,
-  // sorted by status so contacted/interested come first.
+  // Follow-ups shows only new, contacted and interested leads, sorted by status.
   const followupLeads = (myLeads.data || [])
-    .filter((l) => (l.contactStatus || 'NEW') !== 'NEW')
+    .filter((l) => ['NEW', 'CONTACTED', 'INTERESTED'].includes(l.contactStatus || 'NEW'))
     .sort((a, b) => (LEAD_STATUS_ORDER[a.contactStatus] ?? 99) - (LEAD_STATUS_ORDER[b.contactStatus] ?? 99))
 
   // Leads that currently have a live trial site (my-leads is already newest-first).
@@ -570,8 +569,8 @@ function ReferrerDashboard() {
       </div>
 
       <div className="flex flex-col md:flex-row gap-6 items-start">
-        {/* Left vertical sub navbar */}
-        <nav className="w-full md:w-56 md:flex-shrink-0 flex md:flex-col gap-1 overflow-x-auto md:overflow-visible scrollbar-none md:sticky md:top-4">
+        {/* Left vertical sub navbar — stays fixed while the content scrolls. */}
+        <nav className="w-full md:w-56 md:flex-shrink-0 flex md:flex-col gap-1 overflow-x-auto md:overflow-y-auto scrollbar-none md:sticky md:top-16 md:max-h-[calc(100vh-5rem)]">
           {TABS.map((t) => (
             <button key={t.key} type="button" onClick={() => setTab(t.key)}
               className={`font-body text-label-md text-left px-4 py-2.5 rounded-lg whitespace-nowrap transition-colors ${
