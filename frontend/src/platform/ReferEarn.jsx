@@ -388,7 +388,21 @@ function ReferrerDashboard() {
       client.invalidateQueries({ queryKey: referralKeys.me })
       client.invalidateQueries({ queryKey: ['referrals', 'my-leads'] })
     },
-    onError: (e) => setLeadMsg(errorMessage(e, 'Could not get leads.')),
+    onError: (e) => {
+      // The backend sends a clear message for the daily cap (429) and for an empty
+      // pool (404) — surface those verbatim instead of the generic fallback (the
+      // shared 429 helper is worded for login attempts, which is wrong here).
+      const status = e?.response?.status
+      const backendMsg = e?.response?.data?.message
+      if (status === 429) {
+        setLeadMsg(backendMsg
+          || 'Daily lead limit reached. Ask the admin to raise your limit, or try again tomorrow.')
+      } else if (status === 404) {
+        setLeadMsg(backendMsg || 'No new leads are available right now. Please try again later.')
+      } else {
+        setLeadMsg(errorMessage(e, 'Could not get leads.'))
+      }
+    },
   })
   const leadStatus = useMutation({
     mutationFn: ({ leadId, status }) => setLeadStatus(leadId, status),

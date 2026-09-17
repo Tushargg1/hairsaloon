@@ -117,15 +117,15 @@ public class ReferralLeadService {
         long blocksUsed = takenToday / limit;
         long onboardBlocksEarned = onboardedToday / target;
         long allowedBlocks = onboardBlocksEarned + 1;
+        String limitMessage = "Daily lead limit reached. Onboard " + target
+            + " of today's leads to unlock more, ask the admin to raise your limit, or try again tomorrow.";
         if (blocksUsed >= allowedBlocks) {
-            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS,
-                "Daily limit reached. Onboard " + target + " of today's leads to unlock more.");
+            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, limitMessage);
         }
         long remainingInBlock = (allowedBlocks * limit) - takenToday;
         int want = (int) Math.min(batch, Math.max(0, remainingInBlock));
         if (want <= 0) {
-            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS,
-                "Daily limit reached. Onboard " + target + " of today's leads to unlock more.");
+            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, limitMessage);
         }
 
         List<ScraperLeadsClient.Lead> fresh;
@@ -136,11 +136,11 @@ public class ReferralLeadService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
                 "Your lead access is pending approval. Please try again once it is approved.");
         }
-        // The scraper already returns <=10 fresh leads and marked them sent. Keep every
-        // one for this referrer (only skip a lead this same referrer already holds) —
-        // the scraper won't hand these out again, so dropping them here loses them.
+        // external_id is globally unique in referral_leads, so skip any the scraper
+        // re-served that we already stored — inserting a duplicate would abort the
+        // whole transaction (a rollback-only error can't be caught per-lead).
         fresh = fresh.stream()
-            .filter(l -> !leads.existsByReferrerIdAndExternalId(user.id(), l.externalId()))
+            .filter(l -> !leads.existsByExternalId(l.externalId()))
             .toList();
         if (fresh.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND,
