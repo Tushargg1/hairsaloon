@@ -360,7 +360,7 @@ function AccountSettings() {
         className="grid gap-4 sm:grid-cols-2 mb-6">
         <label className="flex flex-col gap-1 font-body text-label-md">Name
           <input value={name} onChange={(e) => setName(e.target.value)} maxLength="160"
-            className="rounded border border-outline-variant/40 bg-transparent px-3 py-2" />
+            className="rounded border border-outline-variant/40 bg-transparent px-3 py-2 text-on-surface" />
         </label>
         <label className="flex flex-col gap-1 font-body text-label-md">Phone (cannot be changed)
           <input value={user?.phone || ''} readOnly disabled
@@ -385,17 +385,17 @@ function AccountSettings() {
         <label className="flex flex-col gap-1 font-body text-label-md">Current password
           <input type="password" value={pw.current} onChange={(e) => setPw((s) => ({ ...s, current: e.target.value }))}
             required autoComplete="current-password"
-            className="rounded border border-outline-variant/40 bg-transparent px-3 py-2" />
+            className="rounded border border-outline-variant/40 bg-transparent px-3 py-2 text-on-surface" />
         </label>
         <label className="flex flex-col gap-1 font-body text-label-md">New password
           <input type="password" value={pw.next} onChange={(e) => setPw((s) => ({ ...s, next: e.target.value }))}
             required minLength="8" maxLength="72" autoComplete="new-password"
-            className="rounded border border-outline-variant/40 bg-transparent px-3 py-2" />
+            className="rounded border border-outline-variant/40 bg-transparent px-3 py-2 text-on-surface" />
         </label>
         <label className="flex flex-col gap-1 font-body text-label-md">Confirm new password
           <input type="password" value={pw.confirm} onChange={(e) => setPw((s) => ({ ...s, confirm: e.target.value }))}
             required minLength="8" maxLength="72" autoComplete="new-password"
-            className="rounded border border-outline-variant/40 bg-transparent px-3 py-2" />
+            className="rounded border border-outline-variant/40 bg-transparent px-3 py-2 text-on-surface" />
         </label>
         <div className="sm:col-span-3 flex items-center gap-3">
           <button type="submit" disabled={savePw.isPending}
@@ -670,7 +670,7 @@ function ReferrerDashboard() {
         <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-on-surface-variant pointer-events-none" />
         <input type="search" value={leadSearch} onChange={(e) => setLeadSearch(e.target.value)}
           placeholder="Search leads by salon name or phone number"
-          className="font-body text-label-md rounded-lg border border-outline-variant/40 bg-transparent pl-10 pr-3 py-2.5 w-full focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary/40 transition-colors" />
+          className="font-body text-label-md text-on-surface placeholder:text-on-surface-variant rounded-lg border border-outline-variant/40 bg-transparent pl-10 pr-3 py-2.5 w-full focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary/40 transition-colors" />
       </div>
 
       <div className="flex flex-col md:flex-row gap-6 items-start">
@@ -727,25 +727,25 @@ function ReferrerDashboard() {
             <form onSubmit={(e) => { e.preventDefault(); submit.mutate() }} className="grid gap-4 sm:grid-cols-2">
               <label className="flex flex-col gap-1 font-body text-label-md">Salon name
                 <input name="salonName" required maxLength="160" value={form.salonName} onChange={update}
-                  className="rounded border border-outline-variant/40 bg-transparent px-3 py-2" />
+                  className="rounded border border-outline-variant/40 bg-transparent px-3 py-2 text-on-surface" />
               </label>
               <label className="flex flex-col gap-1 font-body text-label-md">Salon phone
                 <input name="salonPhone" type="tel" required minLength="10" maxLength="15"
                   value={form.salonPhone} onChange={update}
-                  className="rounded border border-outline-variant/40 bg-transparent px-3 py-2" />
+                  className="rounded border border-outline-variant/40 bg-transparent px-3 py-2 text-on-surface" />
               </label>
               <label className="flex flex-col gap-1 font-body text-label-md">Contact person (whose number)
                 <input name="contactName" maxLength="160" value={form.contactName} onChange={update}
-                  className="rounded border border-outline-variant/40 bg-transparent px-3 py-2" />
+                  className="rounded border border-outline-variant/40 bg-transparent px-3 py-2 text-on-surface" />
               </label>
               <label className="flex flex-col gap-1 font-body text-label-md">Location / address
                 <input name="salonAddress" maxLength="500" value={form.salonAddress} onChange={update}
-                  className="rounded border border-outline-variant/40 bg-transparent px-3 py-2" />
+                  className="rounded border border-outline-variant/40 bg-transparent px-3 py-2 text-on-surface" />
               </label>
               <label className="flex flex-col gap-1 font-body text-label-md sm:col-span-2">Google Maps location link
                 <input name="mapsUrl" type="url" required maxLength="2048" value={form.mapsUrl} onChange={update}
                   placeholder="https://maps.app.goo.gl/..."
-                  className="rounded border border-outline-variant/40 bg-transparent px-3 py-2" />
+                  className="rounded border border-outline-variant/40 bg-transparent px-3 py-2 text-on-surface" />
               </label>
               {error && <p className="font-body text-label-sm text-error sm:col-span-2" role="alert">{error}</p>}
               <div className="sm:col-span-2">
