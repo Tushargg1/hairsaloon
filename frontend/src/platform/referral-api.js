@@ -118,3 +118,13 @@ export async function setReferrerDailyLeadLimit(userId, limit) {
 export async function adminSetLeadStatus(leadId, status) {
   await apiClient.post(`/api/platform/admin/referrals/leads/${leadId}/status`, { status })
 }
+
+// Referrer account: update display name (phone stays fixed) and change password.
+export async function updateReferrerName(name, phone) {
+  const { data } = await apiClient.put('/api/platform/profile', { name, phone })
+  return data
+}
+
+export async function changeReferrerPassword(currentPassword, newPassword) {
+  await apiClient.put('/api/platform/profile/password', { currentPassword, newPassword })
+}

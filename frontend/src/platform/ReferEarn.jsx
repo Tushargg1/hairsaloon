@@ -7,8 +7,8 @@ import Icon from '../shared/components/Icon.jsx'
 import PageLoader from '../shared/components/PageLoader.jsx'
 import ReferrerGuide from './ReferrerGuide.jsx'
 import {
-  createLeadSite, deleteLeadSite, errorMessage, getLeadAccess, getMyLeads, getReferralLeads,
-  getReferralOverview, recordScriptSent, referralKeys, requestLeadAccess, setLeadStatus, submitReferral,
+  changeReferrerPassword, createLeadSite, deleteLeadSite, errorMessage, getLeadAccess, getMyLeads, getReferralLeads,
+  getReferralOverview, recordScriptSent, referralKeys, requestLeadAccess, setLeadStatus, submitReferral, updateReferrerName,
 } from './referral-api.js'
 
 const LEAD_STATUSES = ['NEW', 'CONTACTED', 'INTERESTED', 'NOT_INTERESTED', 'ONBOARDED',
@@ -329,6 +329,82 @@ function AuthForm() {
           </button>
         </div>
       </div>
+    </div>
+  )
+}
+
+// Overview account panel: edit display name and change password. Phone is fixed.
+function AccountSettings() {
+  const { user, refreshSession } = useAuth()
+  const [name, setName] = useState(user?.name || '')
+  const [pw, setPw] = useState({ current: '', next: '', confirm: '' })
+  const [nameMsg, setNameMsg] = useState('')
+  const [pwMsg, setPwMsg] = useState('')
+
+  const saveName = useMutation({
+    mutationFn: () => updateReferrerName(name.trim(), user?.phone),
+    onSuccess: async () => { setNameMsg('Name updated.'); await refreshSession() },
+    onError: (e) => setNameMsg(errorMessage(e, 'Could not update name.')),
+  })
+  const savePw = useMutation({
+    mutationFn: () => changeReferrerPassword(pw.current, pw.next),
+    onSuccess: () => { setPwMsg('Password changed.'); setPw({ current: '', next: '', confirm: '' }) },
+    onError: (e) => setPwMsg(errorMessage(e, 'Could not change password.')),
+  })
+
+  return (
+    <div className="glass-panel rounded-xl p-6">
+      <h2 className="font-display text-headline-sm text-on-surface mb-4">Account settings</h2>
+
+      <form onSubmit={(e) => { e.preventDefault(); setNameMsg(''); saveName.mutate() }}
+        className="grid gap-4 sm:grid-cols-2 mb-6">
+        <label className="flex flex-col gap-1 font-body text-label-md">Name
+          <input value={name} onChange={(e) => setName(e.target.value)} maxLength="160"
+            className="rounded border border-outline-variant/40 bg-transparent px-3 py-2" />
+        </label>
+        <label className="flex flex-col gap-1 font-body text-label-md">Phone (cannot be changed)
+          <input value={user?.phone || ''} readOnly disabled
+            className="rounded border border-outline-variant/40 bg-black/5 px-3 py-2 text-on-surface-variant" />
+        </label>
+        <div className="sm:col-span-2 flex items-center gap-3">
+          <button type="submit" disabled={saveName.isPending || !name.trim()}
+            className="brass-gradient text-espresso font-body font-semibold px-6 py-2.5 rounded disabled:opacity-50">
+            {saveName.isPending ? 'Saving…' : 'Save name'}
+          </button>
+          {nameMsg && <span className="font-body text-label-sm text-on-surface-variant">{nameMsg}</span>}
+        </div>
+      </form>
+
+      <h3 className="font-display text-title-md text-on-surface mb-2">Change password</h3>
+      <form onSubmit={(e) => {
+        e.preventDefault()
+        setPwMsg('')
+        if (pw.next !== pw.confirm) { setPwMsg('New passwords do not match.'); return }
+        savePw.mutate()
+      }} className="grid gap-4 sm:grid-cols-3">
+        <label className="flex flex-col gap-1 font-body text-label-md">Current password
+          <input type="password" value={pw.current} onChange={(e) => setPw((s) => ({ ...s, current: e.target.value }))}
+            required autoComplete="current-password"
+            className="rounded border border-outline-variant/40 bg-transparent px-3 py-2" />
+        </label>
+        <label className="flex flex-col gap-1 font-body text-label-md">New password
+          <input type="password" value={pw.next} onChange={(e) => setPw((s) => ({ ...s, next: e.target.value }))}
+            required minLength="8" maxLength="72" autoComplete="new-password"
+            className="rounded border border-outline-variant/40 bg-transparent px-3 py-2" />
+        </label>
+        <label className="flex flex-col gap-1 font-body text-label-md">Confirm new password
+          <input type="password" value={pw.confirm} onChange={(e) => setPw((s) => ({ ...s, confirm: e.target.value }))}
+            required minLength="8" maxLength="72" autoComplete="new-password"
+            className="rounded border border-outline-variant/40 bg-transparent px-3 py-2" />
+        </label>
+        <div className="sm:col-span-3 flex items-center gap-3">
+          <button type="submit" disabled={savePw.isPending}
+            className="button button-secondary disabled:opacity-50">
+            {savePw.isPending ? 'Changing…' : 'Change password'}
+          </button>
+          {pwMsg && <span className="font-body text-label-sm text-on-surface-variant">{pwMsg}</span>}
+        </div>
+      </form>
     </div>
   )
 }
@@ -688,6 +764,8 @@ function ReferrerDashboard() {
             </p>
           </div>
         )}
+
+        <AccountSettings />
 
         <DeleteAccount note="This permanently closes your referrer account. Your referral history stays on record but you won't be able to sign in again." />
       </div>
