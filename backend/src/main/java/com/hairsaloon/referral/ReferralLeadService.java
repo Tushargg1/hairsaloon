@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +30,7 @@ import org.springframework.web.server.ResponseStatusException;
 public class ReferralLeadService {
 
     private static final ZoneId ZONE = ZoneId.of("Asia/Kolkata");
+    private static final Logger log = LoggerFactory.getLogger(ReferralLeadService.class);
 
     private final ReferrerProfileRepository profiles;
     private final ReferralSubmissionRepository submissions;
@@ -138,12 +141,15 @@ public class ReferralLeadService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
                 "Your lead access is pending approval. Please try again once it is approved.");
         }
+        int scraperReturned = fresh.size();
         // external_id is globally unique in referral_leads, so skip any the scraper
         // re-served that we already stored — inserting a duplicate would abort the
         // whole transaction (a rollback-only error can't be caught per-lead).
         fresh = fresh.stream()
             .filter(l -> !leads.existsByExternalId(l.externalId()))
             .toList();
+        log.info("Lead batch for code {}: scraper returned {}, {} new after dedupe",
+            profile.getReferralCode(), scraperReturned, fresh.size());
         if (fresh.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND,
                 "No new leads are available right now. Please try again later.");
