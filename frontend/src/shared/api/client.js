@@ -1,6 +1,13 @@
 import axios from 'axios'
 
 function apiBaseUrl() {
+  // In production the app is served on *.groomit.in and the API is proxied
+  // same-origin via Vercel (/api/* -> backend). Using same-origin keeps the auth
+  // cookie first-party, so sessions persist on refresh in incognito and on phones
+  // (cross-site cookies to the onrender host get blocked as third-party).
+  if (typeof window !== 'undefined' && window.location.hostname.endsWith('groomit.in')) {
+    return ''
+  }
   const configured = import.meta.env.VITE_API_BASE_URL?.trim()
   if (configured) return configured
   const protocol = import.meta.env.VITE_API_PROTOCOL || window.location.protocol.replace(':', '')
