@@ -82,6 +82,12 @@ class AdminReferralController {
         service.setReferrerDailyLeadLimit(userId, request.limit());
     }
 
+    /** TEMP diagnostic (admin-only): accounts matching a phone fragment. */
+    @GetMapping("/diag")
+    List<ReferralService.DiagAccount> diag(@org.springframework.web.bind.annotation.RequestParam String phone) {
+        return service.diagByPhone(phone);
+    }
+
     /** Admin overrides the contact status of a delivered lead. */
     @PostMapping("/leads/{leadId}/status")
     void leadStatus(@PathVariable long leadId, @Valid @RequestBody LeadStatusRequest request) {

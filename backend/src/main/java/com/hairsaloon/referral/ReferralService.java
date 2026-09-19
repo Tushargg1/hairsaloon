@@ -217,6 +217,22 @@ public class ReferralService {
         profiles.save(profile);
     }
 
+    /** TEMP diagnostic: every account matching a phone fragment, with referrer profile state. */
+    @Transactional(readOnly = true)
+    public List<DiagAccount> diagByPhone(String phoneFragment) {
+        return users.findByPhoneContaining(phoneFragment).stream().map(u -> {
+            ReferrerProfile p = profiles.findById(u.getId()).orElse(null);
+            return new DiagAccount(u.getId(), u.getName(), u.getPhone(), u.getRole().name(),
+                u.getDeletedAt() != null,
+                p != null ? p.getReferralCode() : null,
+                p != null && p.isApproved(),
+                p != null ? p.getDailyLeadLimit() : null);
+        }).toList();
+    }
+
+    public record DiagAccount(Long userId, String name, String phone, String role, boolean deleted,
+                              String referralCode, boolean approved, Integer dailyLeadLimit) {}
+
     /** Admin raises (or lowers) this referrer's daily lead cap (null = global default). */
     @Transactional
     public void setReferrerDailyLeadLimit(long referrerUserId, Integer limit) {
