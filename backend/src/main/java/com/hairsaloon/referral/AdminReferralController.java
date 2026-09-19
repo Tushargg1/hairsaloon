@@ -82,6 +82,14 @@ class AdminReferralController {
         service.setReferrerDailyLeadLimit(userId, request.limit());
     }
 
+    /** Diagnostic (admin-only): accounts matching a phone or name fragment. */
+    @GetMapping("/diag")
+    List<ReferralService.DiagAccount> diag(
+            @org.springframework.web.bind.annotation.RequestParam(required = false, defaultValue = "") String phone,
+            @org.springframework.web.bind.annotation.RequestParam(required = false, defaultValue = "") String name) {
+        return service.diagByPhoneOrName(phone, name);
+    }
+
     /** Admin overrides the contact status of a delivered lead. */
     @PostMapping("/leads/{leadId}/status")
     void leadStatus(@PathVariable long leadId, @Valid @RequestBody LeadStatusRequest request) {
