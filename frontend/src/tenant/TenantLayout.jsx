@@ -6,6 +6,7 @@ import PushOptIn from '../shared/components/PushOptIn.jsx'
 import Icon from '../shared/components/Icon.jsx'
 import SocialButton from '../shared/components/SocialButton.jsx'
 import SleepingCat from '../shared/components/SleepingCat.jsx'
+import ThemeSwitch from '../shared/components/ThemeSwitch.jsx'
 import VideoHero from '../shared/components/VideoHero.jsx'
 import { getSalonProfile, mapsUrl, tenantKeys } from './tenant-api.js'
 import { tenantNameFallback } from './tenant-host.js'
@@ -367,8 +368,10 @@ export default function TenantLayout() {
           <main className="flex flex-col" aria-live="polite">
             <section className="relative w-full -mt-16 min-h-[85vh] md:min-h-[92vh] flex items-end overflow-hidden">
               <VideoHero poster={profileQuery.data?.logoUrl} alt={salonName} />
-              <div className="relative z-10 w-full max-w-[1280px] mx-auto px-4 lg:px-6 pb-[5vh]">
-                <h1 className="font-display text-display-lg-mobile md:text-display-lg text-on-surface mb-4">{salonName}</h1>
+              <ThemeSwitch checked={!siteLight} onChange={toggleSiteTheme}
+                className="absolute top-[67px] right-4 lg:right-6 z-20 drop-shadow-lg" style={{ '--toggle-size': '8px' }} />
+              <div className="hero-content relative z-10 w-full max-w-[1280px] mx-auto px-4 lg:px-6 pb-[5vh]">
+                <h1 className="font-display text-display-lg-mobile md:text-display-lg text-white mb-4">{salonName}</h1>
                 {contactWhatsappUrl && (
                   <a href={contactWhatsappUrl} target="_blank" rel="noreferrer" className="vintage-cta">
                     <Icon name="chat" className="text-[18px]" />
