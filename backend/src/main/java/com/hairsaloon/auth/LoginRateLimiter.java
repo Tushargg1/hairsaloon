@@ -33,16 +33,16 @@ class LoginRateLimiter {
     }
 
     Decision check(String scope, String clientIp, String normalizedPrincipal) {
-        List<String> keys = keys(scope, clientIp, normalizedPrincipal);
+        java.util.Map<String, Integer> buckets = keys(scope, clientIp, normalizedPrincipal);
         if (config.isRedisEnabled()) {
             try {
                 long retry = 0;
                 boolean blocked = false;
-                for (String key : keys) {
-                    String countValue = redis.opsForValue().get(key);
-                    if (countValue != null && Long.parseLong(countValue) >= config.getMaxAttempts()) {
+                for (var bucket : buckets.entrySet()) {
+                    String countValue = redis.opsForValue().get(bucket.getKey());
+                    if (countValue != null && Long.parseLong(countValue) >= bucket.getValue()) {
                         blocked = true;
-                        Long ttl = redis.getExpire(key);
+                        Long ttl = redis.getExpire(bucket.getKey());
                         retry = Math.max(retry, ttl == null ? 1 : Math.max(1, ttl));
                     }
                 }
@@ -51,11 +51,11 @@ class LoginRateLimiter {
                 // Redis is the primary store; an isolated in-process limiter keeps auth available.
             }
         }
-        return fallbackCheck(keys);
+        return fallbackCheck(buckets);
     }
 
     void recordFailure(String scope, String clientIp, String normalizedPrincipal) {
-        List<String> keys = keys(scope, clientIp, normalizedPrincipal);
+        java.util.Set<String> keys = keys(scope, clientIp, normalizedPrincipal).keySet();
         if (config.isRedisEnabled()) {
             try {
                 for (String key : keys) {
@@ -79,15 +79,19 @@ class LoginRateLimiter {
     }
 
     void recordSuccess(String scope, String clientIp, String normalizedPrincipal) {
-        List<String> keys = keys(scope, clientIp, normalizedPrincipal);
+        // Do not clear the global bucket on success — otherwise a spray with an
+        // occasional valid login would reset the shared counter. Only clear the
+        // per-IP and per-principal buckets for this caller.
+        List<String> keys = List.copyOf(keys(scope, clientIp, normalizedPrincipal).keySet());
+        List<String> clearable = keys.stream().filter(k -> !k.contains(":global:")).toList();
         if (config.isRedisEnabled()) {
             try {
-                redis.delete(keys);
+                redis.delete(clearable);
             } catch (RuntimeException unavailable) {
                 // Local cleanup below is always safe.
             }
         }
-        keys.forEach(fallback::remove);
+        clearable.forEach(fallback::remove);
     }
 
     void clear() {
@@ -101,17 +105,18 @@ class LoginRateLimiter {
         }
     }
 
-    private Decision fallbackCheck(List<String> keys) {
+    private Decision fallbackCheck(java.util.Map<String, Integer> buckets) {
         Instant now = Instant.now();
         long retry = 0;
         boolean blocked = false;
-        for (String key : keys) {
+        for (var bucket : buckets.entrySet()) {
+            String key = bucket.getKey();
             AttemptRecord record = fallback.get(key);
             if (record != null && record.expired(now)) {
                 fallback.remove(key, record);
                 record = null;
             }
-            if (record != null && record.count >= config.getMaxAttempts()) {
+            if (record != null && record.count >= bucket.getValue()) {
                 blocked = true;
                 retry = Math.max(retry, Math.max(1,
                     Duration.between(now, record.expiresAt).toSeconds() + 1));
@@ -136,12 +141,20 @@ class LoginRateLimiter {
         return request.getRemoteAddr();
     }
 
-    private List<String> keys(String scope, String clientIp, String principal) {
+    /** Buckets to enforce for this attempt, mapped to their max-attempt threshold. */
+    private java.util.Map<String, Integer> keys(String scope, String clientIp, String principal) {
         String safeScope = scope.replaceAll("[^a-zA-Z0-9_-]", "_");
         String prefix = config.getKeyPrefix() + safeScope + ":";
-        return List.of(
-            prefix + "ip:" + hmac.hash("rate-ip", nullToEmpty(clientIp)),
-            prefix + "principal:" + hmac.hash("rate-principal", nullToEmpty(principal)));
+        java.util.Map<String, Integer> buckets = new java.util.LinkedHashMap<>();
+        buckets.put(prefix + "ip:" + hmac.hash("rate-ip", nullToEmpty(clientIp)), config.getMaxAttempts());
+        buckets.put(prefix + "principal:" + hmac.hash("rate-principal", nullToEmpty(principal)),
+            config.getMaxAttempts());
+        // Per-scope global bucket: caps total failures across all IPs/accounts so a host
+        // rotating X-Forwarded-For can't spray many accounts. Off when set to 0.
+        if (config.getGlobalMaxAttempts() > 0) {
+            buckets.put(prefix + "global:all", config.getGlobalMaxAttempts());
+        }
+        return buckets;
     }
 
     private static String nullToEmpty(String value) { return value == null ? "" : value; }

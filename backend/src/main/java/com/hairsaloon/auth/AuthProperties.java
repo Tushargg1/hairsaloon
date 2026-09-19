@@ -61,11 +61,16 @@ public class AuthProperties {
 
     public static class RateLimit {
         private int maxAttempts = 5;
+        // Cap on total failures per scope across all IPs/accounts in the window; stops
+        // credential-spraying from a single host that rotates X-Forwarded-For. 0 = off.
+        private int globalMaxAttempts = 100;
         private Duration window = Duration.ofMinutes(5);
         private boolean redisEnabled = true;
         private String keyPrefix = "hairsaloon:auth:rate:";
         public int getMaxAttempts() { return maxAttempts; }
         public void setMaxAttempts(int maxAttempts) { this.maxAttempts = maxAttempts; }
+        public int getGlobalMaxAttempts() { return globalMaxAttempts; }
+        public void setGlobalMaxAttempts(int globalMaxAttempts) { this.globalMaxAttempts = globalMaxAttempts; }
         public Duration getWindow() { return window; }
         public void setWindow(Duration window) { this.window = window; }
         public boolean isRedisEnabled() { return redisEnabled; }

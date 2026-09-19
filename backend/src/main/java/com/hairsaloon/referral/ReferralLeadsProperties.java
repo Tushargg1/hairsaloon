@@ -5,7 +5,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties("app.referral-leads")
 public record ReferralLeadsProperties(
     String apiUrl,
-    String apiKey,
     Integer dailyLimit,
     Integer batchSize,
     Integer dailyOnboardTarget,
