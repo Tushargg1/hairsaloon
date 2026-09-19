@@ -40,7 +40,7 @@ class AuthController {
                 request.password(), request.verificationProof());
             rateLimiter.recordSuccess("signup", ip, principal);
             return ResponseEntity.status(HttpStatus.CREATED)
-                .header(HttpHeaders.SET_COOKIE, cookies.authenticated(result.token()).toString())
+                .header(HttpHeaders.SET_COOKIE, cookies.authenticated(result.token(), result.maxAge()).toString())
                 .body(UserResponse.from(result.user()));
         } catch (AuthException failure) {
             // Without this the endpoint allows unlimited account-existence probing.
@@ -62,7 +62,7 @@ class AuthController {
                 request.verificationProof());
             rateLimiter.recordSuccess("business-signup", ip, principal);
             return ResponseEntity.status(HttpStatus.CREATED)
-                .header(HttpHeaders.SET_COOKIE, cookies.authenticated(result.token()).toString())
+                .header(HttpHeaders.SET_COOKIE, cookies.authenticated(result.token(), result.maxAge()).toString())
                 .body(UserResponse.from(result.user()));
         } catch (AuthException failure) {
             rateLimiter.recordFailure("business-signup", ip, principal);
@@ -81,7 +81,7 @@ class AuthController {
                 request.password());
             rateLimiter.recordSuccess("customer-login", ip, principal);
             return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, cookies.authenticated(result.token()).toString())
+                .header(HttpHeaders.SET_COOKIE, cookies.authenticated(result.token(), result.maxAge()).toString())
                 .body(UserResponse.from(result.user()));
         } catch (AuthException failure) {
             rateLimiter.recordFailure("customer-login", ip, principal);

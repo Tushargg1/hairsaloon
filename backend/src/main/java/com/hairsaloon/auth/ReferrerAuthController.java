@@ -43,7 +43,7 @@ class ReferrerAuthController {
             referrals.createProfile(result.user().id(), request.name(), request.phone());
             rateLimiter.recordSuccess("referrer-signup", ip, principal);
             return ResponseEntity.status(HttpStatus.CREATED)
-                .header(HttpHeaders.SET_COOKIE, cookies.authenticated(result.token()).toString())
+                .header(HttpHeaders.SET_COOKIE, cookies.authenticated(result.token(), result.maxAge()).toString())
                 .body(AuthController.UserResponse.from(result.user()));
         } catch (AuthException failure) {
             rateLimiter.recordFailure("referrer-signup", ip, principal);
@@ -62,7 +62,7 @@ class ReferrerAuthController {
                 request.password());
             rateLimiter.recordSuccess("referrer-login", ip, principal);
             return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, cookies.authenticated(result.token()).toString())
+                .header(HttpHeaders.SET_COOKIE, cookies.authenticated(result.token(), result.maxAge()).toString())
                 .body(AuthController.UserResponse.from(result.user()));
         } catch (AuthException failure) {
             rateLimiter.recordFailure("referrer-login", ip, principal);

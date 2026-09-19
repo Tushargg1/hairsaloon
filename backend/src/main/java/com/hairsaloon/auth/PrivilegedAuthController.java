@@ -51,7 +51,7 @@ class PrivilegedAuthController {
                     .map(Salon::getSubdomain).orElse(null);
             }
             return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, cookies.authenticated(result.token()).toString())
+                .header(HttpHeaders.SET_COOKIE, cookies.authenticated(result.token(), result.maxAge()).toString())
                 .body(AuthController.UserResponse.from(result.user(), subdomain));
         } catch (AuthException failure) {
             rateLimiter.recordFailure("privileged-login", ip, principal);

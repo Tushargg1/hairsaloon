@@ -22,13 +22,19 @@ public class AuthProperties {
     public static class Jwt {
         private String secret = "";
         private String issuer = "hairsaloon";
-        private Duration ttl = Duration.ofHours(8);
+        // Session lifetime for staff roles (owner/referrer/admin). Sliding: each request
+        // re-issues the token, so this is effectively an inactivity timeout.
+        private Duration ttl = Duration.ofHours(48);
+        // Longer sliding lifetime for customers.
+        private Duration customerTtl = Duration.ofDays(60);
         public String getSecret() { return secret; }
         public void setSecret(String secret) { this.secret = secret; }
         public String getIssuer() { return issuer; }
         public void setIssuer(String issuer) { this.issuer = issuer; }
         public Duration getTtl() { return ttl; }
         public void setTtl(Duration ttl) { this.ttl = ttl; }
+        public Duration getCustomerTtl() { return customerTtl; }
+        public void setCustomerTtl(Duration customerTtl) { this.customerTtl = customerTtl; }
     }
 
     public static class Cookie {

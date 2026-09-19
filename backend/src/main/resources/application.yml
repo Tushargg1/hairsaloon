@@ -73,7 +73,10 @@ app:
     jwt:
       secret: "${JWT_SECRET:}"
       issuer: "${JWT_ISSUER:groomit}"
-      ttl: "${JWT_TTL:8h}"
+      # Sliding session: re-issued on activity, so this is the inactivity timeout.
+      # Staff (owner/referrer/admin) = 48h; customers use customer-ttl below.
+      ttl: "${JWT_TTL:48h}"
+      customer-ttl: "${JWT_CUSTOMER_TTL:60d}"
     cookie:
       domain: "${AUTH_COOKIE_DOMAIN:}"
       secure: "${AUTH_COOKIE_SECURE:true}"

@@ -42,6 +42,13 @@ class AuthCookieService {
             .build();
     }
 
+    /** Cookie whose lifetime matches the token's session length (per-role TTL). */
+    ResponseCookie authenticated(String token, java.time.Duration maxAge) {
+        return base(token)
+            .maxAge(maxAge)
+            .build();
+    }
+
     ResponseCookie cleared() {
         return base("")
             .maxAge(0)

@@ -252,7 +252,8 @@ public class AuthService {
     }
 
     private AuthResult result(User user) {
-        return new AuthResult(principal(user), jwtService.issue(user));
+        return new AuthResult(principal(user), jwtService.issue(user),
+            jwtService.ttlFor(user.getRole()));
     }
 
     private static ProfileView view(User user) {
@@ -295,7 +296,7 @@ public class AuthService {
         return new AuthException(HttpStatus.NOT_FOUND, "USER_NOT_FOUND", "Account not found");
     }
 
-    record AuthResult(AuthenticatedUser user, String token) {}
+    record AuthResult(AuthenticatedUser user, String token, java.time.Duration maxAge) {}
 
     record ProfileView(Long id, String name, String phone, String email) {}
 }
