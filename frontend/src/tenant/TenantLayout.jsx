@@ -390,10 +390,10 @@ export default function TenantLayout() {
         )}
       </div>
 
-      {/* Footer */}
-      <footer className="salon-footer">
-        <div className="salon-footer-grid">
-          {!notOnboarded && (
+      {/* Footer — hidden entirely for inactive/pending/expired salons. */}
+      {!notOnboarded && (
+        <footer className="salon-footer">
+          <div className="salon-footer-grid">
             <div>
               <p className="salon-footer-name">{salonName}</p>
               {profileQuery.data?.description && (
@@ -401,9 +401,7 @@ export default function TenantLayout() {
               )}
               <a href="/#book-slot" className="salon-footer-cta">Book a Slot</a>
             </div>
-          )}
 
-          {!notOnboarded && (
             <div>
               <h2 className="salon-footer-title">Salon</h2>
               <p className="salon-footer-line"><NavLink to="/about">About Us</NavLink></p>
@@ -413,53 +411,53 @@ export default function TenantLayout() {
               <p className="salon-footer-line"><a href="/#book-slot">Book a Slot</a></p>
               <p className="salon-footer-line"><a href="/#reviews">Reviews</a></p>
             </div>
-          )}
 
-          <div>
-            <h2 className="salon-footer-title">Visit Us</h2>
-            {addressLine && (
-              <p className="salon-footer-line">
-                <Icon name="location_on" className="text-[15px]" />
-                <a href={mapsUrl(profileQuery.data || {})} target="_blank" rel="noreferrer">{addressLine}</a>
-              </p>
-            )}
-            {profileQuery.data?.phone && (
-              <p className="salon-footer-line">
-                <Icon name="call" className="text-[15px]" />
-                <a href={`tel:${profileQuery.data.phone}`}>{profileQuery.data.phone}</a>
-              </p>
-            )}
-            {profileQuery.data?.email && (
-              <p className="salon-footer-line">
-                <Icon name="mail" className="text-[15px]" />
-                <a href={`mailto:${profileQuery.data.email}`}>{profileQuery.data.email}</a>
-              </p>
-            )}
+            <div>
+              <h2 className="salon-footer-title">Visit Us</h2>
+              {addressLine && (
+                <p className="salon-footer-line">
+                  <Icon name="location_on" className="text-[15px]" />
+                  <a href={mapsUrl(profileQuery.data || {})} target="_blank" rel="noreferrer">{addressLine}</a>
+                </p>
+              )}
+              {profileQuery.data?.phone && (
+                <p className="salon-footer-line">
+                  <Icon name="call" className="text-[15px]" />
+                  <a href={`tel:${profileQuery.data.phone}`}>{profileQuery.data.phone}</a>
+                </p>
+              )}
+              {profileQuery.data?.email && (
+                <p className="salon-footer-line">
+                  <Icon name="mail" className="text-[15px]" />
+                  <a href={`mailto:${profileQuery.data.email}`}>{profileQuery.data.email}</a>
+                </p>
+              )}
 
-            {socialLinks(profileQuery.data).length > 0 && (
-              <div className="salon-footer-social">
-                {socialLinks(profileQuery.data).map(({ key, label, url, icon, brand }) => (
-                  brand ? (
-                    <SocialButton key={key} brand={brand} label={label} url={url} />
-                  ) : (
-                    <a key={key} href={url} target="_blank" rel="noreferrer" aria-label={label}
-                      title={label}>
-                      <Icon name={icon} className="text-[16px]" />
-                      <span>{label}</span>
-                    </a>
-                  )
-                ))}
-              </div>
-            )}
+              {socialLinks(profileQuery.data).length > 0 && (
+                <div className="salon-footer-social">
+                  {socialLinks(profileQuery.data).map(({ key, label, url, icon, brand }) => (
+                    brand ? (
+                      <SocialButton key={key} brand={brand} label={label} url={url} />
+                    ) : (
+                      <a key={key} href={url} target="_blank" rel="noreferrer" aria-label={label}
+                        title={label}>
+                        <Icon name={icon} className="text-[16px]" />
+                        <span>{label}</span>
+                      </a>
+                    )
+                  ))}
+                </div>
+              )}
+            </div>
+
           </div>
-
-        </div>
-        <p className="salon-footer-site">
-          <Icon name="language" className="text-[14px]" />
-          {window.location.hostname}
-        </p>
-        <p className="salon-footer-mark">{salonName}</p>
-      </footer>
+          <p className="salon-footer-site">
+            <Icon name="language" className="text-[14px]" />
+            {window.location.hostname}
+          </p>
+          <p className="salon-footer-mark">{salonName}</p>
+        </footer>
+      )}
     </div>
   )
 }

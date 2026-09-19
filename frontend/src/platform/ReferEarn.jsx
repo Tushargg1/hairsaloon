@@ -411,7 +411,9 @@ function AccountSettings() {
 
 function ReferrerDashboard() {
   const client = useQueryClient()
-  const { data, isLoading } = useQuery({ queryKey: referralKeys.me, queryFn: getReferralOverview })
+  const { data, isLoading, isError, error: overviewError, refetch } = useQuery({
+    queryKey: referralKeys.me, queryFn: getReferralOverview, retry: 2,
+  })
   const [searchParams, setSearchParams] = useSearchParams()
   const tab = searchParams.get('tab') || 'overview'
   const setTab = (next) => setSearchParams({ tab: next }, { replace: true })
@@ -585,6 +587,20 @@ function ReferrerDashboard() {
   }
 
   if (isLoading) return <PageLoader />
+
+  // A failed /me (e.g. session/cookie not yet established on this device) must show a
+  // retry — not a blank dashboard that misleadingly reads "awaiting approval".
+  if (isError) {
+    return (
+      <div className="glass-panel rounded-xl p-6 text-center">
+        <p className="font-body text-on-surface mb-3">{errorMessage(overviewError, 'Could not load your account. Please try again.')}</p>
+        <button type="button" onClick={() => refetch()}
+          className="brass-gradient text-espresso font-body font-semibold px-6 py-2.5 rounded">
+          Try again
+        </button>
+      </div>
+    )
+  }
 
   const { referralCode, approved, perReferralAmount, totalPaid, totalPending, history = [] } = data || {}
   // Trial-site owner password = referral code padded to 8+ chars (matches backend).

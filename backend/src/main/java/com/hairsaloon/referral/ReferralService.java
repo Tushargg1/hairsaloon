@@ -217,27 +217,6 @@ public class ReferralService {
         profiles.save(profile);
     }
 
-    /** Diagnostic: accounts matching a phone or name fragment, with referrer profile state. */
-    @Transactional(readOnly = true)
-    public List<DiagAccount> diagByPhoneOrName(String phoneFragment, String nameFragment) {
-        java.util.stream.Stream<com.hairsaloon.auth.User> stream = users.findAll().stream();
-        String phone = phoneFragment == null ? "" : phoneFragment.trim();
-        String name = nameFragment == null ? "" : nameFragment.trim().toLowerCase();
-        return stream
-            .filter(u -> (!phone.isBlank() && u.getPhone() != null && u.getPhone().contains(phone))
-                || (!name.isBlank() && u.getName() != null && u.getName().toLowerCase().contains(name)))
-            .map(u -> {
-                ReferrerProfile p = profiles.findById(u.getId()).orElse(null);
-                return new DiagAccount(u.getId(), u.getName(), u.getPhone(), u.getRole().name(),
-                    p != null ? p.getReferralCode() : null,
-                    p != null && p.isApproved(),
-                    p != null ? p.getDailyLeadLimit() : null);
-            }).toList();
-    }
-
-    public record DiagAccount(Long userId, String name, String phone, String role,
-                              String referralCode, boolean approved, Integer dailyLeadLimit) {}
-
     /** Admin raises (or lowers) this referrer's daily lead cap (null = global default). */
     @Transactional
     public void setReferrerDailyLeadLimit(long referrerUserId, Integer limit) {
