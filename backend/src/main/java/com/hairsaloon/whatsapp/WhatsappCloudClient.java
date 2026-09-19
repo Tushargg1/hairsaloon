@@ -88,7 +88,7 @@ public class WhatsappCloudClient {
             HttpResponse<String> response = client.send(builder.build(),
                 HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() / 100 != 2) {
-                log.warn("WhatsApp GET {} failed: {}", url, response.statusCode());
+                log.warn("WhatsApp GET {} failed: {}", redact(url), response.statusCode());
                 throw new WhatsappException("WhatsApp API request failed.");
             }
             return mapper.readTree(response.body());
@@ -109,19 +109,26 @@ public class WhatsappCloudClient {
             HttpResponse<String> response = client.send(request,
                 HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() / 100 != 2) {
-                log.warn("WhatsApp POST {} failed: {} {}", url, response.statusCode(), response.body());
+                log.warn("WhatsApp POST {} failed: {}", redact(url), response.statusCode());
                 if (throwOnError) throw new WhatsappException("WhatsApp message send failed.");
             }
         } catch (WhatsappException e) {
             throw e;
         } catch (Exception e) {
-            log.warn("WhatsApp POST {} errored", url, e);
+            log.warn("WhatsApp POST {} errored", redact(url), e);
             if (throwOnError) throw new WhatsappException("WhatsApp message send failed.", e);
         }
     }
 
     private static String enc(String value) {
         return URLEncoder.encode(value == null ? "" : value, StandardCharsets.UTF_8);
+    }
+
+    /** Drops the query string so secrets (client_secret, code) never reach the logs. */
+    private static String redact(String url) {
+        if (url == null) return "";
+        int q = url.indexOf('?');
+        return q < 0 ? url : url.substring(0, q) + "?<redacted>";
     }
 
     private static String jsonEscape(String value) {

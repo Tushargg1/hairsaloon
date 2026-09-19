@@ -66,22 +66,64 @@ public class GooglePlacesClient {
         return details(placeId);
     }
 
-    /** Follows a shortened Google Maps link to its full URL; returns input unchanged otherwise. */
+    /**
+     * Follows a shortened Google Maps link to its full URL; returns input unchanged
+     * otherwise. Redirects are followed manually and every hop's host is validated to
+     * be a public HTTPS address, so a malicious short link cannot redirect us into
+     * internal/metadata addresses (SSRF).
+     */
     private String expandShortLink(String query) {
         if (query == null || !query.matches("(?i)https?://(maps\\.app\\.goo\\.gl|goo\\.gl|g\\.co)/.*")) {
             return query;
         }
         try {
             HttpClient follower = HttpClient.newBuilder()
-                .followRedirects(HttpClient.Redirect.NORMAL)
+                .followRedirects(HttpClient.Redirect.NEVER)
                 .connectTimeout(Duration.ofSeconds(10)).build();
-            HttpRequest request = HttpRequest.newBuilder(URI.create(query.trim()))
-                .timeout(Duration.ofSeconds(15)).GET().build();
-            HttpResponse<Void> response = follower.send(request, HttpResponse.BodyHandlers.discarding());
-            String finalUrl = response.uri() != null ? response.uri().toString() : query;
-            return finalUrl == null || finalUrl.isBlank() ? query : finalUrl;
+            URI current = URI.create(query.trim());
+            for (int hop = 0; hop < 5; hop++) {
+                if (!isPublicHttpUrl(current)) return query; // refuse non-public / non-http(s) target
+                HttpRequest request = HttpRequest.newBuilder(current)
+                    .timeout(Duration.ofSeconds(15)).GET().build();
+                HttpResponse<Void> response = follower.send(request, HttpResponse.BodyHandlers.discarding());
+                int code = response.statusCode();
+                if (code / 100 != 3) {
+                    return current.toString();
+                }
+                String location = response.headers().firstValue("Location").orElse(null);
+                if (location == null || location.isBlank()) return current.toString();
+                current = current.resolve(location.trim());
+            }
+            return current.toString();
         } catch (Exception ignored) {
             return query;
+        }
+    }
+
+    /** True only for http/https URLs whose host resolves to public (non-private) addresses. */
+    private static boolean isPublicHttpUrl(URI uri) {
+        if (uri == null) return false;
+        String scheme = uri.getScheme();
+        if (scheme == null || !(scheme.equalsIgnoreCase("http") || scheme.equalsIgnoreCase("https"))) {
+            return false;
+        }
+        String host = uri.getHost();
+        if (host == null || host.isBlank()) return false;
+        try {
+            for (java.net.InetAddress addr : java.net.InetAddress.getAllByName(host)) {
+                if (addr.isLoopbackAddress() || addr.isAnyLocalAddress()
+                    || addr.isLinkLocalAddress() || addr.isSiteLocalAddress()
+                    || addr.isMulticastAddress()) {
+                    return false;
+                }
+                // Block the cloud metadata address and unique-local IPv6 (fc00::/7).
+                byte[] b = addr.getAddress();
+                if (b.length == 4 && (b[0] & 0xff) == 169 && (b[1] & 0xff) == 254) return false;
+                if (b.length == 16 && (b[0] & 0xfe) == 0xfc) return false;
+            }
+            return true;
+        } catch (java.net.UnknownHostException e) {
+            return false;
         }
     }
 
