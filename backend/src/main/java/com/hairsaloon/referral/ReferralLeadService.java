@@ -133,23 +133,29 @@ public class ReferralLeadService {
             throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, limitMessage);
         }
 
-        List<ScraperLeadsClient.Lead> fresh;
+        // The scraper sometimes re-serves a batch we already stored (its "sent"
+        // tracking lags), which our global external_id dedupe then drops to nothing.
+        // Retry a few times so a stale batch doesn't show the user "no leads" when
+        // fresh ones are still available. external_id is globally unique, so any
+        // duplicate must be filtered out before insert (a duplicate insert would
+        // abort the whole transaction).
+        List<ScraperLeadsClient.Lead> fresh = List.of();
+        int totalReturned = 0;
         try {
-            // The scraper returns up to 10 fresh (never-sent) businesses and marks them sent.
-            fresh = scraper.fetchBatch(profile.getReferralCode());
+            for (int attempt = 0; attempt < 5 && fresh.isEmpty(); attempt++) {
+                List<ScraperLeadsClient.Lead> batchLeads = scraper.fetchBatch(profile.getReferralCode());
+                if (batchLeads.isEmpty()) break; // scraper genuinely has nothing left
+                totalReturned += batchLeads.size();
+                fresh = batchLeads.stream()
+                    .filter(l -> !leads.existsByExternalId(l.externalId()))
+                    .toList();
+            }
         } catch (ScraperLeadsClient.NotApprovedException notApproved) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
                 "Your lead access is pending approval. Please try again once it is approved.");
         }
-        int scraperReturned = fresh.size();
-        // external_id is globally unique in referral_leads, so skip any the scraper
-        // re-served that we already stored — inserting a duplicate would abort the
-        // whole transaction (a rollback-only error can't be caught per-lead).
-        fresh = fresh.stream()
-            .filter(l -> !leads.existsByExternalId(l.externalId()))
-            .toList();
-        log.info("Lead batch for code {}: scraper returned {}, {} new after dedupe",
-            profile.getReferralCode(), scraperReturned, fresh.size());
+        log.info("Lead batch for code {}: scraper returned {} total across attempts, {} new after dedupe",
+            profile.getReferralCode(), totalReturned, fresh.size());
         if (fresh.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND,
                 "No new leads are available right now. Please try again later.");
