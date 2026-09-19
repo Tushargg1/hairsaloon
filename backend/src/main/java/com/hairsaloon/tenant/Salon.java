@@ -122,6 +122,10 @@ public class Salon {
     @Column(name = "is_trial", nullable = false, columnDefinition = "boolean default false")
     private boolean trial = false;
 
+    // When set and in the past, the paid membership month has ended (pending payment).
+    @Column(name = "membership_expires_at")
+    private Instant membershipExpiresAt;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -249,6 +253,10 @@ public class Salon {
     public String getTimezone() { return timezone; }
     public SalonStatus getStatus() { return status; }
     public boolean isTrial() { return trial; }
+    public Instant getMembershipExpiresAt() { return membershipExpiresAt; }
+    public void setMembershipExpiresAt(Instant membershipExpiresAt) {
+        this.membershipExpiresAt = membershipExpiresAt;
+    }
     public int getCancellationWindowMinutes() { return cancellationWindowMinutes; }
     public BigDecimal getLatitude() { return latitude; }
     public BigDecimal getLongitude() { return longitude; }

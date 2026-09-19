@@ -62,6 +62,11 @@ export async function getAllSalons() {
   return data
 }
 
+export async function setSalonMembership(id, expiresAt) {
+  const { data } = await apiClient.put(`/api/platform/admin/salons/${id}/membership`, { expiresAt })
+  return data
+}
+
 export async function getAllCustomers() {
   const { data } = await apiClient.get('/api/platform/admin/customers')
   return data
