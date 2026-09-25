@@ -37,7 +37,7 @@ export default function SalonTeam() {
                   <span className="w-12 h-12 flex-shrink-0 rounded-full flex items-center justify-center overflow-hidden"
                     style={{ border: '1px solid rgba(200, 176, 132, 0.5)', backgroundColor: '#151310' }}>
                     {member.photoUrl
-                      ? <img src={member.photoUrl} alt="" className="w-full h-full rounded-full object-cover" />
+                      ? <img src={member.photoUrl} alt={member.name || 'Team member'} className="w-full h-full rounded-full object-cover" />
                       : <span className="font-display text-lg" style={{ color: '#C8B084' }}>{initial(member.name)}</span>}
                   </span>
                   <span className="flex flex-col">

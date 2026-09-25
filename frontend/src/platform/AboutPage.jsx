@@ -3,7 +3,7 @@ import GlassPanel from '../shared/components/GlassPanel.jsx'
 import BrassButton from '../shared/components/BrassButton.jsx'
 import Icon from '../shared/components/Icon.jsx'
 
-const HERO_BG = 'https://lh3.googleusercontent.com/aida-public/AB6AXuDJPIJ2JIxb3RVCeuZEKylrHaYkC9iBqr1ESDbu9hSDBMoaFnzyU30DbmY1hKpWulO2us3e3P1JsUXsjJk6hl7eRxx2By1ce08JGuW6fpEBpz6r6xrHAXom9gvHa6d4KIQ5TDgSAiw4r2DXNctX9_txwNfl026hs7P8mhismD8NaTSlW76CLZmE8PeWYe-YCVdv9UZpLROZgR_dHY3OdUK_u6oL9eaDNvA9VPY7pyeh-vMJI9gKrKEUBMz3aWqfHch-dA'
+const HERO_BG = '/background-windows-img.png'
 
 const VALUES = [
   {

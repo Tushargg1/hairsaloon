@@ -30,6 +30,7 @@ export default function AuthPage({ mode }) {
   const [status, setStatus] = useState({ pending: false, error: '', success: '' })
   const [retryIn, setRetryIn] = useState(0)
   const [resendIn, setResendIn] = useState(0)
+  const [consent, setConsent] = useState(false)
 
   useCountdown(retryIn, setRetryIn)
   useCountdown(resendIn, setResendIn)
@@ -62,6 +63,10 @@ export default function AuthPage({ mode }) {
 
   async function submitSignup(e) {
     e.preventDefault()
+    if (!consent) {
+      setStatus({ pending: false, success: '', error: 'Please agree to the Terms of Service and Privacy Policy to continue.' })
+      return
+    }
     setStatus({ pending: true, error: '', success: '' })
     try {
       await signup({ phone: form.phone.trim(), email: form.email.trim() || undefined, password: form.password })
@@ -220,6 +225,22 @@ export default function AuthPage({ mode }) {
                     maxLength={72}
                     autoComplete="new-password"
                   />
+                  <label htmlFor="signup-consent" className="flex items-start gap-3 font-body text-label-sm text-on-surface-variant cursor-pointer">
+                    <input
+                      id="signup-consent"
+                      name="consent"
+                      type="checkbox"
+                      checked={consent}
+                      onChange={(e) => setConsent(e.target.checked)}
+                      required
+                      className="mt-0.5 h-4 w-4 flex-shrink-0 accent-brass"
+                    />
+                    <span>
+                      I agree to the{' '}
+                      <Link to="/terms" className="text-secondary hover:underline">Terms of Service</Link> and{' '}
+                      <Link to="/privacy" className="text-secondary hover:underline">Privacy Policy</Link>, and consent to my details being used to manage my bookings.
+                    </span>
+                  </label>
                 </>
               )}
 
@@ -330,11 +351,13 @@ export default function AuthPage({ mode }) {
             </p>
           </GlassPanel>
 
-          <p className="text-center font-body text-label-sm text-on-surface-variant/70 mt-6">
-            By proceeding, you agree to our{' '}
-            <Link to="/terms" className="text-secondary hover:underline">Terms of Service</Link> and{' '}
-            <Link to="/privacy" className="text-secondary hover:underline">Privacy Policy</Link>.
-          </p>
+          {!isSignup && (
+            <p className="text-center font-body text-label-sm text-on-surface-variant/70 mt-6">
+              By proceeding, you agree to our{' '}
+              <Link to="/terms" className="text-secondary hover:underline">Terms of Service</Link> and{' '}
+              <Link to="/privacy" className="text-secondary hover:underline">Privacy Policy</Link>.
+            </p>
+          )}
         </div>
       </div>
     </main>

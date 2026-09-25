@@ -323,7 +323,7 @@ export default function SlotBookingWidget({ selectedIds, onToggleService, salonN
                       <video key={characterClip + shouldLoop} src={characterClip} autoPlay loop={shouldLoop} muted
                         playsInline aria-hidden="true" tabIndex={-1} />
                     ) : chosenProfile?.photoUrl ? (
-                      <img src={chosenProfile.photoUrl} alt="" />
+                      <img src={chosenProfile.photoUrl} alt={chosen?.staffName || 'Selected stylist'} />
                     ) : (
                       <span className="booking-avatar-initial">{chosen?.staffName?.[0] || '\u2702'}</span>
                     )}

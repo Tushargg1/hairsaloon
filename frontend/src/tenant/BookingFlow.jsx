@@ -176,7 +176,7 @@ export default function BookingFlow() {
                 <button key={member.id} type="button" onClick={() => chooseStaff(member.id)}
                   className="flex flex-col items-center gap-2 p-4 border border-outline-variant/30 rounded-lg hover:border-secondary/50 hover:bg-surface-container-high/30 transition-all group">
                   <div className="w-14 h-14 rounded-full bg-surface-container-high flex items-center justify-center border border-outline-variant/50 group-hover:border-secondary overflow-hidden">
-                    {member.photoUrl ? <img src={member.photoUrl} alt="" className="w-full h-full object-cover" /> : <span className="font-display text-secondary text-lg">{member.name?.[0]}</span>}
+                    {member.photoUrl ? <img src={member.photoUrl} alt={member.name || 'Team member'} className="w-full h-full object-cover" /> : <span className="font-display text-secondary text-lg">{member.name?.[0]}</span>}
                   </div>
                   <span className="font-body text-title-lg text-on-surface text-sm group-hover:text-secondary">{member.name}</span>
                 </button>

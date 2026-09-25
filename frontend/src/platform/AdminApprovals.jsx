@@ -52,7 +52,7 @@ export default function AdminApprovals() {
             <div key={salon.id} className="glass-surface metallic-border rounded-lg p-6 flex flex-col md:flex-row gap-6">
               {/* Logo */}
               <div className="w-16 h-16 rounded-full bg-surface-container-high flex items-center justify-center border border-outline-variant/50 flex-shrink-0">
-                {salon.logoUrl ? <img src={salon.logoUrl} alt="" className="w-full h-full object-cover rounded-full" /> : <span className="font-display text-secondary text-xl">{salon.name?.[0] || 'S'}</span>}
+                {salon.logoUrl ? <img src={salon.logoUrl} alt={salon.name ? `${salon.name} logo` : 'Salon logo'} className="w-full h-full object-cover rounded-full" /> : <span className="font-display text-secondary text-xl">{salon.name?.[0] || 'S'}</span>}
               </div>
               {/* Details */}
               <div className="flex-grow">

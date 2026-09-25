@@ -36,6 +36,8 @@ export default function Footer() {
           <p className="salon-footer-line"><Link to="/refer">Refer &amp; Earn</Link></p>
           <p className="salon-footer-line"><Link to="/terms">Terms of Service</Link></p>
           <p className="salon-footer-line"><Link to="/privacy">Privacy Policy</Link></p>
+          <p className="salon-footer-line"><Link to="/cookie-policy">Cookie Policy</Link></p>
+          <p className="salon-footer-line"><Link to="/refund-policy">Refund Policy</Link></p>
           <p className="salon-footer-line"><Link to="/grievance">Grievance Redressal</Link></p>
 
           <div className="salon-footer-social">
